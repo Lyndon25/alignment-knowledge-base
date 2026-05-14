@@ -1139,6 +1139,7 @@ function openPaper(id) {
     <h2>${p.title}</h2>
     <div class="meta">${p.authors}${p.venue ? ' · ' + p.venue : ''}${p.doi ? ' · DOI: ' + p.doi : ''}</div>
     ${p.pdf ? `<div class="meta"><a href="${p.pdf}" target="_blank">📄 打开PDF</a></div>` : ''}
+    ${p.doi && !p.doi.startsWith('N/A') ? `<div class="meta"><a href="https://doi.org/${p.doi}" target="_blank">🔗 直达链接</a></div>` : ''}
 
     <section>
       <h3>一句话概要</h3>

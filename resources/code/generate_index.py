@@ -1,4 +1,68 @@
-<!DOCTYPE html>
+#!/usr/bin/env python3
+"""Generate knowledge_base/index.html from extracted wiki stats (_stats.json)."""
+import json
+from pathlib import Path
+
+STATS_PATH = Path(r"C:\Users\Lyndon\Desktop\SW\一年级：2025-2026\Project：alignment\knowledge_base\_stats.json")
+OUTPUT_PATH = Path(r"C:\Users\Lyndon\Desktop\SW\一年级：2025-2026\Project：alignment\knowledge_base\index.html")
+
+with open(STATS_PATH, 'r', encoding='utf-8') as f:
+    stats = json.load(f)
+
+domains = stats['domains']
+t = stats['totals']
+
+# Domain display order
+domain_order = [
+    "01_sae_features", "02_activation_engineering", "03_causal_intervention",
+    "04_alignment_safety", "05_ethics_governance", "06_philosophy_of_science",
+    "07_philosophy_of_mind",
+]
+
+gap_order = [
+    "08_representational_ontology", "09_epistemology_understanding",
+    "10_causal_sufficiency", "11_vector_grounding",
+]
+
+domain_icons = {
+    "01_sae_features": ("#d97706", "01"),
+    "02_activation_engineering": ("#0d9488", "02"),
+    "03_causal_intervention": ("#7c3aed", "03"),
+    "04_alignment_safety": ("#6366f1", "04"),
+    "05_ethics_governance": ("#dc2626", "05"),
+    "06_philosophy_of_science": ("#ea580c", "06"),
+    "07_philosophy_of_mind": ("#c026d3", "07"),
+    "08_representational_ontology": ("#d97706", "G1"),
+    "09_epistemology_understanding": ("#0d9488", "G2"),
+    "10_causal_sufficiency": ("#7c3aed", "G3"),
+    "11_vector_grounding": ("#dc2626", "G4"),
+}
+
+def domain_card_html(key):
+    d = domains[key]
+    color, icon = domain_icons[key]
+    is_gap = key in gap_order
+    # For gap domains, use slightly different styling
+    border_style = f"border:1px solid rgba({','.join(str(int(color.lstrip('#')[i:i+2],16)) for i in (0,2,4))},0.25)" if is_gap else ""
+    return f'''    <a href="{key}/wiki.html" class="domain-card">
+      <div class="domain-icon" style="background:rgba({','.join(str(int(color.lstrip('#')[i:i+2],16)) for i in (0,2,4))},0.12);color:{color}{';' + border_style if is_gap else ''}">{icon}</div>
+      <h3>{d['title']}</h3>
+      <div class="domain-sub">{d['subtitle']}</div>
+      <div class="domain-stats">
+        <div>文献 <span>{d['paper_count']}</span></div>
+        <div>必读 <span>{d['must_count']}</span></div>
+        <div>笔记 <span>{d['note_count']}</span></div>
+      </div>
+      <div class="domain-keywords">
+        {"".join(f'<span class="domain-keyword">{tag}</span>' for tag in d['tags'][:8])}
+      </div>
+    </a>'''
+
+# Build domain card sections
+main_domain_cards = "\n\n".join(domain_card_html(k) for k in domain_order)
+gap_domain_cards = "\n\n".join(domain_card_html(k) for k in gap_order)
+
+html = f'''<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -11,7 +75,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
 
   <style>
-    :root {
+    :root {{
       --bg-void: #f4f5f8;
       --bg-primary: #ffffff;
       --bg-secondary: #eef0f4;
@@ -44,101 +108,101 @@
       --shadow-card-hover: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
       --shadow-elevated: 0 12px 32px rgba(0,0,0,0.08);
       --transition-base: 200ms cubic-bezier(0.22, 1, 0.36, 1);
-    }
+    }}
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+    html {{ scroll-behavior: smooth; }}
 
-    body {
+    body {{
       font-family: var(--font-body);
       background: var(--bg-void);
       color: var(--text-primary);
       line-height: 1.7;
       min-height: 100vh;
-    }
+    }}
 
     /* ─── Sticky Header ─── */
-    .header {
+    .header {{
       background: var(--bg-primary);
       border-bottom: 1px solid var(--border-medium);
       padding: 1.25rem 2rem;
       position: sticky; top: 0; z-index: 100;
       backdrop-filter: blur(12px);
       display: flex; align-items: center; justify-content: space-between;
-    }
-    .header-left {
+    }}
+    .header-left {{
       display: flex; align-items: center; gap: 1.25rem;
-    }
-    .header-logo {
+    }}
+    .header-logo {{
       width: 40px; height: 40px; border-radius: var(--radius-sm);
       background: linear-gradient(135deg, var(--c-align), var(--c-causal));
       display: flex; align-items: center; justify-content: center;
       font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600;
       color: white; letter-spacing: 0.02em;
-    }
-    .header-title {
+    }}
+    .header-title {{
       font-family: var(--font-display);
       font-size: 1.35rem; letter-spacing: -0.02em;
-    }
-    .header-title-sub {
+    }}
+    .header-title-sub {{
       font-size: 0.72rem; color: var(--text-muted);
       margin-top: 0.05rem;
-    }
-    .header-stats {
+    }}
+    .header-stats {{
       display: flex; gap: 1.5rem;
       font-size: 0.78rem; color: var(--text-muted);
-    }
-    .header-stat span { color: var(--text-primary); font-weight: 600; }
+    }}
+    .header-stat span {{ color: var(--text-primary); font-weight: 600; }}
 
     /* ─── Enhanced Stats Hero ─── */
-    .stats-hero {
+    .stats-hero {{
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 1px;
       background: var(--border-medium);
       border-bottom: 1px solid var(--border-medium);
-    }
-    .stat-block {
+    }}
+    .stat-block {{
       background: var(--bg-primary);
       padding: 1.5rem 1rem;
       text-align: center;
-    }
-    .stat-block .value {
+    }}
+    .stat-block .value {{
       font-family: var(--font-display); font-size: 2.2rem;
       color: var(--text-primary); line-height: 1.1;
-    }
-    .stat-block .label {
+    }}
+    .stat-block .label {{
       font-size: 0.7rem; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: 0.08em;
       margin-top: 0.25rem;
-    }
-    .stat-block .sub { font-size: 0.72rem; color: var(--text-faint); margin-top: 0.15rem; }
+    }}
+    .stat-block .sub {{ font-size: 0.72rem; color: var(--text-faint); margin-top: 0.15rem; }}
 
     /* ─── Container ─── */
-    .container { max-width: 1440px; margin: 0 auto; padding: 2rem; }
+    .container {{ max-width: 1440px; margin: 0 auto; padding: 2rem; }}
 
-    .section-title {
+    .section-title {{
       font-family: var(--font-display); font-size: 1.3rem;
       margin-bottom: 0.3rem; letter-spacing: -0.01em;
-    }
-    .section-desc {
+    }}
+    .section-desc {{
       font-size: 0.82rem; color: var(--text-muted);
       margin-bottom: 1.25rem; line-height: 1.6;
-    }
-    .section-divider {
+    }}
+    .section-divider {{
       border: none; height: 1px;
       background: var(--border-medium);
       margin: 2.5rem 0;
-    }
+    }}
 
     /* ─── Domain Cards ─── */
-    .domain-grid {
+    .domain-grid {{
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
       gap: 1rem;
       margin-bottom: 1rem;
-    }
-    .domain-card {
+    }}
+    .domain-card {{
       background: var(--bg-primary);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
@@ -148,75 +212,75 @@
       position: relative;
       text-decoration: none; color: inherit; display: block;
       box-shadow: var(--shadow-card);
-    }
-    .domain-card:hover {
+    }}
+    .domain-card:hover {{
       border-color: var(--border-medium);
       transform: translateY(-2px);
       box-shadow: var(--shadow-card-hover);
-    }
-    .domain-card::after {
+    }}
+    .domain-card::after {{
       content: "→";
       position: absolute; top: 1.5rem; right: 1.5rem;
       color: var(--text-faint); font-size: 1.2rem;
       transition: all var(--transition-base);
-    }
-    .domain-card:hover::after { color: var(--text-primary); transform: translateX(3px); }
+    }}
+    .domain-card:hover::after {{ color: var(--text-primary); transform: translateX(3px); }}
 
-    .domain-icon {
+    .domain-icon {{
       width: 40px; height: 40px; border-radius: var(--radius-sm);
       display: flex; align-items: center; justify-content: center;
       font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600;
       margin-bottom: 0.75rem;
-    }
-    .domain-card h3 { font-size: 1rem; margin-bottom: 0.3rem; }
-    .domain-card .domain-sub {
+    }}
+    .domain-card h3 {{ font-size: 1rem; margin-bottom: 0.3rem; }}
+    .domain-card .domain-sub {{
       font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;
       font-family: var(--font-mono); line-height: 1.5;
-    }
-    .domain-card .domain-stats {
+    }}
+    .domain-card .domain-stats {{
       display: flex; gap: 1rem; font-size: 0.72rem; color: var(--text-muted);
-    }
-    .domain-card .domain-stats span { color: var(--text-secondary); font-weight: 600; }
-    .domain-card .domain-keywords {
+    }}
+    .domain-card .domain-stats span {{ color: var(--text-secondary); font-weight: 600; }}
+    .domain-card .domain-keywords {{
       display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.75rem;
-    }
-    .domain-keyword {
+    }}
+    .domain-keyword {{
       padding: 0.15rem 0.55rem; border-radius: 999px;
       background: var(--bg-secondary); color: var(--text-muted);
       font-size: 0.65rem; font-family: var(--font-mono);
-    }
+    }}
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .domain-card { animation: fadeIn 0.35s ease both; }
+    @keyframes fadeIn {{
+      from {{ opacity: 0; transform: translateY(8px); }}
+      to {{ opacity: 1; transform: translateY(0); }}
+    }}
+    .domain-card {{ animation: fadeIn 0.35s ease both; }}
 
     /* ─── Cross-Domain Graph ─── */
-    .graph-wrapper {
+    .graph-wrapper {{
       position: relative;
       margin-bottom: 2rem;
-    }
-    .graph-container {
+    }}
+    .graph-container {{
       width: 100%; height: 520px;
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-lg);
       background: var(--bg-primary);
       overflow: hidden;
-    }
-    .graph-container.fullscreen {
+    }}
+    .graph-container.fullscreen {{
       position: fixed; inset: 0; z-index: 300;
       width: 100vw; height: 100vh;
       border-radius: 0; border: none;
-    }
-    .graph-toolbar {
+    }}
+    .graph-toolbar {{
       position: absolute;
       bottom: 1rem; right: 1rem;
       display: flex; gap: 0.35rem;
       z-index: 10;
-    }
-    .graph-toolbar.fullscreen { bottom: 2rem; right: 2rem; }
-    .graph-btn {
+    }}
+    .graph-toolbar.fullscreen {{ bottom: 2rem; right: 2rem; }}
+    .graph-btn {{
       width: 36px; height: 36px;
       border: 1px solid var(--border-medium);
       border-radius: 50%;
@@ -226,84 +290,84 @@
       display: flex; align-items: center; justify-content: center;
       transition: all var(--transition-base);
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .graph-btn:hover {
+    }}
+    .graph-btn:hover {{
       background: var(--bg-secondary);
       border-color: var(--border-strong);
       color: var(--text-primary);
       box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    }
-    .graph-btn.fullscreen-btn {
+    }}
+    .graph-btn.fullscreen-btn {{
       width: auto; padding: 0 1rem;
       border-radius: 999px;
       font-size: 0.78rem; font-family: var(--font-body); font-weight: 500;
       gap: 0.35rem;
-    }
-    .graph-legend {
+    }}
+    .graph-legend {{
       display: flex; gap: 1.5rem; flex-wrap: wrap;
       margin-top: 0.75rem; padding: 0.75rem 1rem;
       background: var(--bg-primary); border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       font-size: 0.72rem; color: var(--text-muted);
-    }
-    .graph-legend-item { display: flex; align-items: center; gap: 0.4rem; }
-    .graph-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    }}
+    .graph-legend-item {{ display: flex; align-items: center; gap: 0.4rem; }}
+    .graph-legend-dot {{ width: 10px; height: 10px; border-radius: 50%; }}
 
     /* ─── Bridge Cards ─── */
-    .bridge-list {
+    .bridge-list {{
       display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
       gap: 0.75rem;
-    }
-    .bridge-card {
+    }}
+    .bridge-card {{
       background: var(--bg-primary);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       padding: 1rem;
       box-shadow: var(--shadow-card);
       transition: all var(--transition-base);
-    }
-    .bridge-card:hover {
+    }}
+    .bridge-card:hover {{
       border-color: var(--border-medium);
       box-shadow: var(--shadow-card-hover);
-    }
-    .bridge-card .bridge-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
-    .bridge-card .bridge-domains { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.4rem; font-family: var(--font-mono); }
-    .bridge-card .bridge-desc { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.6; }
+    }}
+    .bridge-card .bridge-title {{ font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }}
+    .bridge-card .bridge-domains {{ font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.4rem; font-family: var(--font-mono); }}
+    .bridge-card .bridge-desc {{ font-size: 0.78rem; color: var(--text-secondary); line-height: 1.6; }}
 
     /* ─── Gap Highlight ─── */
-    .gap-box {
+    .gap-box {{
       background: var(--bg-primary);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-lg);
       padding: 1.5rem;
-    }
-    .gap-box p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.8; }
-    .gap-box ul { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.75rem; padding-left: 1.5rem; line-height: 2; }
-    .gap-box ul li strong { color: var(--text-primary); }
-    .gap-box .gap-note { font-size: 0.82rem; color: var(--text-muted); margin-top: 1rem; line-height: 1.6; }
+    }}
+    .gap-box p {{ font-size: 0.88rem; color: var(--text-secondary); line-height: 1.8; }}
+    .gap-box ul {{ font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.75rem; padding-left: 1.5rem; line-height: 2; }}
+    .gap-box ul li strong {{ color: var(--text-primary); }}
+    .gap-box .gap-note {{ font-size: 0.82rem; color: var(--text-muted); margin-top: 1rem; line-height: 1.6; }}
 
     /* ─── Stats Bar ─── */
-    .milestone-bar {
+    .milestone-bar {{
       display: flex; gap: 1.5rem; flex-wrap: wrap;
       background: var(--bg-primary); border: 1px solid var(--border-medium);
       border-radius: var(--radius-md); padding: 1rem 1.5rem;
       margin-bottom: 2rem;
-    }
-    .milestone-item { font-size: 0.82rem; color: var(--text-muted); }
-    .milestone-item span { color: var(--text-primary); font-weight: 600; font-family: var(--font-mono); }
+    }}
+    .milestone-item {{ font-size: 0.82rem; color: var(--text-muted); }}
+    .milestone-item span {{ color: var(--text-primary); font-weight: 600; font-family: var(--font-mono); }}
 
     /* ─── Footer ─── */
-    .footer {
+    .footer {{
       text-align: center; padding: 2rem;
       color: var(--text-faint); font-size: 0.72rem;
       border-top: 1px solid var(--border-subtle);
       margin-top: 2rem;
-    }
-    .footer a { color: var(--text-muted); }
+    }}
+    .footer a {{ color: var(--text-muted); }}
 
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+    ::-webkit-scrollbar {{ width: 4px; }}
+    ::-webkit-scrollbar-track {{ background: transparent; }}
+    ::-webkit-scrollbar-thumb {{ background: var(--border-strong); border-radius: 4px; }}
   </style>
 </head>
 <body>
@@ -318,36 +382,36 @@
       </div>
     </div>
     <div class="header-stats">
-      <div class="header-stat"><span id="stat-total-papers">276</span> 文献</div>
-      <div class="header-stat"><span>11</span> 领域</div>
-      <div class="header-stat"><span id="stat-total-notes">55</span> 笔记</div>
+      <div class="header-stat"><span id="stat-total-papers">{t['papers']}</span> 文献</div>
+      <div class="header-stat"><span>{t['domains']}</span> 领域</div>
+      <div class="header-stat"><span id="stat-total-notes">{t['notes']}</span> 笔记</div>
     </div>
   </div>
 
   <!-- ═══ Stats Hero ═══ -->
   <div class="stats-hero">
     <div class="stat-block">
-      <div class="value">276</div>
+      <div class="value">{t['papers']}</div>
       <div class="label">文献总量</div>
       <div class="sub">覆盖 11 个专题领域</div>
     </div>
     <div class="stat-block">
-      <div class="value">56</div>
+      <div class="value">{t['must']}</div>
       <div class="label">核心必读</div>
       <div class="sub" style="color:var(--c-priority-must)">最优先级文献</div>
     </div>
     <div class="stat-block">
-      <div class="value">130</div>
+      <div class="value">{t['important']}</div>
       <div class="label">重要文献</div>
       <div class="sub" style="color:var(--c-priority-important)">次级优先级</div>
     </div>
     <div class="stat-block">
-      <div class="value">90</div>
+      <div class="value">{t['ref']}</div>
       <div class="label">参考文献</div>
       <div class="sub" style="color:var(--c-priority-ref)">背景与延伸</div>
     </div>
     <div class="stat-block">
-      <div class="value">55</div>
+      <div class="value">{t['notes']}</div>
       <div class="label">核心笔记</div>
       <div class="sub">平均每域 5 篇深度笔记</div>
     </div>
@@ -365,7 +429,7 @@
     <p class="section-desc">
       本知识库围绕 <strong style="color:var(--text-primary)">机械可解释性</strong> 的经验研究与 <strong style="color:var(--text-primary)">科学技术哲学、伦理学</strong> 的规范分析之间的交叉地带构建。
       前 7 个领域覆盖基础技术栈与哲学框架，在此基础上提炼出 4 个核心研究空白（Gap 1–4），以专题文献库形式深入探索。
-      总计 276 篇文献，其中 ~56 篇为必读核心文献。
+      总计 {t['papers']} 篇文献，其中 ~{t['must']} 篇为必读核心文献。
     </p>
 
     <hr class="section-divider">
@@ -401,169 +465,19 @@
     <p class="section-desc">前 7 个领域构成项目的方法论基础与哲学参照系。每个领域含 20–35 篇文献，5 篇深度笔记。</p>
 
     <div class="domain-grid">
-    <a href="01_sae_features/wiki.html" class="domain-card">
-      <div class="domain-icon" style="background:rgba(217,119,6,0.12);color:#d97706">01</div>
-      <h3>SAE与特征分解</h3>
-      <div class="domain-sub">Sparse Autoencoders · Dictionary Learning · Feature Decomposition · Monosemanticity</div>
-      <div class="domain-stats">
-        <div>文献 <span>28</span></div>
-        <div>必读 <span>5</span></div>
-        <div>笔记 <span>5</span></div>
-      </div>
-      <div class="domain-keywords">
-        <span class="domain-keyword">AbsTopK</span><span class="domain-keyword">CLIP</span><span class="domain-keyword">Claude</span><span class="domain-keyword">FMS</span><span class="domain-keyword">G-SAE</span><span class="domain-keyword">GPT-4</span><span class="domain-keyword">JumpReLU</span><span class="domain-keyword">MoE</span>
-      </div>
-    </a>
-
-    <a href="02_activation_engineering/wiki.html" class="domain-card">
-      <div class="domain-icon" style="background:rgba(13,148,136,0.12);color:#0d9488">02</div>
-      <h3>激活与表征工程</h3>
-      <div class="domain-sub">Activation Engineering · Representation Engineering · Steering Vectors · NLA</div>
-      <div class="domain-stats">
-        <div>文献 <span>28</span></div>
-        <div>必读 <span>5</span></div>
-        <div>笔记 <span>5</span></div>
-      </div>
-      <div class="domain-keywords">
-        <span class="domain-keyword">AlphaSteer</span><span class="domain-keyword">Angular Steering</span><span class="domain-keyword">Anthropic</span><span class="domain-keyword">Boolean operations</span><span class="domain-keyword">CAA</span><span class="domain-keyword">CAE</span><span class="domain-keyword">CLVQ-VAE</span><span class="domain-keyword">COAST</span>
-      </div>
-    </a>
-
-    <a href="03_causal_intervention/wiki.html" class="domain-card">
-      <div class="domain-icon" style="background:rgba(124,58,237,0.12);color:#7c3aed">03</div>
-      <h3>因果干预与心灵哲学</h3>
-      <div class="domain-sub">Causal Intervention · Causal Abstraction · Philosophy of Mind · Predictive Processing</div>
-      <div class="domain-stats">
-        <div>文献 <span>32</span></div>
-        <div>必读 <span>5</span></div>
-        <div>笔记 <span>5</span></div>
-      </div>
-      <div class="domain-keywords">
-        <span class="domain-keyword">AI</span><span class="domain-keyword">AI governance</span><span class="domain-keyword">Bayesian</span><span class="domain-keyword">Buddhism</span><span class="domain-keyword">Dennett</span><span class="domain-keyword">LLM</span><span class="domain-keyword">LLM interpretability</span><span class="domain-keyword">LLM reasoning</span>
-      </div>
-    </a>
-
-    <a href="04_alignment_safety/wiki.html" class="domain-card">
-      <div class="domain-icon" style="background:rgba(99,102,241,0.12);color:#6366f1">04</div>
-      <h3>AI对齐理论与安全</h3>
-      <div class="domain-sub">Scalable Oversight · Constitutional AI · RSP · Deceptive Alignment · Safety Cases</div>
-      <div class="domain-stats">
-        <div>文献 <span>35</span></div>
-        <div>必读 <span>6</span></div>
-        <div>笔记 <span>5</span></div>
-      </div>
-      <div class="domain-keywords">
-        <span class="domain-keyword">AGI safety</span><span class="domain-keyword">AI control</span><span class="domain-keyword">Anthropic</span><span class="domain-keyword">Assurance 2.0</span><span class="domain-keyword">Bayesian IRL</span><span class="domain-keyword">Chain-of-Thought</span><span class="domain-keyword">Constitutional AI</span><span class="domain-keyword">DeepMind</span>
-      </div>
-    </a>
-
-    <a href="05_ethics_governance/wiki.html" class="domain-card">
-      <div class="domain-icon" style="background:rgba(220,38,38,0.12);color:#dc2626">05</div>
-      <h3>AI伦理与治理</h3>
-      <div class="domain-sub">AI Ethics · Moral Patienthood · Governance · Accountability · Participatory Alignment</div>
-      <div class="domain-stats">
-        <div>文献 <span>20</span></div>
-        <div>必读 <span>5</span></div>
-        <div>笔记 <span>5</span></div>
-      </div>
-      <div class="domain-keywords">
-        <span class="domain-keyword">AI accountability</span><span class="domain-keyword">AI alignment</span><span class="domain-keyword">AI auditing</span><span class="domain-keyword">AI ethics</span><span class="domain-keyword">AI ethics textbook</span><span class="domain-keyword">AI governance</span><span class="domain-keyword">AI moral patienthood</span><span class="domain-keyword">AI personhood</span>
-      </div>
-    </a>
-
-    <a href="06_philosophy_of_science/wiki.html" class="domain-card">
-      <div class="domain-icon" style="background:rgba(234,88,12,0.12);color:#ea580c">06</div>
-      <h3>科学哲学：可解释性的认识论</h3>
-      <div class="domain-sub">Epistemology of Interpretability · Feature Ontology · Mechanistic Explanation · Understanding vs Control</div>
-      <div class="domain-stats">
-        <div>文献 <span>27</span></div>
-        <div>必读 <span>5</span></div>
-        <div>笔记 <span>5</span></div>
-      </div>
-      <div class="domain-keywords">
-        <span class="domain-keyword">AI epistemology</span><span class="domain-keyword">AI science</span><span class="domain-keyword">ANN</span><span class="domain-keyword">Bayesian</span><span class="domain-keyword">Bohr</span><span class="domain-keyword">DNN opacity</span><span class="domain-keyword">Emily Sullivan</span><span class="domain-keyword">Goedel incompleteness</span>
-      </div>
-    </a>
-
-    <a href="07_philosophy_of_mind/wiki.html" class="domain-card">
-      <div class="domain-icon" style="background:rgba(192,38,211,0.12);color:#c026d3">07</div>
-      <h3>心灵哲学与AI</h3>
-      <div class="domain-sub">Consciousness Theories · Agency · Intentionality · Extended Mind · Predictive Processing</div>
-      <div class="domain-stats">
-        <div>文献 <span>23</span></div>
-        <div>必读 <span>5</span></div>
-        <div>笔记 <span>5</span></div>
-      </div>
-      <div class="domain-keywords">
-        <span class="domain-keyword">Bayesian</span><span class="domain-keyword">Eliza effect</span><span class="domain-keyword">GWT</span><span class="domain-keyword">IIT</span><span class="domain-keyword">LLM</span><span class="domain-keyword">Phi</span><span class="domain-keyword">RAG</span><span class="domain-keyword">active externalism</span>
-      </div>
-    </a>
+{main_domain_cards}
     </div>
 
     <hr class="section-divider">
 
     <h2 class="section-title">核心研究空白 · 专题文献库</h2>
     <p class="section-desc">
-      基于前 7 个领域 193 篇文献的系统分析，识别出四个核心哲学-技术交叉空白。
-      随后在针对各空白的专项检索中新增 83 篇文献，各自建立专题文献库（共 276 篇）。
+      基于前 7 个领域 {sum(domains[k]['paper_count'] for k in domain_order)} 篇文献的系统分析，识别出四个核心哲学-技术交叉空白。
+      随后在针对各空白的专项检索中新增 {sum(domains[k]['paper_count'] for k in gap_order)} 篇文献，各自建立专题文献库（共 {t['papers']} 篇）。
     </p>
 
     <div class="domain-grid">
-    <a href="08_representational_ontology/wiki.html" class="domain-card">
-      <div class="domain-icon" style="background:rgba(217,119,6,0.12);color:#d97706;border:1px solid rgba(217,119,6,0.25)">G1</div>
-      <h3>表征本体论：发现还是构建？</h3>
-      <div class="domain-sub">Feature Ontology · Scientific Realism · Structuralism · Constructivism · Natural Kinds</div>
-      <div class="domain-stats">
-        <div>文献 <span>20</span></div>
-        <div>必读 <span>5</span></div>
-        <div>笔记 <span>5</span></div>
-      </div>
-      <div class="domain-keywords">
-        <span class="domain-keyword">AI prediction</span><span class="domain-keyword">DNN</span><span class="domain-keyword">DoGMA</span><span class="domain-keyword">FER</span><span class="domain-keyword">FMS</span><span class="domain-keyword">GraphCast</span><span class="domain-keyword">Hofstadter</span><span class="domain-keyword">PExAI</span>
-      </div>
-    </a>
-
-    <a href="09_epistemology_understanding/wiki.html" class="domain-card">
-      <div class="domain-icon" style="background:rgba(13,148,136,0.12);color:#0d9488;border:1px solid rgba(13,148,136,0.25)">G2</div>
-      <h3>理解的认识论：内部机制还是外部验证？</h3>
-      <div class="domain-sub">Epistemology of Understanding · Internal vs External · Mechanistic Explanation · Validation</div>
-      <div class="domain-stats">
-        <div>文献 <span>20</span></div>
-        <div>必读 <span>5</span></div>
-        <div>笔记 <span>5</span></div>
-      </div>
-      <div class="domain-keywords">
-        <span class="domain-keyword">AUP框架</span><span class="domain-keyword">Blockhead论证</span><span class="domain-keyword">DNN</span><span class="domain-keyword">Peirce</span><span class="domain-keyword">de Regt</span><span class="domain-keyword">faithfulness</span><span class="domain-keyword">一致性</span><span class="domain-keyword">一致性标准</span>
-      </div>
-    </a>
-
-    <a href="10_causal_sufficiency/wiki.html" class="domain-card">
-      <div class="domain-icon" style="background:rgba(124,58,237,0.12);color:#7c3aed;border:1px solid rgba(124,58,237,0.25)">G3</div>
-      <h3>因果充分性：干预相关性还是真正因果？</h3>
-      <div class="domain-sub">Causal Sufficiency · Interchange Intervention · Faithfulness · Counterfactuals · Pearl Hierarchy</div>
-      <div class="domain-stats">
-        <div>文献 <span>22</span></div>
-        <div>必读 <span>5</span></div>
-        <div>笔记 <span>5</span></div>
-      </div>
-      <div class="domain-keywords">
-        <span class="domain-keyword">CaF metric</span><span class="domain-keyword">DAS</span><span class="domain-keyword">GPT-2</span><span class="domain-keyword">Gaussian SCM</span><span class="domain-keyword">Jacobian</span><span class="domain-keyword">LLM</span><span class="domain-keyword">Pearl causal hierarchy</span><span class="domain-keyword">Pearl hierarchy</span>
-      </div>
-    </a>
-
-    <a href="11_vector_grounding/wiki.html" class="domain-card">
-      <div class="domain-icon" style="background:rgba(220,38,38,0.12);color:#dc2626;border:1px solid rgba(220,38,38,0.25)">G4</div>
-      <h3>向量奠基：分布模式还是真正语义？</h3>
-      <div class="domain-sub">Vector Grounding Problem · Symbol Grounding · Distributional vs Referential Semantics · Embodied Cognition</div>
-      <div class="domain-stats">
-        <div>文献 <span>21</span></div>
-        <div>必读 <span>5</span></div>
-        <div>笔记 <span>5</span></div>
-      </div>
-      <div class="domain-keywords">
-        <span class="domain-keyword">Chinese room</span><span class="domain-keyword">Clark</span><span class="domain-keyword">DPO</span><span class="domain-keyword">Frege</span><span class="domain-keyword">Heersmink</span><span class="domain-keyword">Kripke</span><span class="domain-keyword">LLM</span><span class="domain-keyword">LLM philosophy</span>
-      </div>
-    </a>
+{gap_domain_cards}
     </div>
 
     <hr class="section-divider">
@@ -641,7 +555,7 @@
     <!-- ═══ Research Gap Highlight ═══ -->
     <h2 class="section-title">核心研究空白（基于文献分析）</h2>
     <p class="section-desc">
-      基于 276 篇文献的系统检索与分析，机械可解释性处于 <strong style="color:var(--text-primary)">四个未解决的哲学-技术交叉问题</strong> 之间。
+      基于 {t['papers']} 篇文献的系统检索与分析，机械可解释性处于 <strong style="color:var(--text-primary)">四个未解决的哲学-技术交叉问题</strong> 之间。
     </p>
     <div class="gap-box">
       <ul>
@@ -688,7 +602,7 @@
     <div class="milestone-bar">
       <div class="milestone-item">📄 PDF 覆盖率 <span>~95%</span></div>
       <div class="milestone-item">🔗 DOI 覆盖率 <span>~78%</span></div>
-      <div class="milestone-item">📝 核心笔记 <span>55</span></div>
+      <div class="milestone-item">📝 核心笔记 <span>{t['notes']}</span></div>
       <div class="milestone-item">🔀 文献关联 <span>500+</span></div>
       <div class="milestone-item">📊 总存储 <span>~600 MB</span></div>
     </div>
@@ -697,7 +611,7 @@
   <!-- ═══ Footer ═══ -->
   <div class="footer">
     <p>AI Alignment · Mechanistic Interpretability · Philosophy of Science &amp; Ethics</p>
-    <p>文献检索：2026 年 5 月 · 共 276 篇，11 个领域，55 篇核心笔记</p>
+    <p>文献检索：2026 年 5 月 · 共 {t['papers']} 篇，{t['domains']} 个领域，{t['notes']} 篇核心笔记</p>
     <p style="margin-top:0.5rem"><a href="../index.html">返回项目主页</a></p>
   </div>
 
@@ -707,120 +621,125 @@
   let crossGraphNetwork = null;
   let crossIsFullscreen = false;
 
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {{
     const domainNodes = [
-      {id:'01', label:'SAE与\n特征分解', color:'#d97706', papers:28, link:'01_sae_features/wiki.html'},
-      {id:'02', label:'激活与\n表征工程', color:'#0d9488', papers:28, link:'02_activation_engineering/wiki.html'},
-      {id:'03', label:'因果干预\n与心灵哲学', color:'#7c3aed', papers:32, link:'03_causal_intervention/wiki.html'},
-      {id:'04', label:'AI对齐\n理论与安全', color:'#6366f1', papers:35, link:'04_alignment_safety/wiki.html'},
-      {id:'05', label:'AI伦理\n与治理', color:'#dc2626', papers:20, link:'05_ethics_governance/wiki.html'},
-      {id:'06', label:'科学哲学\n可解释性', color:'#ea580c', papers:27, link:'06_philosophy_of_science/wiki.html'},
-      {id:'07', label:'心灵哲学\n与AI', color:'#c026d3', papers:23, link:'07_philosophy_of_mind/wiki.html'},
-      {id:'G1', label:'表征本体论\n发现vs构建', color:'#d97706', papers:20, link:'08_representational_ontology/wiki.html', shape:'diamond'},
-      {id:'G2', label:'理解认识论\n机制vs行为', color:'#0d9488', papers:20, link:'09_epistemology_understanding/wiki.html', shape:'diamond'},
-      {id:'G3', label:'因果充分性\n相关vs因果', color:'#7c3aed', papers:22, link:'10_causal_sufficiency/wiki.html', shape:'diamond'},
-      {id:'G4', label:'向量奠基\n分布vs语义', color:'#dc2626', papers:21, link:'11_vector_grounding/wiki.html', shape:'diamond'},
+      {{id:'01', label:'SAE与\\n特征分解', color:'#d97706', papers:{domains['01_sae_features']['paper_count']}, link:'01_sae_features/wiki.html'}},
+      {{id:'02', label:'激活与\\n表征工程', color:'#0d9488', papers:{domains['02_activation_engineering']['paper_count']}, link:'02_activation_engineering/wiki.html'}},
+      {{id:'03', label:'因果干预\\n与心灵哲学', color:'#7c3aed', papers:{domains['03_causal_intervention']['paper_count']}, link:'03_causal_intervention/wiki.html'}},
+      {{id:'04', label:'AI对齐\\n理论与安全', color:'#6366f1', papers:{domains['04_alignment_safety']['paper_count']}, link:'04_alignment_safety/wiki.html'}},
+      {{id:'05', label:'AI伦理\\n与治理', color:'#dc2626', papers:{domains['05_ethics_governance']['paper_count']}, link:'05_ethics_governance/wiki.html'}},
+      {{id:'06', label:'科学哲学\\n可解释性', color:'#ea580c', papers:{domains['06_philosophy_of_science']['paper_count']}, link:'06_philosophy_of_science/wiki.html'}},
+      {{id:'07', label:'心灵哲学\\n与AI', color:'#c026d3', papers:{domains['07_philosophy_of_mind']['paper_count']}, link:'07_philosophy_of_mind/wiki.html'}},
+      {{id:'G1', label:'表征本体论\\n发现vs构建', color:'#d97706', papers:{domains['08_representational_ontology']['paper_count']}, link:'08_representational_ontology/wiki.html', shape:'diamond'}},
+      {{id:'G2', label:'理解认识论\\n机制vs行为', color:'#0d9488', papers:{domains['09_epistemology_understanding']['paper_count']}, link:'09_epistemology_understanding/wiki.html', shape:'diamond'}},
+      {{id:'G3', label:'因果充分性\\n相关vs因果', color:'#7c3aed', papers:{domains['10_causal_sufficiency']['paper_count']}, link:'10_causal_sufficiency/wiki.html', shape:'diamond'}},
+      {{id:'G4', label:'向量奠基\\n分布vs语义', color:'#dc2626', papers:{domains['11_vector_grounding']['paper_count']}, link:'11_vector_grounding/wiki.html', shape:'diamond'}},
     ];
 
-    const nodes = domainNodes.map(d => ({
+    const nodes = domainNodes.map(d => ({{
       id: d.id,
       label: d.label,
-      color: {background: d.color, border: d.color},
-      font: {color: '#1a1f2e', size: 11, face: 'Sora'},
+      color: {{background: d.color, border: d.color}},
+      font: {{color: '#1a1f2e', size: 11, face: 'Sora'}},
       size: 20 + d.papers * 1.2,
       borderWidth: d.shape === 'diamond' ? 2.5 : 2,
       shape: d.shape || 'dot',
-    }));
+    }}));
 
     const edges = [
-      {from:'07',to:'01',label:'Vector Grounding',color:{color:'#c026d3'},dashes:false,width:2},
-      {from:'07',to:'03',label:'意识因果检验',color:{color:'#c026d3'},dashes:false,width:2},
-      {from:'07',to:'06',label:'意向立场 vs 机制解释',color:{color:'#c026d3'},dashes:false,width:1.5},
-      {from:'06',to:'01',label:'特征本体论',color:{color:'#ea580c'},dashes:false,width:2.5},
-      {from:'06',to:'03',label:'因果解释 vs 机制解释',color:{color:'#ea580c'},dashes:false,width:2},
-      {from:'06',to:'02',label:'理解 vs 控制',color:{color:'#ea580c'},dashes:false,width:1.5},
-      {from:'01',to:'03',label:'SAE特征因果验证',color:{color:'#d97706'},dashes:true,width:1.5},
-      {from:'01',to:'02',label:'特征 vs 导向',color:{color:'#d97706'},dashes:true,width:2},
-      {from:'02',to:'04',label:'导向安全应用',color:{color:'#0d9488'},dashes:true,width:1.5},
-      {from:'03',to:'04',label:'因果审计对齐',color:{color:'#7c3aed'},dashes:true,width:2},
-      {from:'04',to:'05',label:'安全治理接口',color:{color:'#6366f1'},dashes:true,width:1.5},
-      {from:'01',to:'04',label:'SAE审计',color:{color:'#d97706'},dashes:true,width:1},
-      {from:'05',to:'06',label:'XAI社会技术',color:{color:'#dc2626'},dashes:false,width:1.5},
-      {from:'G1',to:'01',label:'SAE特征本体',color:{color:'#d97706'},dashes:true,width:2},
-      {from:'G1',to:'06',label:'实在论辩论',color:{color:'#d97706'},dashes:false,width:2},
-      {from:'G2',to:'06',label:'理解标准',color:{color:'#0d9488'},dashes:false,width:2},
-      {from:'G2',to:'03',label:'机制解释',color:{color:'#0d9488'},dashes:true,width:1.5},
-      {from:'G3',to:'03',label:'因果忠诚性',color:{color:'#7c3aed'},dashes:false,width:2},
-      {from:'G3',to:'06',label:'干预主义因果',color:{color:'#7c3aed'},dashes:false,width:1.5},
-      {from:'G4',to:'01',label:'SAE语义地位',color:{color:'#dc2626'},dashes:false,width:2},
-      {from:'G4',to:'07',label:'奠基问题',color:{color:'#dc2626'},dashes:false,width:2},
-      {from:'G4',to:'02',label:'导向向量语义',color:{color:'#dc2626'},dashes:true,width:1.5},
-      {from:'G1',to:'G4',label:'本体论→奠基',color:{color:'#d97706'},dashes:true,width:1},
-      {from:'G2',to:'G3',label:'理解→因果',color:{color:'#0d9488'},dashes:true,width:1},
+      {{from:'07',to:'01',label:'Vector Grounding',color:{{color:'#c026d3'}},dashes:false,width:2}},
+      {{from:'07',to:'03',label:'意识因果检验',color:{{color:'#c026d3'}},dashes:false,width:2}},
+      {{from:'07',to:'06',label:'意向立场 vs 机制解释',color:{{color:'#c026d3'}},dashes:false,width:1.5}},
+      {{from:'06',to:'01',label:'特征本体论',color:{{color:'#ea580c'}},dashes:false,width:2.5}},
+      {{from:'06',to:'03',label:'因果解释 vs 机制解释',color:{{color:'#ea580c'}},dashes:false,width:2}},
+      {{from:'06',to:'02',label:'理解 vs 控制',color:{{color:'#ea580c'}},dashes:false,width:1.5}},
+      {{from:'01',to:'03',label:'SAE特征因果验证',color:{{color:'#d97706'}},dashes:true,width:1.5}},
+      {{from:'01',to:'02',label:'特征 vs 导向',color:{{color:'#d97706'}},dashes:true,width:2}},
+      {{from:'02',to:'04',label:'导向安全应用',color:{{color:'#0d9488'}},dashes:true,width:1.5}},
+      {{from:'03',to:'04',label:'因果审计对齐',color:{{color:'#7c3aed'}},dashes:true,width:2}},
+      {{from:'04',to:'05',label:'安全治理接口',color:{{color:'#6366f1'}},dashes:true,width:1.5}},
+      {{from:'01',to:'04',label:'SAE审计',color:{{color:'#d97706'}},dashes:true,width:1}},
+      {{from:'05',to:'06',label:'XAI社会技术',color:{{color:'#dc2626'}},dashes:false,width:1.5}},
+      {{from:'G1',to:'01',label:'SAE特征本体',color:{{color:'#d97706'}},dashes:true,width:2}},
+      {{from:'G1',to:'06',label:'实在论辩论',color:{{color:'#d97706'}},dashes:false,width:2}},
+      {{from:'G2',to:'06',label:'理解标准',color:{{color:'#0d9488'}},dashes:false,width:2}},
+      {{from:'G2',to:'03',label:'机制解释',color:{{color:'#0d9488'}},dashes:true,width:1.5}},
+      {{from:'G3',to:'03',label:'因果忠诚性',color:{{color:'#7c3aed'}},dashes:false,width:2}},
+      {{from:'G3',to:'06',label:'干预主义因果',color:{{color:'#7c3aed'}},dashes:false,width:1.5}},
+      {{from:'G4',to:'01',label:'SAE语义地位',color:{{color:'#dc2626'}},dashes:false,width:2}},
+      {{from:'G4',to:'07',label:'奠基问题',color:{{color:'#dc2626'}},dashes:false,width:2}},
+      {{from:'G4',to:'02',label:'导向向量语义',color:{{color:'#dc2626'}},dashes:true,width:1.5}},
+      {{from:'G1',to:'G4',label:'本体论→奠基',color:{{color:'#d97706'}},dashes:true,width:1}},
+      {{from:'G2',to:'G3',label:'理解→因果',color:{{color:'#0d9488'}},dashes:true,width:1}},
     ];
 
     const container = document.getElementById('cross-graph');
-    crossGraphNetwork = new vis.Network(container, {
+    crossGraphNetwork = new vis.Network(container, {{
       nodes: new vis.DataSet(nodes),
       edges: new vis.DataSet(edges)
-    }, {
-      physics: {
+    }}, {{
+      physics: {{
         solver: 'forceAtlas2Based',
-        forceAtlas2Based: {gravitationalConstant: -40, centralGravity: 0.008, springLength: 200}
-      },
-      edges: {smooth: {type:'continuous'}, font: {size:9, color:'#7a8aa2', face:'Sora'}},
-      interaction: {hover: true, tooltipDelay: 150},
-    });
+        forceAtlas2Based: {{gravitationalConstant: -40, centralGravity: 0.008, springLength: 200}}
+      }},
+      edges: {{smooth: {{type:'continuous'}}, font: {{size:9, color:'#7a8aa2', face:'Sora'}}}},
+      interaction: {{hover: true, tooltipDelay: 150}},
+    }});
 
     // Graph controls
-    document.getElementById('graph-zoom-in').addEventListener('click', () => {
-      if (crossGraphNetwork) crossGraphNetwork.moveTo({ scale: crossGraphNetwork.getScale() * 1.4 });
-    });
-    document.getElementById('graph-zoom-out').addEventListener('click', () => {
-      if (crossGraphNetwork) crossGraphNetwork.moveTo({ scale: crossGraphNetwork.getScale() / 1.4 });
-    });
-    document.getElementById('graph-reset').addEventListener('click', () => {
-      if (crossGraphNetwork) crossGraphNetwork.fit({ animation: true });
-    });
+    document.getElementById('graph-zoom-in').addEventListener('click', () => {{
+      if (crossGraphNetwork) crossGraphNetwork.moveTo({{ scale: crossGraphNetwork.getScale() * 1.4 }});
+    }});
+    document.getElementById('graph-zoom-out').addEventListener('click', () => {{
+      if (crossGraphNetwork) crossGraphNetwork.moveTo({{ scale: crossGraphNetwork.getScale() / 1.4 }});
+    }});
+    document.getElementById('graph-reset').addEventListener('click', () => {{
+      if (crossGraphNetwork) crossGraphNetwork.fit({{ animation: true }});
+    }});
     document.getElementById('graph-fullscreen').addEventListener('click', toggleCrossFullscreen);
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', (e) => {{
       if (e.key === 'Escape' && crossIsFullscreen) toggleCrossFullscreen();
-    });
+    }});
 
     // Graph node click → navigate to domain wiki
-    crossGraphNetwork.on('click', function(evt) {
-      if (evt.nodes.length > 0) {
-        const links = {
+    crossGraphNetwork.on('click', function(evt) {{
+      if (evt.nodes.length > 0) {{
+        const links = {{
           '01':'01_sae_features/wiki.html','02':'02_activation_engineering/wiki.html',
           '03':'03_causal_intervention/wiki.html','04':'04_alignment_safety/wiki.html',
           '05':'05_ethics_governance/wiki.html','06':'06_philosophy_of_science/wiki.html',
           '07':'07_philosophy_of_mind/wiki.html',
           'G1':'08_representational_ontology/wiki.html','G2':'09_epistemology_understanding/wiki.html',
           'G3':'10_causal_sufficiency/wiki.html','G4':'11_vector_grounding/wiki.html'
-        };
+        }};
         window.location.href = links[evt.nodes[0]];
-      }
-    });
-  });
+      }}
+    }});
+  }});
 
-  function toggleCrossFullscreen() {
+  function toggleCrossFullscreen() {{
     const container = document.getElementById('cross-graph');
     const toolbar = document.getElementById('graph-toolbar');
     const btn = document.getElementById('graph-fullscreen');
 
-    if (!crossIsFullscreen) {
+    if (!crossIsFullscreen) {{
       container.classList.add('fullscreen');
       toolbar.classList.add('fullscreen');
       btn.textContent = '✕ 退出';
       crossIsFullscreen = true;
-    } else {
+    }} else {{
       container.classList.remove('fullscreen');
       toolbar.classList.remove('fullscreen');
       btn.textContent = '⛶ 全屏';
       crossIsFullscreen = false;
-      setTimeout(() => { if (crossGraphNetwork) crossGraphNetwork.fit({ animation: false }); }, 100);
-    }
-  }
+      setTimeout(() => {{ if (crossGraphNetwork) crossGraphNetwork.fit({{ animation: false }}); }}, 100);
+    }}
+  }}
   </script>
 </body>
-</html>
+</html>'''
+
+with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
+    f.write(html)
+
+print(f"✓ Generated {OUTPUT_PATH}")
