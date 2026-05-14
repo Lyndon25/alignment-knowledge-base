@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALIGNMENT — 对齐 · 可解释性 · 知识库</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Spline+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0b0b0d;
+      --bg-elevated: #111114;
+      --bg-card: #151518;
+      --bg-hover: #1c1c20;
+      --bg-graph: #0e0e11;
+      --text: #f2f2f5;
+      --text-secondary: #9a9aa8;
+      --text-muted: #5a5a6a;
+      --text-faint: #3a3a48;
+      --border: rgba(255,255,255,0.06);
+      --border-medium: rgba(255,255,255,0.10);
+      --border-strong: rgba(255,255,255,0.18);
+
+      --c-sae: #f5a623;
+      --c-act: #2dd4bf;
+      --c-causal: #c084fc;
+      --c-align: #a5b4fc;
+      --c-ethics: #fb7185;
+      --c-philsci: #fdba74;
+      --c-philmind: #f0abfc;
+      --c-gap: #e2e8f0;
+
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'Spline Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 14px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── Noise texture overlay ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ─── Scroll progress bar ─── */
+    .scroll-progress {
+      position: fixed;
+      top: 0; left: 0; height: 2px;
+      background: linear-gradient(90deg, var(--c-sae), var(--c-causal), var(--c-act));
+      z-index: 1000;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    /* ─── Custom cursor ─── */
+    .cursor-glow {
+      position: fixed;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245,166,35,0.04) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.3s;
+    }
+
+    /* ─── Marquee strip ─── */
+    .marquee {
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      white-space: nowrap;
+      padding: 0.5rem 0;
+    }
+    .marquee-inner {
+      display: inline-block;
+      animation: marquee-scroll 40s linear infinite;
+    }
+    .marquee-item {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 0 2rem;
+    }
+    .marquee-item::after {
+      content: '◆';
+      margin-left: 2rem;
+      color: var(--text-faint);
+      font-size: 0.4rem;
+      vertical-align: middle;
+    }
+    @keyframes marquee-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ─── Hero Section ─── */
+    .hero {
+      min-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 4rem 3rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-watermark {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -55%);
+      font-family: var(--font-display);
+      font-size: clamp(8rem, 22vw, 18rem);
+      font-weight: 800;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(255,255,255,0.035);
+      letter-spacing: -0.04em;
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .hero-kicker {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      margin-bottom: 1.5rem;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 6.5vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
+      max-width: 900px;
+    }
+    .hero-title em {
+      font-style: normal;
+      color: var(--c-sae);
+    }
+    .hero-subtitle {
+      font-family: var(--font-body);
+      font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+      color: var(--text-secondary);
+      max-width: 620px;
+      line-height: 1.7;
+      margin-bottom: 3rem;
+    }
+
+    /* ─── Hero CTA — large, refined ─── */
+    .hero-cta-wrap {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 3.5rem;
+    }
+    .hero-cta {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 1.1rem 2.6rem;
+      background: linear-gradient(135deg, rgba(245,166,35,0.12), rgba(192,132,252,0.08));
+      border: 1px solid rgba(245,166,35,0.35);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      text-decoration: none;
+      border-radius: 999px;
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .hero-cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(245,166,35,0.25), rgba(192,132,252,0.15));
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .hero-cta:hover {
+      border-color: rgba(245,166,35,0.7);
+      box-shadow: 0 0 32px rgba(245,166,35,0.15), 0 0 64px rgba(192,132,252,0.06);
+      transform: translateY(-2px);
+    }
+    .hero-cta:hover::before {
+      opacity: 1;
+    }
+    .hero-cta span,
+    .hero-cta svg {
+      position: relative;
+      z-index: 1;
+    }
+    .hero-cta svg {
+      width: 18px; height: 18px;
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .hero-cta:hover svg {
+      transform: translateX(5px);
+    }
+
+    .hero-cta-secondary {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      transition: color 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .hero-cta-secondary:hover {
+      color: var(--text-secondary);
+    }
+
+    /* ─── Scroll down indicator ─── */
+    .scroll-down {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 1.5rem;
+      cursor: pointer;
+      text-decoration: none;
+      align-self: center;
+    }
+    .scroll-down-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      animation: fade-pulse 3s ease-in-out infinite;
+    }
+    .scroll-down-arrow {
+      width: 24px; height: 36px;
+      position: relative;
+    }
+    .scroll-down-arrow svg {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: arrow-bounce 2s ease-in-out infinite;
+    }
+    .scroll-down-arrow svg:nth-child(1) { animation-delay: 0s; }
+    .scroll-down-arrow svg:nth-child(2) { animation-delay: 0.15s; }
+    .scroll-down-arrow svg:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes arrow-bounce {
+      0%, 100% { opacity: 0.15; transform: translateX(-50%) translateY(0); }
+      50% { opacity: 0.6; transform: translateX(-50%) translateY(6px); }
+    }
+    @keyframes fade-pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+
+    /* ─── Hero Stats Bar ─── */
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-top: 1px solid var(--border);
+    }
+    .hero-stat {
+      background: var(--bg);
+      padding: 1.75rem 1.25rem 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-stat::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--c-sae), transparent);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .hero-stat:hover::before { opacity: 0.5; }
+    .hero-stat .num {
+      font-family: var(--font-mono);
+      font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1;
+      display: block;
+    }
+    .hero-stat .num::before {
+      content: attr(data-prefix);
+      font-size: 0.6em;
+      color: var(--text-muted);
+      margin-right: 0.1em;
+    }
+    .hero-stat .label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-top: 0.6rem;
+      display: block;
+    }
+    .hero-stat .sub {
+      font-size: 0.65rem;
+      color: var(--text-faint);
+      margin-top: 0.25rem;
+    }
+
+    /* ─── Section system ─── */
+    .section {
+      padding: 5rem 3rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 2rem;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+    }
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .section-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      line-height: 1.7;
+    }
+    .section-rule {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border-medium), transparent);
+      margin: 0;
+    }
+
+    /* ─── Overview text block ─── */
+    .overview-block {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      line-height: 2;
+      max-width: 800px;
+    }
+    .overview-block strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* ─── Graph Section ─── */
+    .graph-section {
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 4rem 0;
+    }
+    .graph-section .section {
+      padding-top: 0; padding-bottom: 0;
+    }
+    .graph-frame {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--bg-graph);
+      overflow: hidden;
+    }
+    .graph-frame::before,
+    .graph-frame::after {
+      content: '';
+      position: absolute;
+      width: 40px; height: 40px;
+      border: 1px solid var(--border-medium);
+      z-index: 5;
+      pointer-events: none;
+    }
+    .graph-frame::before {
+      top: 12px; left: 12px;
+      border-right: none; border-bottom: none;
+    }
+    .graph-frame::after {
+      bottom: 12px; right: 12px;
+      border-left: none; border-top: none;
+    }
+    .graph-frame .corner-tr,
+    .graph-frame .corner-bl {
+      position: absolute;
+      width: 40px; height: 40px;
+      border: 1px solid var(--border-medium);
+      z-index: 5;
+      pointer-events: none;
+    }
+    .graph-frame .corner-tr {
+      top: 12px; right: 12px;
+      border-left: none; border-bottom: none;
+    }
+    .graph-frame .corner-bl {
+      bottom: 12px; left: 12px;
+      border-right: none; border-top: none;
+    }
+    .graph-container {
+      width: 100%; height: 560px;
+      background: transparent;
+    }
+    .graph-container.fullscreen {
+      position: fixed; inset: 0; z-index: 300;
+      width: 100vw; height: 100vh;
+      border-radius: 0; border: none;
+      background: var(--bg);
+    }
+    .graph-toolbar {
+      position: absolute;
+      bottom: 1.5rem; right: 1.5rem;
+      display: flex; gap: 0.5rem;
+      z-index: 10;
+    }
+    .graph-toolbar.fullscreen { bottom: 2rem; right: 2rem; }
+    .graph-btn {
+      width: 38px; height: 38px;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      background: rgba(11,11,13,0.85);
+      backdrop-filter: blur(8px);
+      color: var(--text-secondary);
+      font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.25s;
+    }
+    .graph-btn:hover {
+      border-color: var(--border-strong);
+      color: var(--text);
+      background: rgba(20,20,24,0.95);
+    }
+    .graph-btn.fullscreen-btn {
+      width: auto; padding: 0 1.1rem;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      gap: 0.4rem;
+    }
+    .graph-legend {
+      display: flex; gap: 1.25rem; flex-wrap: wrap;
+      margin-top: 1.25rem;
+      padding: 1rem 0;
+    }
+    .graph-legend-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .graph-legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+    .graph-legend-diamond {
+      width: 8px; height: 8px;
+      background: var(--c-gap);
+      transform: rotate(45deg);
+    }
+
+    /* ─── Domain Grid ─── */
+    .domain-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .domain-card {
+      background: var(--bg-card);
+      padding: 2rem 1.75rem 1.75rem;
+      text-decoration: none; color: inherit;
+      display: block;
+      position: relative;
+      transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      overflow: hidden;
+    }
+    .domain-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--card-accent, var(--c-sae));
+      opacity: 0.6;
+      transition: opacity 0.3s, height 0.3s;
+    }
+    .domain-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.04), transparent 40%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .domain-card:hover {
+      background: var(--bg-hover);
+      transform: translateY(-3px);
+    }
+    .domain-card:hover::before {
+      opacity: 1;
+      height: 3px;
+      box-shadow: 0 0 16px var(--card-accent, var(--c-sae));
+    }
+    .domain-card:hover::after {
+      opacity: 1;
+    }
+    .domain-card .card-num {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-faint);
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .domain-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      letter-spacing: -0.01em;
+    }
+    .domain-card .domain-sub {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+      min-height: 2.2em;
+    }
+    .domain-card .domain-stats {
+      display: flex;
+      gap: 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+    .domain-card .domain-stats span {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .domain-card .domain-keywords {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: 1.25rem;
+    }
+    .domain-keyword {
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.6rem;
+      font-family: var(--font-mono);
+      transition: all 0.25s;
+    }
+    .domain-card:hover .domain-keyword {
+      border-color: var(--border-medium);
+      color: var(--text-secondary);
+    }
+    .domain-card .enter-arrow {
+      position: absolute;
+      top: 2rem; right: 1.75rem;
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--text-faint);
+      transition: all 0.3s;
+    }
+    .domain-card:hover .enter-arrow {
+      color: var(--card-accent, var(--text));
+      transform: translateX(3px);
+    }
+
+    @keyframes reveal-up {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .reveal {
+      opacity: 0;
+      animation: reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    /* ─── Gap Section accent ─── */
+    .gap-section {
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ─── Bridge Cards (horizontal scroll) ─── */
+    .bridge-scroll {
+      display: flex;
+      gap: 1px;
+      overflow-x: auto;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--text-faint) transparent;
+    }
+    .bridge-scroll::-webkit-scrollbar { height: 4px; }
+    .bridge-scroll::-webkit-scrollbar-track { background: transparent; }
+    .bridge-scroll::-webkit-scrollbar-thumb { background: var(--text-faint); border-radius: 4px; }
+    .bridge-card {
+      flex: 0 0 380px;
+      background: var(--bg-card);
+      padding: 1.75rem;
+      transition: background 0.3s;
+    }
+    .bridge-card:hover {
+      background: var(--bg-hover);
+    }
+    .bridge-card .bridge-title {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 0.6rem;
+    }
+    .bridge-card .bridge-domains {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .bridge-card .bridge-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .bridge-card .bridge-index {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-faint);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.1em;
+    }
+
+    /* ─── Gap Detail Block ─── */
+    .gap-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .gap-detail-item {
+      background: var(--bg-card);
+      padding: 2.5rem 2rem;
+      transition: background 0.3s;
+    }
+    .gap-detail-item:hover {
+      background: var(--bg-hover);
+    }
+    .gap-detail-item .gap-num {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-faint);
+      letter-spacing: 0.15em;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .gap-detail-item h4 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      line-height: 1.3;
+    }
+    .gap-detail-item p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.9;
+    }
+    .gap-detail-item .gap-meta {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 1.25rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* ─── Milestone bar ─── */
+    .milestone-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .milestone-item {
+      background: var(--bg-card);
+      padding: 1.5rem 1rem;
+      text-align: center;
+    }
+    .milestone-item .m-val {
+      font-family: var(--font-mono);
+      font-size: 1.3rem;
+      font-weight: 500;
+      color: var(--text);
+      display: block;
+    }
+    .milestone-item .m-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-top: 0.4rem;
+      display: block;
+    }
+
+    /* ─── Footer ─── */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 4rem 3rem 3rem;
+      text-align: center;
+    }
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    .footer p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+    .footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-bottom: 1px solid var(--border-medium);
+      transition: all 0.25s;
+    }
+    .footer a:hover {
+      color: var(--text);
+      border-color: var(--text-secondary);
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 960px) {
+      .hero { padding: 3rem 1.5rem 0; }
+      .hero-stats { grid-template-columns: repeat(3, 1fr); }
+      .section { padding: 3rem 1.5rem; }
+      .gap-detail-grid { grid-template-columns: 1fr; }
+      .milestone-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .hero-stats { grid-template-columns: repeat(2, 1fr); }
+      .domain-grid { grid-template-columns: 1fr; }
+      .bridge-card { flex: 0 0 300px; }
+      .hero-cta-wrap { flex-direction: column; align-items: flex-start; }
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--text-faint); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <div class="scroll-progress" id="scroll-progress"></div>
+  <div class="cursor-glow" id="cursor-glow"></div>
+
+  <!-- ═══ Marquee ═══ -->
+  <div class="marquee">
+    <div class="marquee-inner">
+      <span class="marquee-item">Sparse Autoencoders</span>
+      <span class="marquee-item">Mechanistic Interpretability</span>
+      <span class="marquee-item">Causal Abstraction</span>
+      <span class="marquee-item">AI Alignment</span>
+      <span class="marquee-item">Philosophy of Science</span>
+      <span class="marquee-item">Feature Ontology</span>
+      <span class="marquee-item">Vector Grounding</span>
+      <span class="marquee-item">Activation Engineering</span>
+      <span class="marquee-item">Epistemology of Understanding</span>
+      <span class="marquee-item">Constitutional AI</span>
+      <span class="marquee-item">Sparse Autoencoders</span>
+      <span class="marquee-item">Mechanistic Interpretability</span>
+      <span class="marquee-item">Causal Abstraction</span>
+      <span class="marquee-item">AI Alignment</span>
+      <span class="marquee-item">Philosophy of Science</span>
+      <span class="marquee-item">Feature Ontology</span>
+      <span class="marquee-item">Vector Grounding</span>
+      <span class="marquee-item">Activation Engineering</span>
+      <span class="marquee-item">Epistemology of Understanding</span>
+      <span class="marquee-item">Constitutional AI</span>
+    </div>
+  </div>
+
+  <!-- ═══ Hero ═══ -->
+  <section class="hero">
+    <div class="hero-watermark">ALIGNMENT</div>
+    <div class="hero-kicker">Knowledge Base / 2026</div>
+    <h1 class="hero-title">
+      对齐与<em>可解释性</em><br>
+      文献知识库
+    </h1>
+    <p class="hero-subtitle">
+      围绕机械可解释性的经验研究与科学技术哲学、伦理学的规范分析之间的交叉地带，
+      构建 11 个专题领域、276 篇文献的知识图谱。
+    </p>
+
+    <div class="hero-cta-wrap">
+      <a href="#domains" class="hero-cta">
+        <span>浏览知识库</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+      <a href="#overview" class="hero-cta-secondary">了解更多 ↓</a>
+    </div>
+
+    <!-- Scroll down indicator -->
+    <a href="#overview" class="scroll-down">
+      <span class="scroll-down-label">Scroll</span>
+      <div class="scroll-down-arrow">
+        <svg width="14" height="8" viewBox="0 0 14 8" fill="none" style="top:0">
+          <path d="M1 1L7 7L13 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-faint)"/>
+        </svg>
+        <svg width="14" height="8" viewBox="0 0 14 8" fill="none" style="top:8px">
+          <path d="M1 1L7 7L13 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-faint)"/>
+        </svg>
+        <svg width="14" height="8" viewBox="0 0 14 8" fill="none" style="top:16px">
+          <path d="M1 1L7 7L13 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-faint)"/>
+        </svg>
+      </div>
+    </a>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="num" data-target="276" data-prefix="">0</span>
+        <span class="label">文献总量</span>
+        <div class="sub">11 个专题领域</div>
+      </div>
+      <div class="hero-stat">
+        <span class="num" data-target="56" data-prefix="">0</span>
+        <span class="label">核心必读</span>
+        <div class="sub" style="color:var(--c-sae)">最优先级</div>
+      </div>
+      <div class="hero-stat">
+        <span class="num" data-target="130" data-prefix="">0</span>
+        <span class="label">重要文献</span>
+        <div class="sub" style="color:var(--c-act)">次级优先级</div>
+      </div>
+      <div class="hero-stat">
+        <span class="num" data-target="90" data-prefix="">0</span>
+        <span class="label">参考文献</span>
+        <div class="sub">背景与延伸</div>
+      </div>
+      <div class="hero-stat">
+        <span class="num" data-target="55" data-prefix="">0</span>
+        <span class="label">核心笔记</span>
+        <div class="sub">平均每域 5 篇</div>
+      </div>
+      <div class="hero-stat">
+        <span class="num" data-target="93" data-prefix="~">0</span>
+        <span class="label">2025—26 占比</span>
+        <div class="sub">反映领域前沿</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Overview ═══ -->
+  <section class="section" id="overview">
+    <div class="section-header">
+      <div>
+        <div class="section-label">About</div>
+        <h2 class="section-title">研究概览</h2>
+      </div>
+    </div>
+    <p class="overview-block reveal">
+      本知识库围绕 <strong>机械可解释性</strong> 的经验研究与 <strong>科学技术哲学、伦理学</strong> 的规范分析之间的交叉地带构建。
+      前 7 个领域覆盖基础技术栈与哲学框架，在此基础上提炼出 4 个核心研究空白（Gap 1–4），以专题文献库形式深入探索。
+      总计 276 篇文献，其中 56 篇为必读核心。
+    </p>
+  </section>
+
+  <div class="section-rule"></div>
+
+  <!-- ═══ Graph ═══ -->
+  <section class="graph-section">
+    <div class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-label">Network</div>
+          <h2 class="section-title">跨领域关系图谱</h2>
+        </div>
+        <p class="section-desc">节点大小表示文献数量。彩色连线表示跨领域概念与方法论关联。点击节点进入对应领域 Wiki。</p>
+      </div>
+
+      <div class="graph-frame reveal">
+        <div class="corner-tr"></div>
+        <div class="corner-bl"></div>
+        <div class="graph-container" id="cross-graph"></div>
+        <div class="graph-toolbar" id="graph-toolbar">
+          <button class="graph-btn" id="graph-zoom-in" title="放大">+</button>
+          <button class="graph-btn" id="graph-zoom-out" title="缩小">−</button>
+          <button class="graph-btn" id="graph-reset" title="重置">↺</button>
+          <button class="graph-btn fullscreen-btn" id="graph-fullscreen" title="全屏">⛶ 全屏</button>
+        </div>
+      </div>
+      <div class="graph-legend">
+        <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-sae)"></div> SAE · 特征分解</div>
+        <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-act)"></div> 激活工程</div>
+        <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-causal)"></div> 因果干预</div>
+        <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-align)"></div> 对齐安全</div>
+        <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-ethics)"></div> 伦理治理</div>
+        <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-philsci)"></div> 科学哲学</div>
+        <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-philmind)"></div> 心灵哲学</div>
+        <div class="graph-legend-item"><div class="graph-legend-diamond"></div> 菱形 = 核心研究空白</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-rule"></div>
+
+  <!-- ═══ Foundation Domains ═══ -->
+  <section class="section" id="domains">
+    <div class="section-header">
+      <div>
+        <div class="section-label">Foundations / 01–07</div>
+        <h2 class="section-title">技术基础 · 领域文献库</h2>
+      </div>
+      <p class="section-desc">前 7 个领域构成项目的方法论基础与哲学参照系。每个领域含 20–35 篇文献，5 篇深度笔记。</p>
+    </div>
+
+    <div class="domain-grid">
+      <a href="knowledge_base/01_sae_features/wiki.html" class="domain-card reveal" style="--card-accent:var(--c-sae)">
+        <span class="enter-arrow">→</span>
+        <span class="card-num">01</span>
+        <h3>SAE与特征分解</h3>
+        <div class="domain-sub">Sparse Autoencoders · Dictionary Learning · Feature Decomposition</div>
+        <div class="domain-stats">
+          <div>文献 <span>28</span></div>
+          <div>必读 <span>5</span></div>
+          <div>笔记 <span>5</span></div>
+        </div>
+        <div class="domain-keywords">
+          <span class="domain-keyword">AbsTopK</span><span class="domain-keyword">CLIP</span><span class="domain-keyword">Claude</span><span class="domain-keyword">JumpReLU</span><span class="domain-keyword">MoE</span>
+        </div>
+      </a>
+
+      <a href="knowledge_base/02_activation_engineering/wiki.html" class="domain-card reveal" style="--card-accent:var(--c-act)">
+        <span class="enter-arrow">→</span>
+        <span class="card-num">02</span>
+        <h3>激活与表征工程</h3>
+        <div class="domain-sub">Activation Engineering · Steering Vectors · NLA</div>
+        <div class="domain-stats">
+          <div>文献 <span>28</span></div>
+          <div>必读 <span>5</span></div>
+          <div>笔记 <span>5</span></div>
+        </div>
+        <div class="domain-keywords">
+          <span class="domain-keyword">AlphaSteer</span><span class="domain-keyword">CAA</span><span class="domain-keyword">CAE</span><span class="domain-keyword">COAST</span><span class="domain-keyword">Angular</span>
+        </div>
+      </a>
+
+      <a href="knowledge_base/03_causal_intervention/wiki.html" class="domain-card reveal" style="--card-accent:var(--c-causal)">
+        <span class="enter-arrow">→</span>
+        <span class="card-num">03</span>
+        <h3>因果干预与心灵哲学</h3>
+        <div class="domain-sub">Causal Intervention · Causal Abstraction · Philosophy of Mind</div>
+        <div class="domain-stats">
+          <div>文献 <span>32</span></div>
+          <div>必读 <span>5</span></div>
+          <div>笔记 <span>5</span></div>
+        </div>
+        <div class="domain-keywords">
+          <span class="domain-keyword">Bayesian</span><span class="domain-keyword">Dennett</span><span class="domain-keyword">LLM</span><span class="domain-keyword">Buddhism</span><span class="domain-keyword">Governance</span>
+        </div>
+      </a>
+
+      <a href="knowledge_base/04_alignment_safety/wiki.html" class="domain-card reveal" style="--card-accent:var(--c-align)">
+        <span class="enter-arrow">→</span>
+        <span class="card-num">04</span>
+        <h3>AI对齐理论与安全</h3>
+        <div class="domain-sub">Scalable Oversight · Constitutional AI · RSP · Safety Cases</div>
+        <div class="domain-stats">
+          <div>文献 <span>35</span></div>
+          <div>必读 <span>6</span></div>
+          <div>笔记 <span>5</span></div>
+        </div>
+        <div class="domain-keywords">
+          <span class="domain-keyword">AGI safety</span><span class="domain-keyword">Anthropic</span><span class="domain-keyword">DeepMind</span><span class="domain-keyword">Chain-of-Thought</span><span class="domain-keyword">Assurance</span>
+        </div>
+      </a>
+
+      <a href="knowledge_base/05_ethics_governance/wiki.html" class="domain-card reveal" style="--card-accent:var(--c-ethics)">
+        <span class="enter-arrow">→</span>
+        <span class="card-num">05</span>
+        <h3>AI伦理与治理</h3>
+        <div class="domain-sub">AI Ethics · Moral Patienthood · Governance · Accountability</div>
+        <div class="domain-stats">
+          <div>文献 <span>20</span></div>
+          <div>必读 <span>5</span></div>
+          <div>笔记 <span>5</span></div>
+        </div>
+        <div class="domain-keywords">
+          <span class="domain-keyword">Accountability</span><span class="domain-keyword">Auditing</span><span class="domain-keyword">Governance</span><span class="domain-keyword">Personhood</span><span class="domain-keyword">Alignment</span>
+        </div>
+      </a>
+
+      <a href="knowledge_base/06_philosophy_of_science/wiki.html" class="domain-card reveal" style="--card-accent:var(--c-philsci)">
+        <span class="enter-arrow">→</span>
+        <span class="card-num">06</span>
+        <h3>科学哲学：可解释性的认识论</h3>
+        <div class="domain-sub">Epistemology of Interpretability · Mechanistic Explanation</div>
+        <div class="domain-stats">
+          <div>文献 <span>27</span></div>
+          <div>必读 <span>5</span></div>
+          <div>笔记 <span>5</span></div>
+        </div>
+        <div class="domain-keywords">
+          <span class="domain-keyword">ANN</span><span class="domain-keyword">Bayesian</span><span class="domain-keyword">DNN opacity</span><span class="domain-keyword">de Regt</span><span class="domain-keyword">Sullivan</span>
+        </div>
+      </a>
+
+      <a href="knowledge_base/07_philosophy_of_mind/wiki.html" class="domain-card reveal" style="--card-accent:var(--c-philmind)">
+        <span class="enter-arrow">→</span>
+        <span class="card-num">07</span>
+        <h3>心灵哲学与AI</h3>
+        <div class="domain-sub">Consciousness · Agency · Intentionality · Extended Mind</div>
+        <div class="domain-stats">
+          <div>文献 <span>23</span></div>
+          <div>必读 <span>5</span></div>
+          <div>笔记 <span>5</span></div>
+        </div>
+        <div class="domain-keywords">
+          <span class="domain-keyword">GWT</span><span class="domain-keyword">IIT</span><span class="domain-keyword">Phi</span><span class="domain-keyword">RAG</span><span class="domain-keyword">Eliza</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <div class="section-rule"></div>
+
+  <!-- ═══ Research Gap Domains ═══ -->
+  <section class="section gap-section">
+    <div class="section-header">
+      <div>
+        <div class="section-label">Research Gaps / G1–G4</div>
+        <h2 class="section-title">核心研究空白 · 专题文献库</h2>
+      </div>
+      <p class="section-desc">基于前 7 个领域 193 篇文献的系统分析，识别出四个核心哲学-技术交叉空白。新增 83 篇专题文献。</p>
+    </div>
+
+    <div class="domain-grid">
+      <a href="knowledge_base/08_representational_ontology/wiki.html" class="domain-card reveal" style="--card-accent:var(--c-sae)">
+        <span class="enter-arrow">→</span>
+        <span class="card-num">G1</span>
+        <h3>表征本体论：发现还是构建？</h3>
+        <div class="domain-sub">Feature Ontology · Scientific Realism · Structuralism · Natural Kinds</div>
+        <div class="domain-stats">
+          <div>文献 <span>20</span></div>
+          <div>必读 <span>5</span></div>
+          <div>笔记 <span>5</span></div>
+        </div>
+        <div class="domain-keywords">
+          <span class="domain-keyword">DNN</span><span class="domain-keyword">DoGMA</span><span class="domain-keyword">FER</span><span class="domain-keyword">FMS</span><span class="domain-keyword">PExAI</span>
+        </div>
+      </a>
+
+      <a href="knowledge_base/09_epistemology_understanding/wiki.html" class="domain-card reveal" style="--card-accent:var(--c-act)">
+        <span class="enter-arrow">→</span>
+        <span class="card-num">G2</span>
+        <h3>理解的认识论：内部机制还是外部验证？</h3>
+        <div class="domain-sub">Epistemology of Understanding · Internal vs External · Validation</div>
+        <div class="domain-stats">
+          <div>文献 <span>20</span></div>
+          <div>必读 <span>5</span></div>
+          <div>笔记 <span>5</span></div>
+        </div>
+        <div class="domain-keywords">
+          <span class="domain-keyword">AUP框架</span><span class="domain-keyword">Blockhead</span><span class="domain-keyword">Peirce</span><span class="domain-keyword">de Regt</span><span class="domain-keyword">Faithfulness</span>
+        </div>
+      </a>
+
+      <a href="knowledge_base/10_causal_sufficiency/wiki.html" class="domain-card reveal" style="--card-accent:var(--c-causal)">
+        <span class="enter-arrow">→</span>
+        <span class="card-num">G3</span>
+        <h3>因果充分性：干预相关性还是真正因果？</h3>
+        <div class="domain-sub">Causal Sufficiency · Interchange Intervention · Pearl Hierarchy</div>
+        <div class="domain-stats">
+          <div>文献 <span>22</span></div>
+          <div>必读 <span>5</span></div>
+          <div>笔记 <span>5</span></div>
+        </div>
+        <div class="domain-keywords">
+          <span class="domain-keyword">CaF</span><span class="domain-keyword">DAS</span><span class="domain-keyword">GPT-2</span><span class="domain-keyword">Pearl</span><span class="domain-keyword">Jacobian</span>
+        </div>
+      </a>
+
+      <a href="knowledge_base/11_vector_grounding/wiki.html" class="domain-card reveal" style="--card-accent:var(--c-ethics)">
+        <span class="enter-arrow">→</span>
+        <span class="card-num">G4</span>
+        <h3>向量奠基：分布模式还是真正语义？</h3>
+        <div class="domain-sub">Vector Grounding Problem · Symbol Grounding · Embodied Cognition</div>
+        <div class="domain-stats">
+          <div>文献 <span>21</span></div>
+          <div>必读 <span>5</span></div>
+          <div>笔记 <span>5</span></div>
+        </div>
+        <div class="domain-keywords">
+          <span class="domain-keyword">Chinese room</span><span class="domain-keyword">Clark</span><span class="domain-keyword">Frege</span><span class="domain-keyword">Kripke</span><span class="domain-keyword">LLM</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <div class="section-rule"></div>
+
+  <!-- ═══ Bridge Papers ═══ -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-label">Bridges</div>
+        <h2 class="section-title">跨领域桥梁文献</h2>
+      </div>
+      <p class="section-desc">同时连接多个研究领域的关键节点文献，是整合技术研究与哲学分析的核心枢纽。</p>
+    </div>
+
+    <div class="bridge-scroll reveal">
+      <div class="bridge-card">
+        <div class="bridge-index">01 / 12</div>
+        <div class="bridge-title">Milliere &amp; Coelho Mollo (2026)</div>
+        <div class="bridge-domains">07 心灵哲学 ↔ 01 SAE ↔ 06 科学哲学</div>
+        <div class="bridge-desc">直接挑战SAE发现特征的语义地位：纯语言模型向量的内在语义内容缺失。将Harnad的符号奠基问题重构为向量时代版本。</div>
+      </div>
+      <div class="bridge-card">
+        <div class="bridge-index">02 / 12</div>
+        <div class="bridge-title">Queloz &amp; Beckmann (2026)</div>
+        <div class="bridge-domains">07 心灵哲学 ↔ 03 因果干预 ↔ 01 SAE</div>
+        <div class="bridge-desc">综合机械可解释性证据，论证LLM具有"可废止的理解"。揭示人类与机器认知之间的平行机制结构差异。</div>
+      </div>
+      <div class="bridge-card">
+        <div class="bridge-index">03 / 12</div>
+        <div class="bridge-title">Phua (2025)</div>
+        <div class="bridge-domains">07 心灵哲学 ↔ 03 因果干预</div>
+        <div class="bridge-desc">首个系统性因果消融研究，在AI agent中测试GWT和HOT预测，发现"广播-放大效应"。</div>
+      </div>
+      <div class="bridge-card">
+        <div class="bridge-index">04 / 12</div>
+        <div class="bridge-title">Culcu (2025)</div>
+        <div class="bridge-domains">06 科学哲学 ↔ 01 SAE</div>
+        <div class="bridge-desc">系统综述揭示ML文献中60%结构唯心论、0%结构实在论——直接质询SAE特征的本体论地位。</div>
+      </div>
+      <div class="bridge-card">
+        <div class="bridge-index">05 / 12</div>
+        <div class="bridge-title">Ayonrinde et al. (2025)</div>
+        <div class="bridge-domains">06 科学哲学 ↔ 01 SAE ↔ 03 因果干预</div>
+        <div class="bridge-desc">为机械可解释性提供四维度定义和解释性美德框架，桥接科学哲学与可解释性实践。</div>
+      </div>
+      <div class="bridge-card">
+        <div class="bridge-index">06 / 12</div>
+        <div class="bridge-title">Ovadya et al. (2025)</div>
+        <div class="bridge-domains">05 伦理治理 ↔ 04 对齐安全</div>
+        <div class="bridge-desc">将民主理论操作化为AI对齐框架，要求内部透明性（可解释性）以实现公民知情参与。</div>
+      </div>
+      <div class="bridge-card">
+        <div class="bridge-index">07 / 12</div>
+        <div class="bridge-title">Longo et al. (2024/2025)</div>
+        <div class="bridge-domains">05 伦理治理 ↔ 06 科学哲学 ↔ 01 SAE</div>
+        <div class="bridge-desc">将XAI重构为社会技术治理基础设施，机械可解释性必须服务于该框架。</div>
+      </div>
+      <div class="bridge-card">
+        <div class="bridge-index">08 / 12</div>
+        <div class="bridge-title">Keeling &amp; Street (2026)</div>
+        <div class="bridge-domains">05 伦理治理 ↔ 07 心灵哲学</div>
+        <div class="bridge-desc">机械可解释性可解决AI意识/福利评估中的行为歧义问题。</div>
+      </div>
+      <div class="bridge-card">
+        <div class="bridge-index">09 / 12</div>
+        <div class="bridge-title">Sutter et al. (2025)</div>
+        <div class="bridge-domains">03 因果干预 ↔ 06 科学哲学 ↔ 07 心灵哲学</div>
+        <div class="bridge-desc">因果抽象中的非线性困境与意向立场的形式化之间存在结构同构性——"无约束的解释是空洞的"。</div>
+      </div>
+      <div class="bridge-card">
+        <div class="bridge-index">10 / 12</div>
+        <div class="bridge-title">Alignment Auditor (2025)</div>
+        <div class="bridge-domains">03 因果干预 ↔ 04 对齐安全</div>
+        <div class="bridge-desc">机械可解释性作为对齐审计工具：通过因果方法检测隐藏目标。</div>
+      </div>
+      <div class="bridge-card">
+        <div class="bridge-index">11 / 12</div>
+        <div class="bridge-title">Beisbart (2025)</div>
+        <div class="bridge-domains">06 科学哲学 ↔ 01 SAE ↔ 02 激活工程</div>
+        <div class="bridge-desc">对DNN解释性理解的"普世教会"分析——同时涵盖SAE和表征工程两种范式。</div>
+      </div>
+      <div class="bridge-card">
+        <div class="bridge-index">12 / 12</div>
+        <div class="bridge-title">Shanahan (2025)</div>
+        <div class="bridge-domains">07 心灵哲学 ↔ 04 对齐安全</div>
+        <div class="bridge-desc">关于LLM意识/意向性话语的哲学分析，直接关联对齐中的 deceptive alignment 检测。</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-rule"></div>
+
+  <!-- ═══ Gap Details ═══ -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-label">The Four Gaps</div>
+        <h2 class="section-title">核心研究空白</h2>
+      </div>
+      <p class="section-desc">基于 276 篇文献的系统检索与分析，机械可解释性处于四个未解决的哲学-技术交叉问题之间。</p>
+    </div>
+
+    <div class="gap-detail-grid reveal">
+      <div class="gap-detail-item">
+        <span class="gap-num">GAP 01</span>
+        <h4 style="color:var(--c-sae)">表征本体论张力</h4>
+        <p>SAE/激活工程揭示的特征是 <em>被发现</em> 的（实在论）还是 <em>被构建</em> 的（工具论）？文献分析显示 ML 文献中 <strong>0%</strong> 的结构实在论立场（Culcu 2025）。</p>
+        <div class="gap-meta">→ 20 篇专题文献 · 08_representational_ontology</div>
+      </div>
+      <div class="gap-detail-item">
+        <span class="gap-num">GAP 02</span>
+        <h4 style="color:var(--c-act)">理解认识论张力</h4>
+        <p>纯内部机制分析是否足以产生科学理解，还是必须结合行为验证？外部主义者直接挑战 MI 的内部主义预设。</p>
+        <div class="gap-meta">→ 20 篇专题文献 · 09_epistemology_understanding</div>
+      </div>
+      <div class="gap-detail-item">
+        <span class="gap-num">GAP 03</span>
+        <h4 style="color:var(--c-causal)">因果充分性空缺</h4>
+        <p>当前因果干预方法是否捕捉了真正的因果结构，还是仅仅是相关性在干预下的保持？非线性困境与意向立场之间的深层结构联系尚未充分探索。</p>
+        <div class="gap-meta">→ 22 篇专题文献 · 10_causal_sufficiency</div>
+      </div>
+      <div class="gap-detail-item">
+        <span class="gap-num">GAP 04</span>
+        <h4 style="color:var(--c-ethics)">向量奠基问题</h4>
+        <p>Milliere &amp; Coelho Mollo (2026) 提出的 Vector Grounding Problem 直接威胁 SAE 特征发现和导向向量的语义合法性。当前最紧急的哲学-技术交叉问题。</p>
+        <div class="gap-meta">→ 21 篇专题文献 · 11_vector_grounding</div>
+      </div>
+    </div>
+
+    <p class="overview-block reveal" style="margin-top: 2.5rem; font-size: 0.9rem;">
+      尚无任何论文声称已同时解决上述所有张力。这构成了本研究的核心贡献空间：在技术上精准的哲学分析中，整合 SAE、激活工程、因果干预的经验发现，回应表征本体论、理解认识论、因果充分性和向量奠基四个核心问题。
+    </p>
+  </section>
+
+  <div class="section-rule"></div>
+
+  <!-- ═══ Coverage Stats ═══ -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-label">Coverage</div>
+        <h2 class="section-title">覆盖统计</h2>
+      </div>
+      <p class="section-desc">文献检索日期：2026 年 5 月。覆盖 arXiv, PhilArchive, PhilPapers, Semantic Scholar, Springer, Oxford, Cambridge, ACL Anthology, OpenReview 等来源。</p>
+    </div>
+
+    <div class="milestone-grid reveal">
+      <div class="milestone-item">
+        <span class="m-val">~95%</span>
+        <span class="m-label">PDF 覆盖率</span>
+      </div>
+      <div class="milestone-item">
+        <span class="m-val">~78%</span>
+        <span class="m-label">DOI 覆盖率</span>
+      </div>
+      <div class="milestone-item">
+        <span class="m-val">55</span>
+        <span class="m-label">核心笔记</span>
+      </div>
+      <div class="milestone-item">
+        <span class="m-val">500+</span>
+        <span class="m-label">文献关联</span>
+      </div>
+      <div class="milestone-item">
+        <span class="m-val">~600 MB</span>
+        <span class="m-label">总存储</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="footer">
+    <div class="footer-logo">ALIGNMENT</div>
+    <p>AI Alignment · Mechanistic Interpretability · Philosophy of Science &amp; Ethics</p>
+    <p>文献检索：2026 年 5 月 · 共 276 篇，11 个领域，55 篇核心笔记</p>
+  </footer>
+
+  <!-- ═══ Scripts ═══ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js"></script>
+  <script>
+  let crossGraphNetwork = null;
+  let crossIsFullscreen = false;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // ── Scroll progress bar ──
+    const progressBar = document.getElementById('scroll-progress');
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      progressBar.style.width = (scrollTop / docHeight * 100) + '%';
+    });
+
+    // ── Cursor glow (desktop only) ──
+    const cursorGlow = document.getElementById('cursor-glow');
+    if (window.matchMedia('(pointer: fine)').matches) {
+      document.addEventListener('mousemove', (e) => {
+        cursorGlow.style.left = e.clientX + 'px';
+        cursorGlow.style.top = e.clientY + 'px';
+      });
+    } else {
+      cursorGlow.style.display = 'none';
+    }
+
+    // ── Count-up animation ──
+    const nums = document.querySelectorAll('.num[data-target]');
+    const countObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const target = parseInt(el.dataset.target);
+          const prefix = el.dataset.prefix || '';
+          const duration = 1500;
+          const start = performance.now();
+          function update(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = Math.round(eased * target);
+            el.textContent = prefix + current;
+            if (progress < 1) requestAnimationFrame(update);
+          }
+          requestAnimationFrame(update);
+          countObserver.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+    nums.forEach(n => countObserver.observe(n));
+
+    // ── Reveal on scroll ──
+    const reveals = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationDelay = (i * 0.08) + 's';
+          entry.target.style.animationPlayState = 'running';
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    reveals.forEach(el => {
+      el.style.animationPlayState = 'paused';
+      revealObserver.observe(el);
+    });
+
+    // ── Domain card mouse glow ──
+    document.querySelectorAll('.domain-card').forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
+        card.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
+      });
+    });
+
+    // ── vis-network graph ──
+    const domainNodes = [
+      {id:'01', label:'SAE与\n特征分解', color:'#f5a623', papers:28, link:'knowledge_base/01_sae_features/wiki.html'},
+      {id:'02', label:'激活与\n表征工程', color:'#2dd4bf', papers:28, link:'knowledge_base/02_activation_engineering/wiki.html'},
+      {id:'03', label:'因果干预\n与心灵哲学', color:'#c084fc', papers:32, link:'knowledge_base/03_causal_intervention/wiki.html'},
+      {id:'04', label:'AI对齐\n理论与安全', color:'#a5b4fc', papers:35, link:'knowledge_base/04_alignment_safety/wiki.html'},
+      {id:'05', label:'AI伦理\n与治理', color:'#fb7185', papers:20, link:'knowledge_base/05_ethics_governance/wiki.html'},
+      {id:'06', label:'科学哲学\n可解释性', color:'#fdba74', papers:27, link:'knowledge_base/06_philosophy_of_science/wiki.html'},
+      {id:'07', label:'心灵哲学\n与AI', color:'#f0abfc', papers:23, link:'knowledge_base/07_philosophy_of_mind/wiki.html'},
+      {id:'G1', label:'表征本体论\n发现vs构建', color:'#f5a623', papers:20, link:'knowledge_base/08_representational_ontology/wiki.html', shape:'diamond'},
+      {id:'G2', label:'理解认识论\n机制vs行为', color:'#2dd4bf', papers:20, link:'knowledge_base/09_epistemology_understanding/wiki.html', shape:'diamond'},
+      {id:'G3', label:'因果充分性\n相关vs因果', color:'#c084fc', papers:22, link:'knowledge_base/10_causal_sufficiency/wiki.html', shape:'diamond'},
+      {id:'G4', label:'向量奠基\n分布vs语义', color:'#fb7185', papers:21, link:'knowledge_base/11_vector_grounding/wiki.html', shape:'diamond'},
+    ];
+
+    const nodes = domainNodes.map(d => ({
+      id: d.id,
+      label: d.label,
+      color: {background: d.color, border: d.color},
+      font: {color: '#f2f2f5', size: 11, face: 'Spline Sans'},
+      size: 20 + d.papers * 1.2,
+      borderWidth: d.shape === 'diamond' ? 2.5 : 2,
+      shape: d.shape || 'dot',
+    }));
+
+    const edges = [
+      {from:'07',to:'01',label:'Vector Grounding',color:{color:'#c084fc'},dashes:false,width:2},
+      {from:'07',to:'03',label:'意识因果检验',color:{color:'#c084fc'},dashes:false,width:2},
+      {from:'07',to:'06',label:'意向立场 vs 机制解释',color:{color:'#c084fc'},dashes:false,width:1.5},
+      {from:'06',to:'01',label:'特征本体论',color:{color:'#fdba74'},dashes:false,width:2.5},
+      {from:'06',to:'03',label:'因果解释 vs 机制解释',color:{color:'#fdba74'},dashes:false,width:2},
+      {from:'06',to:'02',label:'理解 vs 控制',color:{color:'#fdba74'},dashes:false,width:1.5},
+      {from:'01',to:'03',label:'SAE特征因果验证',color:{color:'#f5a623'},dashes:true,width:1.5},
+      {from:'01',to:'02',label:'特征 vs 导向',color:{color:'#f5a623'},dashes:true,width:2},
+      {from:'02',to:'04',label:'导向安全应用',color:{color:'#2dd4bf'},dashes:true,width:1.5},
+      {from:'03',to:'04',label:'因果审计对齐',color:{color:'#c084fc'},dashes:true,width:2},
+      {from:'04',to:'05',label:'安全治理接口',color:{color:'#a5b4fc'},dashes:true,width:1.5},
+      {from:'01',to:'04',label:'SAE审计',color:{color:'#f5a623'},dashes:true,width:1},
+      {from:'05',to:'06',label:'XAI社会技术',color:{color:'#fb7185'},dashes:false,width:1.5},
+      {from:'G1',to:'01',label:'SAE特征本体',color:{color:'#f5a623'},dashes:true,width:2},
+      {from:'G1',to:'06',label:'实在论辩论',color:{color:'#f5a623'},dashes:false,width:2},
+      {from:'G2',to:'06',label:'理解标准',color:{color:'#2dd4bf'},dashes:false,width:2},
+      {from:'G2',to:'03',label:'机制解释',color:{color:'#2dd4bf'},dashes:true,width:1.5},
+      {from:'G3',to:'03',label:'因果忠诚性',color:{color:'#c084fc'},dashes:false,width:2},
+      {from:'G3',to:'06',label:'干预主义因果',color:{color:'#c084fc'},dashes:false,width:1.5},
+      {from:'G4',to:'01',label:'SAE语义地位',color:{color:'#fb7185'},dashes:false,width:2},
+      {from:'G4',to:'07',label:'奠基问题',color:{color:'#fb7185'},dashes:false,width:2},
+      {from:'G4',to:'02',label:'导向向量语义',color:{color:'#fb7185'},dashes:true,width:1.5},
+      {from:'G1',to:'G4',label:'本体论→奠基',color:{color:'#f5a623'},dashes:true,width:1},
+      {from:'G2',to:'G3',label:'理解→因果',color:{color:'#2dd4bf'},dashes:true,width:1},
+    ];
+
+    const container = document.getElementById('cross-graph');
+    crossGraphNetwork = new vis.Network(container, {
+      nodes: new vis.DataSet(nodes),
+      edges: new vis.DataSet(edges)
+    }, {
+      physics: {
+        solver: 'forceAtlas2Based',
+        forceAtlas2Based: {gravitationalConstant: -40, centralGravity: 0.008, springLength: 200}
+      },
+      edges: {smooth: {type:'continuous'}, font: {size:9, color:'#5a5a6a', face:'Spline Sans'}},
+      interaction: {hover: true, tooltipDelay: 150},
+    });
+
+    // Graph controls
+    document.getElementById('graph-zoom-in').addEventListener('click', () => {
+      if (crossGraphNetwork) crossGraphNetwork.moveTo({ scale: crossGraphNetwork.getScale() * 1.4 });
+    });
+    document.getElementById('graph-zoom-out').addEventListener('click', () => {
+      if (crossGraphNetwork) crossGraphNetwork.moveTo({ scale: crossGraphNetwork.getScale() / 1.4 });
+    });
+    document.getElementById('graph-reset').addEventListener('click', () => {
+      if (crossGraphNetwork) crossGraphNetwork.fit({ animation: true });
+    });
+    document.getElementById('graph-fullscreen').addEventListener('click', toggleCrossFullscreen);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && crossIsFullscreen) toggleCrossFullscreen();
+    });
+
+    // Graph node click → navigate to domain wiki
+    crossGraphNetwork.on('click', function(evt) {
+      if (evt.nodes.length > 0) {
+        const links = {
+          '01':'knowledge_base/01_sae_features/wiki.html','02':'knowledge_base/02_activation_engineering/wiki.html',
+          '03':'knowledge_base/03_causal_intervention/wiki.html','04':'knowledge_base/04_alignment_safety/wiki.html',
+          '05':'knowledge_base/05_ethics_governance/wiki.html','06':'knowledge_base/06_philosophy_of_science/wiki.html',
+          '07':'knowledge_base/07_philosophy_of_mind/wiki.html',
+          'G1':'knowledge_base/08_representational_ontology/wiki.html','G2':'knowledge_base/09_epistemology_understanding/wiki.html',
+          'G3':'knowledge_base/10_causal_sufficiency/wiki.html','G4':'knowledge_base/11_vector_grounding/wiki.html'
+        };
+        window.location.href = links[evt.nodes[0]];
+      }
+    });
+  });
+
+  function toggleCrossFullscreen() {
+    const container = document.getElementById('cross-graph');
+    const toolbar = document.getElementById('graph-toolbar');
+    const btn = document.getElementById('graph-fullscreen');
+
+    if (!crossIsFullscreen) {
+      container.classList.add('fullscreen');
+      toolbar.classList.add('fullscreen');
+      btn.innerHTML = '✕ 退出';
+      crossIsFullscreen = true;
+    } else {
+      container.classList.remove('fullscreen');
+      toolbar.classList.remove('fullscreen');
+      btn.innerHTML = '⛶ 全屏';
+      crossIsFullscreen = false;
+      setTimeout(() => { if (crossGraphNetwork) crossGraphNetwork.fit({ animation: false }); }, 100);
+    }
+  }
+  </script>
+</body>
+</html>
