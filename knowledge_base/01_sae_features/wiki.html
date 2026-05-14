@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>01_sae_features · 文献Wiki</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-void: #06080f;
+      --bg-primary: #0c0f1a;
+      --bg-secondary: #12182a;
+      --bg-tertiary: #1a2238;
+      --bg-elevated: #222d4a;
+      --text-primary: #dce3f0;
+      --text-secondary: #8899bb;
+      --text-muted: #556688;
+      --text-faint: #334466;
+      --border-subtle: rgba(68, 102, 153, 0.08);
+      --border-medium: rgba(68, 102, 153, 0.18);
+      --border-strong: rgba(68, 102, 153, 0.30);
+      --c-priority-must: #4ade80;
+      --c-priority-important: #fbbf24;
+      --c-priority-ref: #64748b;
+      --c-rel-cites: #818cf8;
+      --c-rel-extends: #2dd4bf;
+      --c-rel-contradicts: #f87171;
+      --c-rel-shares: #f5a623;
+      --c-rel-empirical: #a78bfa;
+      --c-rel-philosophical: #fb923c;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition-base: 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem; color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .header-stats {
+      display: flex; gap: 1.5rem;
+      font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+    }
+    .header-stat span { color: var(--text-primary); font-weight: 500; }
+
+    .tab-nav {
+      display: flex; gap: 0;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 0 2rem;
+    }
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none; background: none;
+      color: var(--text-muted); font-family: var(--font-body);
+      font-size: 0.85rem; cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-base);
+    }
+    .tab-btn:hover { color: var(--text-secondary); }
+    .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--c-rel-cites); }
+
+    .tab-content { display: none; padding: 2rem; }
+    .tab-content.active { display: block; }
+
+    .filters {
+      display: flex; gap: 0.75rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.85rem;
+      border: 1px solid var(--border-medium); border-radius: 999px;
+      background: transparent; color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.7rem;
+      cursor: pointer; transition: all var(--transition-base);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--text-secondary); color: var(--text-primary);
+    }
+    .filter-btn.priority-must.active { border-color: var(--c-priority-must); color: var(--c-priority-must); }
+    .filter-btn.priority-important.active { border-color: var(--c-priority-important); color: var(--c-priority-important); }
+    .filter-btn.priority-ref.active { border-color: var(--c-priority-ref); color: var(--c-priority-ref); }
+
+    .search-input {
+      padding: 0.35rem 1rem;
+      background: var(--bg-secondary); border: 1px solid var(--border-medium);
+      border-radius: 999px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 0.8rem;
+      width: 240px; outline: none;
+    }
+    .search-input:focus { border-color: var(--border-strong); }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card.priority-must { border-left: 3px solid var(--c-priority-must); }
+    .card.priority-important { border-left: 3px solid var(--c-priority-important); }
+    .card.priority-ref { border-left: 3px solid var(--c-priority-ref); }
+
+    .card-id {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: var(--text-faint); margin-bottom: 0.5rem;
+    }
+    .card-title {
+      font-size: 0.95rem; font-weight: 500;
+      color: var(--text-primary); margin-bottom: 0.4rem;
+      line-height: 1.35;
+    }
+    .card-authors {
+      font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .card-summary {
+      font-size: 0.78rem; color: var(--text-secondary);
+      line-height: 1.5; margin-bottom: 0.75rem;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags {
+      display: flex; gap: 0.35rem; flex-wrap: wrap;
+    }
+    .card-tag {
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      background: var(--bg-tertiary); color: var(--text-muted);
+      font-size: 0.65rem; font-family: var(--font-mono);
+    }
+    .card-priority-badge {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .card-priority-badge.must { background: var(--c-priority-must); box-shadow: 0 0 6px var(--c-priority-must); }
+    .card-priority-badge.important { background: var(--c-priority-important); box-shadow: 0 0 6px var(--c-priority-important); }
+    .card-priority-badge.ref { background: var(--c-priority-ref); }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(6,8,15,0.85); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      max-width: 780px; width: 90vw; max-height: 85vh;
+      overflow-y: auto; padding: 2rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      width: 32px; height: 32px; border: 1px solid var(--border-medium);
+      border-radius: 50%; background: transparent; color: var(--text-muted);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-base);
+    }
+    .modal-close:hover { border-color: #f87171; color: #f87171; }
+    .modal h2 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .modal .meta { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; }
+    .modal section { margin-bottom: 1.25rem; }
+    .modal section h3 {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .modal section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+    .modal .relations { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .modal .rel-badge {
+      padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.7rem;
+      font-family: var(--font-mono);
+    }
+    .rel-badge.cites { background: rgba(129,140,248,0.15); color: var(--c-rel-cites); }
+    .rel-badge.extends { background: rgba(45,212,191,0.15); color: var(--c-rel-extends); }
+    .rel-badge.contradicts { background: rgba(248,113,113,0.15); color: var(--c-rel-contradicts); }
+    .rel-badge.shares { background: rgba(245,166,35,0.15); color: var(--c-rel-shares); }
+
+    .graph-container {
+      width: 100%; height: 70vh;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+    .graph-legend {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      margin-top: 1rem; padding: 0.75rem 1rem;
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+    }
+    .graph-legend-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.7rem; color: var(--text-muted);
+    }
+    .graph-legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    .notes-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .note-card {
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 1.25rem;
+    }
+    .note-card h4 { font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .note-card .note-meta { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 0.6rem; }
+    .note-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-void); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+    a { color: var(--c-rel-cites); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Footer navigation */
+    .wiki-footer {
+      margin-top: 3rem; padding: 1.5rem 2rem;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-medium);
+    }
+    .wiki-footer a { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; transition: color var(--transition-base); }
+    .wiki-footer a:hover { color: var(--text-primary); text-decoration: none; }
+    .wiki-footer .footer-title { font-size: 0.7rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-domains { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-back { margin-top: 0.5rem; }
+    .wiki-footer .footer-back a { color: var(--c-rel-cites); font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.35rem">
+      <a href="../index.html" style="color:var(--c-rel-cites)">← 文献知识库总览</a>
+    </div>
+    <div class="header-title">SAE与特征分解</div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.15rem">Sparse Autoencoders · Dictionary Learning · Feature Decomposition · Monosemanticity</div>
+  </div>
+  <div class="header-stats">
+    <div class="header-stat">文献 <span id="paper-count">0</span></div>
+    <div class="header-stat">必读 <span id="must-count" style="color:var(--c-priority-must)">0</span></div>
+    <div class="header-stat">笔记 <span id="note-count">0</span></div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="browse">浏览文献</button>
+  <button class="tab-btn" data-tab="graph">关系图谱</button>
+  <button class="tab-btn" data-tab="notes">阅读笔记</button>
+</div>
+
+<div class="tab-content active" id="tab-browse">
+  <div class="filters">
+    <input class="search-input" id="search" placeholder="搜索标题/作者/关键词..." oninput="filterCards()">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="filter-btn priority-must" data-filter="must">必读</button>
+    <button class="filter-btn priority-important" data-filter="important">重要</button>
+    <button class="filter-btn priority-ref" data-filter="ref">参考</button>
+    <button class="filter-btn" data-filter="2026">2026</button>
+    <button class="filter-btn" data-filter="2025">2025</button>
+    <button class="filter-btn" data-filter="2024"><=2024</button>
+  </div>
+  <div class="card-grid" id="card-grid"></div>
+</div>
+
+<div class="tab-content" id="tab-graph">
+  <div class="graph-container" id="graph-container"></div>
+  <div class="graph-legend" id="graph-legend">
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-must)"></div> 必读</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-important)"></div> 重要</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-ref)"></div> 参考</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-cites)"></div> 引用</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-extends)"></div> 方法继承</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-contradicts)"></div> 对立观点</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-shares)"></div> 共享概念</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-empirical)"></div> 经验基础</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-philosophical)"></div> 哲学先导</div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-notes">
+  <div class="notes-list" id="notes-list"></div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js"></script>
+<script>
+const PAPERS = [
+  {
+    id: "001", title: "Towards Monosemanticity: Decomposing Language Models With Dictionary Learning",
+    authors: "Trenton Bricken, Adly Templeton, Joshua Batson, Brian Chen, Adam Jermyn, et al. (Anthropic)",
+    year: 2023,
+    venue: "Anthropic Transformer Circuits Thread",
+    doi: "N/A (transformer-circuits.pub)",
+    pdf: "papers/001_Bricken_2023_Towards_Monosemanticity.pdf",
+    priority: "must",
+    tags: ["SAE", "dictionary learning", "monosemanticity", "feature decomposition"],
+    summary_cn: "首次提出使用稀疏自编码器（SAE）将Transformer的神经元激活分解为可解释的、单语义特征，论证了神经网络中的特征叠加（superposition）可以通过字典学习来解开。",
+    abstract_cn: "本文解决了神经网络中的多语义神经元（polysemanticity）问题——单个神经元同时响应多种无关概念的现象。作者提出使用稀疏自编码器（一种弱字典学习算法）将单层Transformer的MLP激活分解为超过4000个可解释的“特征”。这些特征远比原始神经元更加单语义化：盲法人类评估和自动可解释性评估均证实了这一点。特征的因果性通过人工激活实验得到验证：强制激活某个特征（如“阿拉伯文字”或“Base64编码”）会导致模型生成对应内容。特征在不同模型间表现出普遍性，且随着自编码器规模的扩大，特征会“分裂”为更细粒度的子特征。作者认为，首次使大语言模型可理解的主要障碍已从科学变为工程。",
+    methodology: "单层Transformer（512神经元MLP层），使用ReLU稀疏自编码器，扩展因子1×到256×（最多131072特征），盲法人类评估+自动可解释性（LLM-based），因果干预实验。",
+    findings: "核心发现：（1）SAE可从单层提取4000+可解释特征；（2）特征远比神经元单语义化；（3）特征具有跨模型普遍性；（4）特征可因果操控模型行为；（5）特征分裂现象随规模出现；（6）存在类似有限状态自动机的特征回路。",
+    limitations: "仅在一层Transformer上验证；计算开销大（扩展256×需512×原始MLP的FLOPs）；特征冗余问题未解决；未在更大规模模型上验证。",
+    relevance: "本文是SAE/特征分解领域的奠基性论文，开启了整个机械可解释性研究范式。对哲学研究而言，它提供了关于表征结构（叠加→分解）的概念基础，引发关于科学实在论（特征是否真实存在）和可解释性认识论的深层问题。",
+    relations: [
+      {target: "002", type: "extends", label: "002将此方法扩展到Claude 3 Sonnet"},
+      {target: "003", type: "extends", label: "003引入TopK SAE改进"},
+      {target: "005", type: "empirical", label: "005证明了该范式的根本局限性"}
+    ]
+  },
+  {
+    id: "002", title: "Scaling Monosemanticity: Extracting Interpretable Features from Claude 3 Sonnet",
+    authors: "Adly Templeton, Tom Conerly, Jonathan Marcus, Jack Lindamood, Trenton Bricken, et al. (Anthropic)",
+    year: 2024,
+    venue: "Anthropic Transformer Circuits Thread",
+    doi: "N/A (transformer-circuits.pub)",
+    pdf: "papers/002_Templeton_2024_Scaling_Monosemanticity.pdf",
+    priority: "must",
+    tags: ["SAE", "scaling laws", "monosemanticity", "feature steering", "Claude"],
+    summary_cn: "将SAE方法首次扩展到生产级大语言模型Claude 3 Sonnet，从中间层残差流提取数百万可解释特征，建立SAE训练的缩放定律，并展示了特征操控（如“金门大桥Claude”）的因果效果。",
+    abstract_cn: "这是Towards Monosemanticity的后续工作，首次将稀疏自编码器扩展到生产级模型Claude 3 Sonnet。团队训练了三个SAE（约1M、4M、34M特征），从残差流中间层提取特征。缩放定律表明：损失随计算量呈幂律下降，最优特征数增长速度快于最优训练步数。特征是多语言、多模态的（文本+图像），并可在具体与抽象引用之间泛化。著名的“金门大桥Claude”实验展示了特征操控：人工放大该特征后，Claude自称是金门大桥。团队还发现了安全相关特征，包括欺骗、奉承、偏见、后门漏洞和危险内容。文章同时讨论了将可解释性扩展到更大规模面临的工程挑战。",
+    methodology: "Claude 3 Sonnet中间层残差流，训练1M/4M/34M特征的SAE，缩放定律推导最优超参数，特征操控实验（将解码器方向加到残差流），安全特征发现与分析。",
+    findings: "核心发现：（1）SAE可扩展到34M特征规模；（2）SAE训练遵循清晰的缩放定律；（3）特征高度抽象（跨语言、跨模态）；（4）特征可用于精确控制模型行为；（5）发现安全相关特征（欺骗、偏见等）；（6）大规模可解释性面临工程而非科学瓶颈。",
+    limitations: "仅分析中间层残差流；计算成本极高（34M特征SAE需要大量GPU资源）；65%特征在34M规模下“死亡”；特征操控可能降低模型总体能力；安全特征的发现并不意味着自动缓解。",
+    relevance: "这是SAE范式的旗舰级实证验证。对哲学研究至关重要：展示了科学实在论意义上的“特征真实存在”（成功操控意味着因果效力）；引发关于表征透明性与AI安全的伦理学问题（知道特征存在不等于能够安全控制）；缩放定律为科学哲学中的“渐近真理”问题提供案例。",
+    relations: [
+      {target: "001", type: "extends", label: "直接扩展001的方法到生产级模型"},
+      {target: "003", type: "shares", label: "与003同期独立探索SAE缩放"},
+      {target: "005", type: "empirical", label: "005揭示了该方法中的吸收问题"},
+      {target: "007", type: "empirical", label: "007进一步量化了单语义性"}
+    ]
+  },
+  {
+    id: "003", title: "Scaling and Evaluating Sparse Autoencoders",
+    authors: "Leo Gao, Tom Dupré la Tour, Henk Tillman, Gabriel Goh, Rajan Troll, Alec Radford, Ilya Sutskever, Jan Leike, Jeffrey Wu (OpenAI)",
+    year: 2024,
+    venue: "arXiv: 2406.04093",
+    doi: "10.48550/arXiv.2406.04093",
+    pdf: "papers/003_Gao_2024_Scaling_Evaluating_SAEs.pdf",
+    priority: "must",
+    tags: ["SAE", "TopK", "scaling laws", "evaluation metrics", "GPT-4"],
+    summary_cn: "OpenAI提出的k-稀疏自编码器（TopK SAE），通过直接控制稀疏度（而非L1惩罚）来改进SAE训练，提出死神经元解决方案，建立了SAE的缩放定律，并训练了GPT-4上的16M潜在特征SAE。",
+    abstract_cn: "本文提出使用k-稀疏自编码器（Makhzani & Frey 2013）来直接控制稀疏度，而非依赖L1惩罚项，从而简化SAE训练并改进重建-稀疏度前沿。作者通过两个关键创新解决了死潜在变量问题：（1）将编码器初始化为解码器的转置；（2）在top-k死潜在变量上使用辅助损失。这些技术将大SAE中的死潜在变量从典型情况下的90%以上降至仅约7%。作者建立了清晰的缩放定律（包括以自动编码器大小和稀疏度为自变量的联合缩放定律），并在GPT-4的残差流激活上训练了一个16M潜在特征的SAE（使用40B tokens）。提出了一系列新的评估指标：下游损失、探测损失、可解释性和消融稀疏度。",
+    methodology: "TopK激活函数替代ReLU+L1，编码器-解码器转置初始化，辅助损失（AuxK），缩放定律L(N, k)，GPT-4残差流16M SAE，多维度评估指标。",
+    findings: "核心发现：（1）TopK SAE在重建质量-稀疏度权衡上优于L1-based SAE；（2）死神经元从90%降至7%；（3）缩放定律清晰且可预测；（4）16M SAE在GPT-4上可行；（5）所有评估指标随规模单调改善；（6）转置初始化和AuxK损失是关键创新。",
+    limitations: "TopK强制全局等稀疏性（每个输入激活相同数量的特征），可能非最优；16M SAE仍有7%死特征；评估指标之间并非总是一致；未充分探讨特征操控的副作用。",
+    relevance: "TopK SAE成为后续大多数工作的默认架构。对哲学研究相关：提出的评估指标引发关于“什么是好的可解释性”的规范性问题；缩放定律为科学哲学中的理论进步模型提供素材；AuxK损失的技术设计引发关于优化目标与认知目标对齐的讨论。",
+    relations: [
+      {target: "001", type: "extends", label: "改进001的SAE架构（TopK替代ReLU+L1）"},
+      {target: "002", type: "shares", label: "与002同期独立探索SAE缩放"},
+      {target: "006", type: "empirical", label: "006基于003的架构构建基准"},
+      {target: "005", type: "empirical", label: "005分析了TopK SAE中的吸收问题"}
+    ]
+  },
+  {
+    id: "004", title: "A Unified Theory of Sparse Dictionary Learning in Mechanistic Interpretability: Piecewise Biconvexity and Spurious Minima",
+    authors: "Yiming Tang, Yijia Zheng, Yuhang Wu, et al. (NUS, CUHK, HKUST, NJIT)",
+    year: 2025,
+    venue: "arXiv: 2512.05534",
+    doi: "10.48550/arXiv.2512.05534",
+    pdf: "papers/004_Tang_2025_Unified_Theory_SDL.pdf",
+    priority: "must",
+    tags: ["SAE", "dictionary learning", "theoretical framework", "optimization", "identifiability"],
+    summary_cn: "首个统一SAE、transcoder和crosscoder理论框架，将稀疏字典学习形式化为分段双凸优化问题，解释了特征吸收、死神经元和伪局部最小值等现象。",
+    abstract_cn: "本文提出了首个统一的稀疏字典学习（SDL）理论框架，将SAE、transcoder和crosscoder视为同一类分段双凸优化问题的不同实例。作者刻画了全局解集、非可识别性和伪局部最小值（spurious minima）的特征，为特征吸收（feature absorption）、死神经元和多样征性（polysemanticity）等现象提供了理论解释。论文引入“Linear Representation Bench”作为评估基准，并提出“特征锚定”（feature anchoring）技术来恢复可识别性并改善特征恢复。理论分析揭示了为何某些架构在某些条件下表现更好，以及为何缩放不能解决根本问题。",
+    methodology: "分段双凸优化框架，全局解集刻画，理论与实验结合验证，Linear Representation Bench评估基准，特征锚定技术。",
+    findings: "核心发现：（1）SAE/transcoder/crosscoder可统一为分段双凸优化；（2）全局最小值和伪局部最小值之间的结构差异导致特征吸收；（3）死神经元源于非可识别性；（4）特征锚定可显著改善特征恢复；（5）某些架构缺陷来源于优化景观的结构特性。",
+    limitations: "理论假设（如精确稀疏性）可能不完全符合实际数据分布；特征锚定在更大规模模型上尚未充分验证；理论框架主要覆盖线性解码器；对非线性交互的理论解释仍需扩展。",
+    relevance: "对哲学研究极具价值：将SAE的理论基础形式化，为关于表征实在论（可识别性条件）、解释的理想化（全局vs伪局部解）和方法论的规范性（最优架构选择）等哲学问题提供了精确的数学语言。",
+    relations: [
+      {target: "001", type: "extends", label: "为001的字典学习方法提供理论形式化"},
+      {target: "003", type: "extends", label: "分析003的TopK SAE的优化景观"},
+      {target: "005", type: "philosophical", label: "为005的吸收现象提供理论解释"},
+      {target: "016", type: "shares", label: "统一框架包含016的crosscoder架构"}
+    ]
+  },
+  {
+    id: "005", title: "A is for Absorption: Studying Feature Splitting and Absorption in Sparse Autoencoders",
+    authors: "David Chanin, James Wilken-Smith, Tomáš Dulka, Hardik Bhatnagar, Satvik Golechha, Joseph Bloom",
+    year: 2025,
+    venue: "NeurIPS 2025 (Oral), arXiv: 2409.14507",
+    doi: "10.48550/arXiv.2409.14507",
+    pdf: "papers/005_Chanin_2025_A_is_for_Absorption.pdf",
+    priority: "must",
+    tags: ["SAE", "feature absorption", "feature splitting", "hierarchical features", "interpretability illusion"],
+    summary_cn: "揭示并命名了SAE中的“特征吸收”现象（表面上单语义的潜在特征未能触发其本应代表的概念，因为该概念被更具体的子特征吸收），证明调整SAE宽度或稀疏度无法根本解决问题。",
+    abstract_cn: "本文识别了SAE中的一个根本缺陷——特征吸收。当概念形成层级结构时（如“数学”→“代数”和“几何”），稀疏分解变得不鲁棒。一个看似单语义的特征（如“以S开头”）会在某些输入上（如“short”）完全沉默——不是因为概念不存在，而是因为其方向被更具体的子特征吸收了。作者在玩具模型和Gemma-2-2B（使用Gemma Scope SAE）上系统演示了这一现象。关键发现：调整SAE宽度或稀疏度不能解决吸收问题——这是优化稀疏性目标的固有结果。吸收随SAE规模增大和稀疏性增加而加剧。作者引入了检测吸收的指标，并讨论了Meta-SAE和结构化稀疏性等潜在解决方案。",
+    methodology: "玩具层次特征模型（可控数据生成），Gemma-2-2B + Gemma Scope SAE案例分析，吸收检测指标（latent silence ratio），跨架构验证（Gemma, Qwen2, Llama 3），稀疏度和宽度消融实验。",
+    findings: "核心发现：（1）特征吸收是SAE中层次化特征的普遍现象；（2）调整宽度或稀疏度未能解决吸收；（3）更宽、更稀疏的SAE中吸收更严重；（4）这在多个架构上跨模型出现；（5）吸收创造“可解释性幻觉”——特征看似干净但默默失效。",
+    limitations: "主要研究拼写任务和简单层次结构，更复杂概念层的泛化仍需验证；提出的解决方案（Meta-SAE, group lasso）仍处于初步阶段；吸收检测指标依赖于特征与概念的人工标注。",
+    relevance: "对哲学研究意义重大：吸收现象挑战了SAE的可靠性基础，引发关于表征真实性的认识论问题（特征是真的描述了概念，还是只是优化的副产品）。这与科学哲学中关于可观察物与不可观察物的实在论辩论高度相关。特征分裂的层级结构也引发关于科学中还原论/涌现的讨论。",
+    relations: [
+      {target: "001", type: "contradicts", label: "揭示001范式的根本局限性"},
+      {target: "002", type: "contradicts", label: "挑战002中SAE作为可靠解释工具的前提"},
+      {target: "004", type: "shares", label: "004为吸收现象提供理论框架"},
+      {target: "010", type: "extends", label: "010提出SMIXAE以解决吸收"},
+      {target: "014", type: "extends", label: "014通过领域特异性缓解吸收"}
+    ]
+  },
+  {
+    id: "006", title: "SAEBench: A Comprehensive Benchmark for Sparse Autoencoders in Language Model Interpretability",
+    authors: "Adam Karvonen, Can Rager, Johnny Lin, Neel Nanda, et al.",
+    year: 2025,
+    venue: "ICML 2025, arXiv: 2503.09532",
+    doi: "10.48550/arXiv.2503.09532",
+    pdf: "papers/006_Karvonen_2025_SAEBench.pdf",
+    priority: "important",
+    tags: ["SAE", "benchmark", "evaluation", "interpretability", "feature disentanglement"],
+    summary_cn: "首个全面的SAE评估基准，覆盖8种SAE架构、200+个SAE、8种评估指标。关键发现：代理指标上的提升不一定转化为实际应用效果的改善。",
+    abstract_cn: "SAEBench是首个全面的稀疏自编码器评估基准，覆盖8种评估指标：可解释性、特征解缠、下游应用（如解锁）。作者开源了200+个SAE，涵盖8种最新提出的SAE架构和训练算法。关键发现是代理指标上的提升并不可靠地转化为更好的实际应用表现——Matryoshka SAEs在代理指标上略逊，但在特征解缠上显著优于其他架构，且优势随规模扩大而增强。SAEBench提供交互式界面（neuronpedia.org/sae-bench），已被ICML 2025录用。",
+    methodology: "多维度基准测试，8种SAE架构（ReLU, TopK, Gated, JumpReLU, Matryoshka等），200+ SAEs，8种评估指标，交互式Web界面。",
+    findings: "核心发现：（1）代理指标不总是与实际效用相关；（2）Matryoshka SAEs在特征解缠上表现最佳；（3）更大SAE在大多数指标上更好；（4）稀疏度与效用之间存在非单调关系；（5）当前基准覆盖了大多数但非所有重要维度。",
+    limitations: "基准的8个维度可能未覆盖所有重要方面（如跨层交互）；部分指标依赖外部LLM判断，可能引入系统性偏见；基准主要关注SAE内在质量，对下游应用覆盖有限。",
+    relevance: "对哲学研究：SAEBench提出了“什么是好的可解释性”的操作化问题——将哲学概念操作化为可测量指标的过程本身值得分析。代理指标与实际效用的不一致性引发了关于理论完善性和科学实在论中工具主义vs.实在论的辩论。",
+    relations: [
+      {target: "003", type: "empirical", label: "大量基于003的TopK SAE架构"},
+      {target: "002", type: "empirical", label: "验证002中SAE缩放的方法论"},
+      {target: "021", type: "shares", label: "021提供轻量级替代评估方案"},
+      {target: "022", type: "shares", label: "022关注单语义性的特定维度评估"}
+    ]
+  },
+  {
+    id: "007", title: "Measuring and Guiding Monosemanticity",
+    authors: "Ruben Härle, Felix Friedrich, Manuel Brack, Stephan Wäldchen, Björn Deiseroth, Patrick Schramowski, Kristian Kersting (TU Darmstadt, hessian.AI)",
+    year: 2025,
+    venue: "NeurIPS 2025 Spotlight, arXiv: 2506.19382",
+    doi: "10.48550/arXiv.2506.19382",
+    pdf: "papers/007_Harle_2025_Measuring_Guiding_Monosemanticity.pdf",
+    priority: "important",
+    tags: ["SAE", "monosemanticity", "FMS", "G-SAE", "feature steering", "supervised SAE"],
+    summary_cn: "提出特征单语义性分数（FMS）和引导式稀疏自编码器（G-SAE），将单语义性翻倍（0.27→0.52），单一特征准确率达0.86，实现了轻度监督下的精确特征操控。",
+    abstract_cn: "本文提出两个核心创新：（1）FMS（Feature Monosemanticity Score），一个量化单个潜在特征单语义程度的新指标，通过浅层决策树测量特征容量、局部解缠和全局解缠三个维度；（2）G-SAE（Guided Sparse Autoencoder），一种轻度监督的SAE扩展，在训练时保留一小块潜在索引，使用二元交叉熵损失将其与标注概念对齐。在Llama-3-8B上，G-SAE将平均FMS@1从0.27提升至0.52（约翻倍），最佳引导特征单一准确率达0.86。G-SAE在毒性操控（0.98）、莎士比亚风格操控（0.72）和隐私操控（0.53）上均显著优于基线方法。此外，G-SAE保持流畅度优于PreADD、Model Arithmetic、ICV和DiffVec。",
+    methodology: "FMS指标（特征容量+局部解缠+全局解缠），G-SAE架构（预留概念索引块+BCE损失），Llama-3-8B实验，多任务操控评估（毒性、莎士比亚、隐私）。",
+    findings: "核心发现：（1）FMS提供了可操作的量化单语义性指标；（2）G-SAE将单语义性翻倍；（3）轻度监督显著提升可信度；（4）G-SAE在保持流畅度上优于其他操控方法；（5）单一特征即可实现高质量操控。",
+    limitations: "G-SAE需要概念标注数据，限制了可扩展性；FMS依赖于浅层决策树的代理能力；仅在一组预定义概念上验证（毒性、莎士比亚、隐私）；未深入探究G-SAE训练对模型整体表征的影响。",
+    relevance: "对哲学研究：FMS的提出将“什么是单语义性”这一哲学问题操作化为精确的测量问题，体现了科学哲学中操作主义与实在论之间的张力。G-SAE的轻度监督策略引发关于可解释性目标（描述vs.控制）的规范性问题。",
+    relations: [
+      {target: "002", type: "extends", label: "扩展002的单语义性概念为可测量指标"},
+      {target: "003", type: "extends", label: "基于003的SAE架构添加轻度监督"},
+      {target: "006", type: "empirical", label: "006的基准可用于评估007的改进"},
+      {target: "018", type: "contradicts", label: "018发现解释性提升不一定改善效用"}
+    ]
+  },
+  {
+    id: "008", title: "Temporal Sparse Autoencoders: Leveraging the Sequential Nature of Language for Interpretability",
+    authors: "Usha Bhalla, Alex Oesterling, et al. (Harvard University)",
+    year: 2025,
+    venue: "ICLR 2026 Oral, arXiv: 2511.05541",
+    doi: "10.48550/arXiv.2511.05541",
+    pdf: "papers/008_Bhalla_2025_Temporal_SAEs.pdf",
+    priority: "important",
+    tags: ["SAE", "temporal", "sequence modeling", "contrastive learning", "disentanglement"],
+    summary_cn: "利用语言的序列性质提出时间对比损失，使SAE自动分离语义特征和句法特征，恢复了更平滑、更连贯的语义概念表征。",
+    abstract_cn: "本文提出Temporal Sparse Autoencoders（T-SAEs），引入了一种时间对比损失：鼓励高级语义特征在相邻token上保持一致激活，而允许句法特征自由变化。这种自监督方法使SAE能够自动分离语义和句法特征。实验表明，T-SAEs恢复的语义特征更加平滑和连贯，与标准SAE相比在语义一致性上有显著提升。论文被ICLR 2026录用为Oral，代表了将语言序列结构纳入SAE训练的重要方向。",
+    methodology: "时间对比损失（相邻token特征激活一致性惩罚），标准SAE架构+时间正则化，语义/句法特征分离评估，多模型验证。",
+    findings: "核心发现：（1）时间对比损失有效分离语义和句法特征；（2）T-SAEs恢复更连贯的语义特征；（3）时间信息是自监督特征解缠的有效信号；（4）自监督方法无需额外标注。",
+    limitations: "对比损失主要适用于自回归语言建模场景；对非序列化任务（如图像）泛化有限；时间窗口大小的选择影响效果；计算开销较标准SAE增加。",
+    relevance: "对哲学研究：T-SAEs利用语言的时间结构为特征学习提供先验，这与哲学中关于语言和思维的序列性质（维特根斯坦、海德格尔）的讨论高度相关。自监督语义/句法分离引发关于语法和语义关系的语言学哲学问题。",
+    relations: [
+      {target: "003", type: "extends", label: "在TopK SAE基础上添加时间正则化"},
+      {target: "005", type: "shares", label: "与005共享对特征分解的关注"},
+      {target: "027", type: "extends", label: "027进一步改进时间注意力机制"}
+    ]
+  },
+  {
+    id: "009", title: "Sparse Autoencoders Learn Monosemantic Features in Vision-Language Models",
+    authors: "Mateusz Pach, Kiran Karthik, et al.",
+    year: 2025,
+    venue: "NeurIPS 2025, arXiv: 2504.02821",
+    doi: "10.48550/arXiv.2504.02821",
+    pdf: "papers/009_Pach_2025_SAE_Vision_Language.pdf",
+    priority: "important",
+    tags: ["SAE", "vision-language models", "CLIP", "multimodal", "feature steering"],
+    summary_cn: "将SAE扩展到视觉-语言模型（CLIP），证明SAE显著提升了视觉编码器神经元的单语义性，且SAE干预可以直接操控多模态LLM的输出。",
+    abstract_cn: "本文首次将稀疏自编码器系统性地应用于视觉-语言模型（VLMs）。作者在CLIP等VLMs的视觉编码器上训练SAE，发现SAE显著增强了神经元的单语义性。更重要的是，对CLIP视觉编码器的SAE干预可以直接操控下游多模态LLM（如LLaVA）的输出——这意味着SAE学到的视觉概念在跨模态模型中具有因果效力。论文被NeurIPS 2025录用，代表了SAE从纯文本领域向多模态领域的重要扩展。",
+    methodology: "CLIP视觉编码器SAE训练，视觉-语言特征对齐分析，多模态LLM下游操控实验（LLaVA等），单语义性量化评估。",
+    findings: "核心发现：（1）SAE可成功应用于视觉编码器；（2）视觉SAE特征比原始神经元更单语义化；（3）SAE干预视觉编码器可因果操控多模态LLM输出；（4）视觉概念与文本概念存在对应关系。",
+    limitations: "仅在CLIP系列模型上验证；视觉概念的语义粒度较粗；多模态操控的精确度仍需提高；对更复杂视觉推理任务的适用性未知。",
+    relevance: "对哲学研究：跨模态特征的可操控性引发关于“概念”本体论的有趣问题——视觉概念和文本概念是同一事物的不同模态表现，还是根本不同的实体？这涉及心灵哲学中关于概念表征的模态性vs非模态性辩论。",
+    relations: [
+      {target: "002", type: "extends", label: "将002的文本SAE范式扩展到视觉模态"},
+      {target: "003", type: "extends", label: "使用003的TopK架构训练视觉SAE"},
+      {target: "010", type: "shares", label: "与010共享多模态特征分解的目标"}
+    ]
+  },
+  {
+    id: "010", title: "SMIXAE: Towards Unsupervised Manifold Discovery in Language Models",
+    authors: "Collin Francel",
+    year: 2026,
+    venue: "arXiv: 2605.09224",
+    doi: "10.48550/arXiv.2605.09224",
+    pdf: "papers/010_Francel_2026_SMIXAE_Manifold_Discovery.pdf",
+    priority: "important",
+    tags: ["SAE", "manifold learning", "feature splitting", "mixture of experts", "multidimensional features"],
+    summary_cn: "解决标准SAE无法建模多维特征（流形）的局限，提出Sparse Mixture of Autoencoders架构，直接学习圆形、螺旋、环面等复杂几何结构。",
+    abstract_cn: "本文针对标准SAE的关键局限——无法直接建模多维特征（流形）——提出SMIXAE（Sparse Mixture of Autoencoders）架构。SMIXAE将自编码器分割为多个稀疏激活的“专家”自编码器，每个专家有一个低维瓶颈。这使得模型能直接学习嵌入在LLM激活中的复杂几何结构（圆形、螺旋、环面等）。在Gemma 2 2B和9B上的实验成功发现了已知和新颖的流形结构（如计数和模运算中的圆形/螺旋流形）。该工作与多维线性表征假说（mLRH）相关，代表了从一维特征到多维流形的范式转变。",
+    methodology: "Sparse Mixture of Autoencoders（MoE架构应用于SAE），低维瓶颈专家网络，多维流形检测与可视化，Gemma 2 2B/9B实验。",
+    findings: "核心发现：（1）LLM激活中存在多维流形结构；（2）SMIXAE可直接学习这些流形；（3）发现圆形/螺旋流形对应计数和模运算；（4）专家瓶颈维度揭示了流形内在维度；（5）克服了标准SAE的特征分裂问题。",
+    limitations: "SMIXAE的训练更复杂（MoE路由+负载平衡）；流形结构的因果验证尚不充分；在大规模模型上的训练开销较大；对更复杂概念（如抽象推理）的流形结构尚未探索。",
+    relevance: "对哲学研究：SMIXAE发现的多维流形结构引发关于神经表征几何学与概念空间隐喻的深层问题。如果概念不是点（一维特征）而是空间（流形），这对关于概念的传统原子论观点有何影响？与哲学中关于概念结构（原型理论、范例理论）的讨论高度相关。",
+    relations: [
+      {target: "005", type: "extends", label: "直接解决005识别的特征吸收/分裂问题"},
+      {target: "002", type: "empirical", label: "在002开创的SAE框架内工作"},
+      {target: "012", type: "shares", label: "与012共享流形如何影响SAE缩放的关注"},
+      {target: "019", type: "shares", label: "019进一步研究SAE特征竞争"}
+    ]
+  },
+  {
+    id: "011", title: "Sparse Autoencoders Trained on the Same Data Learn Different Features",
+    authors: "Gonçalo Paulo, Nora Belrose",
+    year: 2025,
+    venue: "arXiv: 2501.16615",
+    doi: "10.48550/arXiv.2501.16615",
+    pdf: "papers/011_Paulo_2025_Different_Features.pdf",
+    priority: "important",
+    tags: ["SAE", "feature stability", "seed dependence", "universality", "reproducibility"],
+    summary_cn: "发现相同数据和模型上训练的不同随机种子SAE学到不同特征集（Llama 3 8B上仅约30%特征共享），质疑SAE特征的“真实”分解观，主张实用主义解读。",
+    abstract_cn: "本文揭示了SAE训练的一个关键不稳定问题：在相同模型和相同数据上、仅改变随机种子的SAE训练会学到显著不同的特征集。作者在Llama 3 8B上发现不同种子间仅约30%的特征是共享的。TopK SAE的种子依赖性比ReLU SAE（L1损失）更强。这一发现挑战了将SAE特征视为“真实”或“完备”的分解的观点——作者主张应将SAE特征理解为一种“实用主义分解”（pragmatic decomposition），而非模型的本质属性。论文引发了关于SAE特征本体论地位的广泛讨论。",
+    methodology: "Llama 3 8B上的多种子SAE训练，特征匹配与重合度量化（余弦相似度、激活相关性），TopK vs. ReLU SAE比较，实用性评估。",
+    findings: "核心发现：（1）相同条件下不同种子学到不同特征；（2）仅~30%特征跨种子共享；（3）TopK SAE种子依赖性更强；（4）特征应被视为实用主义分解而非“真实”特征；（5）这对SAE的普遍性和可靠性提出挑战。",
+    limitations: "特征匹配方法可能低估了语义相似但方向不同的特征；仅在一组种子和模型规模上验证；实用主义立场可能低估了某些特征确实捕捉到真实概念的可能性。",
+    relevance: "对哲学研究高度相关：直接触及科学实在论的核心问题——SAE特征是否是“真实”的？实用主义立场（特征只是有用的工具）与实在论立场（特征揭示了模型的真实结构）之间的张力是本研究项目的核心议题之一。这关系到机械可解释性作为科学知识生产的认识论地位。",
+    relations: [
+      {target: "001", type: "contradicts", label: "挑战001的跨模型普遍性主张"},
+      {target: "002", type: "contradicts", label: "质疑002中特征的“真实”存在性"},
+      {target: "004", type: "philosophical", label: "004的理论框架可解释非可识别性"},
+      {target: "024", type: "shares", label: "024探讨特征空间相似性而非个别特征"}
+    ]
+  },
+  {
+    id: "012", title: "Sparse Autoencoder Scaling in the Presence of Feature Manifolds",
+    authors: "Anonymous (under review)",
+    year: 2025,
+    venue: "arXiv: 2509.02565",
+    doi: "10.48550/arXiv.2509.02565",
+    pdf: "papers/012_Author_2025_SAE_Scaling_Manifolds.pdf",
+    priority: "important",
+    tags: ["SAE", "scaling laws", "manifolds", "capacity allocation", "pathological scaling"],
+    summary_cn: "发现SAE在特征流形存在时出现“病态缩放”现象——SAE将过多容量分配给高频流形，导致罕见特征“饥饿”——并给出了避免该现象的临界条件。",
+    abstract_cn: "本文研究了SAE在特征流形（而非孤立特征）存在时的缩放行为。作者将容量分配模型适用于SAE缩放分析，发现了一个关键的警告信号：当损失衰减率β < 特征频率指数α时，SAE进入“病态缩放”状态——它会将过多的潜在变量分配给高频流形，使得罕见（但可能重要）的特征得不到充分表征。论文给出了避免这种病态缩放的临界条件，并为实际SAE训练提供了超参数指导。这一发现解释了为什么单纯增大SAE规模并不总能改善所有类型特征的恢复质量。",
+    methodology: "容量分配理论模型，缩放定律分析（幂律拟合），频率-特征恢复质量关联分析，多尺度实验验证。",
+    findings: "核心发现：（1）SAE在流形存在时缩放非单调；（2）β < α导致罕见特征被“饿死”；（3）临界条件可指导避免病态缩放；（4）纯粹增大SAE不总是最优策略；（5）解释了实践中某些特征意外的低质量。",
+    limitations: "理论模型基于一定简化假设；“特征频率指数α”在实际模型中难以精确估计；仅分析了特定类型的流形结构；未提供完整的自动避免病态缩放的方案。",
+    relevance: "对哲学研究：病态缩放现象揭示了更大的能力并不意味着更好的理解——这与科学哲学中关于还原论和科学进步的复杂性的讨论相关。罕见特征的缺失引发关于在科学解释中如何处理边缘案例的规范性问题。",
+    relations: [
+      {target: "002", type: "extends", label: "扩展002的缩放定律到流形场景"},
+      {target: "003", type: "extends", label: "扩展003的缩放分析"},
+      {target: "010", type: "shares", label: "与010共享对流形的关注"},
+      {target: "017", type: "shares", label: "017从优化角度研究类似问题"}
+    ]
+  },
+  {
+    id: "013", title: "Interpretability Illusions with Sparse Autoencoders: Evaluating Robustness of Concept Representations",
+    authors: "Anonymous (under review)",
+    year: 2025,
+    venue: "arXiv: 2505.16004",
+    doi: "10.48550/arXiv.2505.16004",
+    pdf: "papers/013_Author_2025_Interpretability_Illusions.pdf",
+    priority: "important",
+    tags: ["SAE", "adversarial robustness", "interpretability illusion", "concept representation", "evaluation"],
+    summary_cn: "揭示SAE概念表征在对抗扰动下的脆弱性——微小输入扰动可操控SAE检测到的概念而不影响LLM输出，构成“可解释性幻觉”的新形式。",
+    abstract_cn: "本文揭示了SAE概念表征的一个关键脆弱性：微小的对抗扰动可以显著操控SAE检测到的概念表征，而不会改变基础LLM的最终输出。这构成了一种新型的可解释性幻觉——观察者可能从SAE中看到根本不存在的概念（或漏掉实际存在的概念）。作者系统评估了不同SAE架构对这种扰动的鲁棒性，发现现有架构普遍脆弱。这一发现对依赖SAE进行安全监控、偏见检测和模型审计的实践提出了严重警告。",
+    methodology: "对抗扰动生成（PGD, FGSM），多SAE架构鲁棒性基准测试，概念表征稳定性分析，扰动-输出不一致性量化。",
+    findings: "核心发现：（1）SAE概念表征极易受对抗扰动影响；（2）扰动可在不改变LLM输出情况下操控SAE检测；（3）所有主流SAE架构均表现出脆弱性；（4）当前评估忽略了鲁棒性维度；（5）对SAE安全应用构成现实威胁。",
+    limitations: "对抗扰动的实际可实施性（白盒访问需求）限制了现实威胁级别；对特定防御策略（对抗训练等）的探索不足；仅测试了有限的概念类型。",
+    relevance: "对哲学研究：可解释性幻觉直接触及关于“可解释性作为知识”的认识论问题——如果可解释性工具能被轻易欺骗，它们在何种意义上提供了真正的知识？这与科学哲学中关于实验工具可靠性和科学诈骗的讨论直接相关。",
+    relations: [
+      {target: "003", type: "contradicts", label: "揭示了003等SAE架构的鲁棒性问题"},
+      {target: "005", type: "shares", label: "与005共享可解释性幻觉的关注点"},
+      {target: "006", type: "empirical", label: "006的评估基准可能遗漏鲁棒性维度"},
+      {target: "018", type: "shares", label: "与018共享对解释性效用的怀疑"}
+    ]
+  },
+  {
+    id: "014", title: "Resurrecting the Salmon: Rethinking Mechanistic Interpretability with Domain-Specific Sparse Autoencoders",
+    authors: "Charles O'Neill, Harsha Jayasekara, et al.",
+    year: 2025,
+    venue: "arXiv: 2508.09363",
+    doi: "10.48550/arXiv.2508.09363",
+    pdf: "papers/014_ONeill_2025_Resurrecting_Salmon.pdf",
+    priority: "important",
+    tags: ["SAE", "domain-specific", "JumpReLU", "clinical QA", "feature fidelity"],
+    summary_cn: "提出领域特异SAE（而非通用SAE）在目标领域上解释方差提高20%，并减少特征吸收和分裂，挑战“一个通用SAE”范式。",
+    abstract_cn: "本文挑战了训练一个通用SAE来覆盖所有概念的范式。作者提出了领域特异SAE的概念——在特定领域数据上训练的SAE。以临床问答领域为例，使用195k条临床QA数据训练JumpReLU SAE（Gemma-2模型的layer-20激活），发现领域特异SAE比通用SAE在目标领域上多解释约20%的方差，并将线性残差误差降低约20%。更重要的是，领域限制缓解了特征吸收和分裂问题。这暗示了“多SAE生态系统”而非“一个通用SAE”的未来方向。",
+    methodology: "领域特异训练数据（195k临床QA），JumpReLU SAE，层20激活（Gemma-2），方差解释和线性残差误差比较，领域内/外通用性测试。",
+    findings: "核心发现：（1）领域特异SAE显著优于通用SAE（+20%方差解释）；（2）领域限制缓解了特征吸收；（3）线性残差误差降低~20%；（4）领域内保真度提升以领域外为代价。",
+    limitations: "仅在临床QA领域验证；使用特定层（20）和特定架构（JumpReLU）；领域外泛化能力退化；多个领域SAE的集成尚未探索。",
+    relevance: "对哲学研究：领域特异SAE的成功挑战了“统一表征”的假设，引发关于科学解释中统一性vs.多样性的讨论。这类比于科学哲学中关于还原论统一科学与科学多元主义的辩论。多个局部模型是否优于一个全局模型，涉及科学知识组织的根本问题。",
+    relations: [
+      {target: "005", type: "extends", label: "通过领域限制缓解005的吸收问题"},
+      {target: "002", type: "contradicts", label: "挑战002的通用SAE思路"},
+      {target: "016", type: "shares", label: "与016共享跨层特征发现的关注"}
+    ]
+  },
+  {
+    id: "015", title: "SAE-SSV: Supervised Steering in Sparse Representation Spaces for Reliable Control of Language Models",
+    authors: "Zirui He, et al.",
+    year: 2025,
+    venue: "EMNLP 2025, arXiv: 2505.16188",
+    doi: "10.48550/arXiv.2505.16188",
+    pdf: "papers/015_He_2025_SAE_SSV.pdf",
+    priority: "important",
+    tags: ["SAE", "feature steering", "supervised learning", "subspace identification", "model control"],
+    summary_cn: "利用SAE和线性分类器识别任务相关潜在子空间，在受限子空间内学习监督引导向量，实现更可靠的高成功率模型操控。",
+    abstract_cn: "SAE-SSV提出了一个利用SAE进行可解释模型操控的框架。首先，使用SAE和线性分类器识别与目标任务相关的潜在特征子空间。然后，在该受限子空间内学习监督引导向量。这种方法保证了操控仅影响目标行为，而将模型其他能力的退化降至最低。在情感操控、真实性增强和政治极性调节等任务上，SAE-SSV实现了更高的成功率且副作用最小。论文被EMNLP 2025录用。",
+    methodology: "SAE + 线性分类器子空间识别，受限子空间监督引导向量学习，多任务评估（情感、真实性、政治极性），成功率和能力退化双重指标。",
+    findings: "核心发现：（1）SAE潜在子空间可有效约束引导；（2）受限子空间操控减少无关副作用；（3）监督引导优于无监督引导；（4）子空间维度影响操控精确度。",
+    limitations: "需要标注的任务数据（监督学习需求）；子空间选择可能遗漏关键特征；对更复杂任务（如多步推理）的可控性未知。",
+    relevance: "对哲学研究：SAE-SSV的受限操控策略体现了“精确控制”vs.“全面理解”之间的张力。这与关于技术控制的伦理学（精确控制是好是坏？）和关于可解释性目标的规范性讨论相关。",
+    relations: [
+      {target: "002", type: "extends", label: "扩展002的特征操控范式"},
+      {target: "003", type: "extends", label: "基于003的SAE架构"},
+      {target: "007", type: "shares", label: "与007共享监督引导思路"},
+      {target: "018", type: "empirical", label: "018提供了评估操控效用的方法论"}
+    ]
+  },
+  {
+    id: "016", title: "fmxcoders: Factorized Masked Crosscoders for Cross-Layer Feature Discovery",
+    authors: "Andreas D. Demou, Panagiotis Koromilas, et al.",
+    year: 2026,
+    venue: "arXiv: 2605.09438",
+    doi: "10.48550/arXiv.2605.09438",
+    pdf: "papers/016_Demou_2026_fmxcoders.pdf",
+    priority: "important",
+    tags: ["crosscoders", "cross-layer", "factorization", "feature discovery", "dictionary learning"],
+    summary_cn: "证明标准crosscoder在跨层特征发现上基本失败（潜在变量仅被1-2层驱动），提出因子化掩码crosscoder（fmxcoder）实现10-30点F1提升。",
+    abstract_cn: "本文发现了标准crosscoder的关键问题：尽管设计目标是捕获跨层特征，但大多数潜在变量实际上仅由1-2层驱动——跨层特征发现基本失败。作者提出fmxcoder，引入低秩张量因子化和随机层掩码两个创新。低秩因子化对层间交互施加结构化先验，随机层掩码强制潜在变量利用多层信息。在GPT2-Small、Pythia和Gemma2模型上，fmxcoder实现了10-30点F1探测增益、2倍平均功能连贯性和25-50%的重建MSE降低，并将语义连贯的潜在变量恢复数量提高了3-13倍。",
+    methodology: "低秩张量因子化，随机层掩码训练，跨GPT2/Pythia/Gemma2验证，探测F1和功能连贯性多维度评估。",
+    findings: "核心发现：（1）标准crosscoder无法有效捕获跨层特征；（2）fmxcoder低秩因子化强制层间共享；（3）随机层掩码迫使利用多层信息；（4）提升10-30点F1和2倍连贯性，MSE降低25-50%；（5）恢复3-13倍语义连贯潜在变量。",
+    limitations: "训练更复杂（多目标优化）；张量因子化的秩选择需要人工调参；对更大模型（>10B）的扩展性未充分验证。",
+    relevance: "对哲学研究：fmxcoder的成功说明了结构先验（因子化+掩码）对从数据中提取有意义特征的关键作用——这与关于先天知识、归纳偏见和科学发现的哲学讨论直接相关。跨层特征的组织结构也引发关于涌现和层级组织的哲学问题。",
+    relations: [
+      {target: "004", type: "shares", label: "004的统一理论涵盖crosscoder架构"},
+      {target: "005", type: "empirical", label: "在跨层设置中分析特征分解"},
+      {target: "014", type: "shares", label: "与014共享跨层/跨域的分解策略"}
+    ]
+  },
+  {
+    id: "017", title: "Feature Starvation as Geometric Instability in Sparse Autoencoders",
+    authors: "Collin Francel, et al.",
+    year: 2026,
+    venue: "arXiv: 2605.05341",
+    doi: "10.48550/arXiv.2605.05341",
+    pdf: "papers/017_Francel_2026_Feature_Starvation.pdf",
+    priority: "important",
+    tags: ["SAE", "optimization", "dead neurons", "geometric instability", "elastic net"],
+    summary_cn: "将SAE中的死神经元问题分析为一种优化几何病理学，提出Adaptive Elastic Net SAE（AEN-SAE）完全消除了特征饥饿，无需启发式重采样。",
+    abstract_cn: "本文将L1正则化SAE中的死神经元问题重新概念化为一种根本的优化几何病理学。作者证明，死神经元并非偶然，而是L1正则化下的内在几何不稳定性——在特征空间边界处，梯度场将潜在变量永久推向零。基于此理论分析，作者提出Adaptive Elastic Net SAEs（AEN-SAEs），一种完全可微的架构，通过自适应调整L1和L2正则化权重来消除特征饥饿。在Pythia 70M和Llama 3.1 8B上，AEN-SAEs完全消除了特征饥饿，无需任何启发式重采样策略，同时保持或超越了标准SAE的重建质量。",
+    methodology: "L1-SAEs的几何不稳定性理论分析，自适应弹性网络正则化（Adaptive Elastic Net），Pythia 70M/Llama 3.1 8B实验，死神经元率与重建质量双重评估。",
+    findings: "核心发现：（1）死神经元源于L1正则下的几何不稳定性（非偶然）；（2）AEN-SAE完全消除特征饥饿（0%死神经元）；（3）无需启发式重采样；（4）重建质量至少持平；（5）理论与实验结果一致。",
+    limitations: "AEN-SAE需要调整两个超参数（L1和L2权重）；对更大规模模型的验证有限；未深入探讨弹性网络对特征质量（单语义性）的影响。",
+    relevance: "对哲学研究：将死神经元重新定义为几何不稳定性而非“坏运气”体现了科学哲学中关于科学解释的理论化——从现象描述到机制解释的转变。消除死神经元的理论驱动方法vs.启发式方法引发关于科学方法论（理论先导vs.试错）的讨论。",
+    relations: [
+      {target: "003", type: "extends", label: "从理论上解决003中识别的死神经元问题"},
+      {target: "004", type: "shares", label: "004提供了相关优化理论"},
+      {target: "005", type: "shares", label: "共同关注SAE的根本局限性"},
+      {target: "028", type: "shares", label: "028从不同角度改进SAE架构"}
+    ]
+  },
+  {
+    id: "018", title: "Does Higher Interpretability Imply Better Utility? A Pairwise Analysis on Sparse Autoencoders",
+    authors: "Xu Wang, et al.",
+    year: 2025,
+    venue: "arXiv: 2510.03659",
+    doi: "10.48550/arXiv.2510.03659",
+    pdf: "papers/018_Wang_2025_Interpretability_Utility.pdf",
+    priority: "important",
+    tags: ["SAE", "interpretability", "utility", "feature steering", "correlation analysis"],
+    summary_cn: "训练90个SAE发现可解释性和操控效用之间仅存在弱正相关（τ_b≈0.298），提出Delta Token Confidence作为新特征选择标准，将操控效果提升52.52%。",
+    abstract_cn: "本文在三个LLM上训练了90个SAE，系统分析了可解释性和下游操控效用之间的关系。核心发现：可解释性和操控效用之间仅存在弱正相关（Kendall's τ_b ≈ 0.298），表明可解释性不足以作为操控性能的代理指标。作者提出Delta Token Confidence作为一种新的特征选择标准，仅基于SAE特征对输出概率的影响进行选择，将操控效果提升了52.52%。这一结果对将可解释性等同于实用性的隐含假设提出了质疑。",
+    methodology: "90 SAEs跨3个LLMs，Kendall's τ_b相关性分析，Delta Token Confidence特征选择指标，操控效果定量评估。",
+    findings: "核心发现：（1）可解释性和效用仅弱相关（τ_b≈0.298）；（2）Delta Token Confidence大幅提升操控效果（+52.52%）；（3）可解释性不能作为效用的代理指标；（4）为SAE特征选择提供了新视角。",
+    limitations: "仅在3个LLM和有限任务上验证；Delta Token Confidence的泛化性需更多测试；弱相关性的原因（数据、架构、评估方法）需要更深入分析。",
+    relevance: "对哲学研究：可解释性和效用的弱相关直接触及工具主义vs.实在论的经典辩论——理解的深度（可解释性）与操控的成功（效用）是否必然一致？如果更好的理解不带来更好的控制，这对科学的认知价值意味着什么？",
+    relations: [
+      {target: "006", type: "empirical", label: "基于006的评估框架分析"},
+      {target: "007", type: "contradicts", label: "挑战007中可解释性改善意味着更好操控的观点"},
+      {target: "013", type: "shares", label: "与013共享对可解释性幻觉的关注"}
+    ]
+  },
+  {
+    id: "019", title: "Feature Rivalry in Sparse Autoencoder Representations: A Mechanistic Study of Uncertainty-Driven Feature Competition in LLMs",
+    authors: "Collin Francel, et al.",
+    year: 2026,
+    venue: "arXiv: 2605.08149",
+    doi: "10.48550/arXiv.2605.08149",
+    pdf: "papers/019_Francel_2026_Feature_Rivalry.pdf",
+    priority: "important",
+    tags: ["SAE", "feature rivalry", "uncertainty", "competition", "mechanistic interpretability"],
+    summary_cn: "发现SAE特征之间存在负相关的“特征竞争”现象，将其作为模型不确定性的机制性特征，可以预测答案正确性（AUROC=0.689）。",
+    abstract_cn: "本文引入“特征竞争”（Feature Rivalry）概念——指SAE特征对之间的负相关关系——作为LLM不确定性的机制性特征。在Gemma-2-2B上使用Gemma Scope SAE的实验表明，特征竞争主要定位于层0和层12，因果上游于模型输出，并可以预测答案正确性（AUROC=0.689）。特征竞争揭示了在不确定性下多个竞争性概念解释共存时的内部冲突动态。这一发现为从SAE特征的角度理解模型决策过程提供了新维度。",
+    methodology: "SAE特征对负相关分析，层定位分析（Gemma-2-2B），因果干预（上游/下游验证），AUROC正确性预测，不确定性-竞争关联分析。",
+    findings: "核心发现：（1）SAE特征间存在负相关的特征竞争；（2）竞争定位于层0和层12；（3）特征竞争因果上游于输出；（4）可预测答案正确性（AUROC=0.689）；（5）揭示了不确定性下的内部冲突机制。",
+    limitations: "仅在Gemma-2-2B上验证；特征竞争是否普遍存在于其他模型和架构未知；AUROC=0.689虽然在机制层面有意义但远非完美预测。",
+    relevance: "对哲学研究：特征竞争概念引入了一种“竞争性表征”的动态视角，挑战了传统关于稳定、一致的表征系统的假设。这与关于科学理论竞争（库恩）和认知失调的讨论相关。特征之间的竞争关系暗示表征具有“政治性”（权力、冲突、妥协），这为科学哲学提供了有趣的类比。",
+    relations: [
+      {target: "002", type: "extends", label: "基于002的SAE框架发现新现象"},
+      {target: "005", type: "shares", label: "与005共享对SAE特征间关系的分析"},
+      {target: "010", type: "shares", label: "与010同作者系列关于SAE特征的高级分析"},
+      {target: "023", type: "shares", label: "023从成对矩阵角度研究特征关系"}
+    ]
+  },
+  {
+    id: "020", title: "Dictionary Learning: The Complexity of Sparse Superposed Features with Feedback",
+    authors: "Akash Kumar",
+    year: 2025,
+    venue: "arXiv: 2502.05407",
+    doi: "10.48550/arXiv.2502.05407",
+    pdf: "papers/020_Kumar_2025_Dictionary_Learning_Feedback.pdf",
+    priority: "important",
+    tags: ["dictionary learning", "superposition", "feedback complexity", "feature recovery", "computational learning theory"],
+    summary_cn: "从计算学习理论角度研究叠加特征的反馈复杂性，量化了通过人力或LLM反馈检索叠加特征的效率上界。",
+    abstract_cn: "本文从计算学习理论角度研究了一个关键问题：神经网络中处于叠加状态的特征能否通过人类或LLM反馈高效地检索出来？作者分析了通过相对三元组比较获取反馈来学习特征矩阵的复杂度。在稀疏假设下，探索了恢复真实特征字典所需的反馈量上下界。在Recursive Feature Machines和Pythia-70M SAE上的实验验证了理论预测。论文为理解特征可恢复性的根本限制提供了理论基础。",
+    methodology: "反馈复杂度理论分析，三元组比较框架，Recursive Feature Machines/Pythia-70M SAE实验验证，上下界推导。",
+    findings: "核心发现：（1）叠加特征可通过有限量反馈恢复；（2）恢复复杂度取决于特征的稀疏性和相互独立性；（3）三元组比较是最有效的反馈形式；（4）理论上下界与实证一致。",
+    limitations: "理论分析基于稀疏性假设；反馈提供者的可靠性影响实践效果；未分析更丰富反馈形式（如自然语言描述）的复杂度。",
+    relevance: "对哲学研究：特征是否能被“检索”的问题引发关于科学知识获取的认识论讨论——机器学习可解释性在何种程度上是一种“发现”已有的结构vs.“构建”新的描述？反馈的有限性限制暗示了认识论中的有限理性（bounded rationality）约束。",
+    relations: [
+      {target: "001", type: "philosophical", label: "为001的字典学习提供计算理论基础"},
+      {target: "004", type: "shares", label: "与004共享稀疏字典学习的理论基础"},
+      {target: "011", type: "philosophical", label: "为011中特征非唯一性提供理论框架"}
+    ]
+  },
+  {
+    id: "021", title: "CE-Bench: Towards a Reliable Contrastive Evaluation Benchmark of Interpretability of Sparse Autoencoders",
+    authors: "Anonymous (under review)",
+    year: 2025,
+    venue: "arXiv: 2509.00691",
+    doi: "10.48550/arXiv.2509.00691",
+    pdf: "papers/021_Author_2025_CE_Bench.pdf",
+    priority: "ref",
+    tags: ["SAE", "benchmark", "contrastive evaluation", "lightweight", "interpretability"],
+    summary_cn: "提出轻量级对比评估基准CE-Bench，基于对比故事对，无需外部LLM裁判，与SAEBench结果达到>70% Spearman相关。",
+    abstract_cn: "CE-Bench是一个轻量级的SAE对比评估基准。与需要大量计算和外部LLM裁判的SAEBench相比，CE-Bench基于精心设计的对比故事对，直接比较SAE在不同故事上的激活模式。这种设计不需要外部LLM裁判，显著降低了评估开销。尽管设计简单，CE-Bench与SAEBench的结果达到了>70%的Spearman秩相关，使其成为快速迭代评估SAE质量的有效工具。",
+    methodology: "对比故事对设计，无外部LLM裁判的对比评估，Spearman秩相关验证，轻量级实现。",
+    findings: "核心发现：（1）对比评估无需外部LLM；（2）>70% Spearman相关于SAEBench；（3）显著降低评估开销；（4）适合快速迭代开发。",
+    limitations: "覆盖的概念类型有限（依赖故事对设计）；与SAEBench的30%不相关部分可能代表重要的评估维度；对非对比性概念（如“幸福”）的适用性有限。",
+    relevance: "对哲学研究：对比评估的设计依赖于“概念差异应体现在表征中”的隐含假设——这涉及表征的内容决定论和关于概念个体化的哲学。",
+    relations: [
+      {target: "006", type: "extends", label: "在006的基础上提供轻量级替代"},
+      {target: "022", type: "shares", label: "与022共享对评估方法学的关注"}
+    ]
+  },
+  {
+    id: "022", title: "Evaluating Sparse Autoencoders for Monosemantic Representation",
+    authors: "Anonymous (under review)",
+    year: 2025,
+    venue: "arXiv: 2508.15094",
+    doi: "10.48550/arXiv.2508.15094",
+    pdf: "papers/022_Author_2025_Evaluating_Monosemanticity.pdf",
+    priority: "ref",
+    tags: ["SAE", "evaluation", "monosemanticity", "concept separability", "concept erasure"],
+    summary_cn: "首次定量比较SAE与基础模型的单语义性，提出Jensen-Shannon概念可分离性分数和APP（基于后验概率衰减）的定向概念擦除方法。",
+    abstract_cn: "本文进行了首次SAE与基础模型之间关于单语义性的定量比较。作者引入基于Jensen-Shannon散度的概念可分离性分数来衡量特征空间的“纯净度”。此外，提出了APP（Attenuation via Posterior Probabilities）方法用于定向概念擦除——在不影响无关概念的情况下移除目标概念的表征。实验结果量化了SAE相对于原始神经元在单语义性上的改进程度，并展示了APP在精准概念擦除上的优势。",
+    methodology: "Jensen-Shannon概念可分离性分数，APP概念擦除方法，SAE vs.基础模型定量比较。",
+    findings: "核心发现：（1）SAE显著提升单语义性；（2）概念可分离性分数可靠量化改进；（3）APP实现精准概念擦除；（4）SAE架构选择显著影响效果。",
+    limitations: "评估集中在可明确定义的概念上；模糊或复合概念的评估方法论仍需发展；未涉及跨层概念表征。",
+    relevance: "对哲学研究：概念擦除技术引发伦理学问题——我们是否应该擦除模型中的某些概念？这涉及关于心智修改、遗忘权和认知自由的哲学讨论。概念可分离性的量化也是概念工程在AI中的实践。",
+    relations: [
+      {target: "006", type: "extends", label: "补充006的单语义性评估维度"},
+      {target: "007", type: "shares", label: "与007共享单语义性量化的目标"}
+    ]
+  },
+  {
+    id: "023", title: "Pairwise Matrices for Sparse Autoencoders: Single-Feature Inspection Mislabels Causal Axes",
+    authors: "Anonymous (under review)",
+    year: 2026,
+    venue: "arXiv: 2605.03160",
+    doi: "10.48550/arXiv.2605.03160",
+    pdf: "papers/023_Author_2026_Pairwise_Matrices.pdf",
+    priority: "ref",
+    tags: ["SAE", "pairwise analysis", "causal axes", "feature steering", "co-varying"],
+    summary_cn: "提出SAE的成对矩阵协议，证明单一特征检查会错误标注因果轴——协同调控揭示倒U形、联合抑制等单特征方法看不到的行为。",
+    abstract_cn: "本文挑战了SAE分析中的标准做法——逐一检查单个特征。作者提出“成对矩阵协议”，系统地检查特征对之间的共变效应。在Qwen3-1.7B-Instruct和Gemma-2-2B上的实验表明，协同操控两个特征揭示了单一特征检查完全看不到的行为模式：倒U形效应、联合抑制效应和非线性交互。这些发现表明，仅检查单个特征会系统性错误标注因果轴的方向和强度。成对分析应成为SAE解释的标准工具。",
+    methodology: "成对操控矩阵协议，倒U形效应检测，联合抑制分析，Qwen3-1.7B-Instruct + Gemma-2-2B验证。",
+    findings: "核心发现：（1）单一特征检查系统性错误标注因果轴；（2）成对操控揭示非线性交互；（3）倒U形和联合抑制效应普遍存在；（4）成对分析应成为标准实践。",
+    limitations: "计算开销随特征数量二次增长；成对分析难以扩展到更高阶交互（三元组等）；对因果关系vs.相关性的区分仍需要额外验证。",
+    relevance: "对哲学研究：成对分析的发现揭示了还原论的局限——将系统分解为部分并分别研究可能遗漏关键的相互作用效应。这与科学哲学中整体论vs.还原论的经典辩论高度相关。非线性交互也引发关于线性因果模型的哲学讨论。",
+    relations: [
+      {target: "002", type: "extends", label: "扩展002的单特征操控到成对分析"},
+      {target: "005", type: "shares", label: "与005共享对SAE分析方法的批判"},
+      {target: "019", type: "shares", label: "与019共享对特征间关系的分析"}
+    ]
+  },
+  {
+    id: "024", title: "Superposition Disentanglement of Neural Representations Reveals Hidden Alignment",
+    authors: "André Longon, et al.",
+    year: 2025,
+    venue: "arXiv: 2510.03186",
+    doi: "10.48550/arXiv.2510.03186",
+    pdf: "papers/024_Longon_2025_Superposition_Disentanglement.pdf",
+    priority: "ref",
+    tags: ["superposition", "SAE", "representational alignment", "disentanglement", "similarity"],
+    summary_cn: "发现叠加结构干扰表征对齐指标，使用SAE解缠叠加后对齐分数显著增加，揭示叠加解缠是表征相似性比较的必要前提。",
+    abstract_cn: "本文研究了一个关键方法论问题：神经网络中的叠加结构如何干扰标准的表征对齐度量。作者发现，由于叠加的存在，两个可能共享相似表征的网络在标准对齐指标（如CKA、PWCCA）上可能表现得很不同。使用SAE解缠叠加后，网络间的对齐分数显著增加。这不仅验证了SAE在恢复“真实”表征上的有效性，也表明叠加解缠是进行跨模型表征比较的必要预处理步骤。这一发现对表征相似性研究的整个方法论有深远影响。",
+    methodology: "CKA/PWCCA等对齐指标在原始vs.SAE解缠表征上的比较，多模型对分析，叠加-对齐干扰量化。",
+    findings: "核心发现：（1）叠加扭曲了表征对齐度量；（2）SAE解缠后对齐分数增加；（3）解缠是表征比较的必要预处理；（4）揭示此前被叠加“隐藏”的对齐。",
+    limitations: "SAE解缠本身可能引入变换偏差；对齐分数的增加部分可能是SAE训练的副产品；未在所有可能的表征空间上进行验证。",
+    relevance: "对哲学研究：叠加作为“隐藏结构”的概念引发关于科学实在论的讨论——结构在何种意义上是“真实的”如果它在常规度量下不可见？这与关于不可观察实体和理论术语的科学哲学辩论直接相关。",
+    relations: [
+      {target: "001", type: "empirical", label: "为001的叠加假说提供实证支持"},
+      {target: "011", type: "shares", label: "与011共享对特征空间相似性的关注"},
+      {target: "002", type: "extends", label: "扩展002使用SAE进行表征分析"}
+    ]
+  },
+  {
+    id: "025", title: "SCALAR: Benchmarking SAE Interaction Sparsity in Toy LLMs",
+    authors: "Anonymous (under review)",
+    year: 2025,
+    venue: "arXiv: 2511.07572",
+    doi: "10.48550/arXiv.2511.07572",
+    pdf: "papers/025_Author_2025_SCALAR.pdf",
+    priority: "ref",
+    tags: ["SAE", "benchmark", "interaction sparsity", "staircase SAE", "weight sharing"],
+    summary_cn: "提出测量SAE特征间跨层交互稀疏性的基准，并引入“阶梯SAE”（Staircase SAE）通过权重共享减少虚假跨层连接。",
+    abstract_cn: "SCALAR是一个专注于测量SAE特征之间跨层交互稀疏性的基准。作者认为，除了特征的单语义性外，特征间的交互稀疏性（简洁的功能电路）同样重要。SCALAR在玩具LLM上系统评估了不同SAE架构的交互稀疏性。此外，作者提出了Staircase SAE——一种通过跨层权重共享来减少虚假跨层连接的架构。实验表明，Staircase SAE在保持重建质量的同时显著减少了跨层虚假连接。",
+    methodology: "交互稀疏性度量，玩具LLM基准测试，Staircase SAE架构设计（跨层权重共享），多架构比较。",
+    findings: "核心发现：（1）交互稀疏性是SAE的重要但被忽视的维度；（2）标准SAE包含大量虚假跨层连接；（3）Staircase SAE有效减少虚假连接；（4）玩具模型中的结果对实践有指导意义。",
+    limitations: "仅在玩具LLM上验证；虚假连接的定义和检测依赖于简化假设；权重共享策略对更大模型的适用性未知。",
+    relevance: "对哲学研究：交互稀疏性的概念体现了“奥卡姆剃刀”哲学——更简单的交互模式更好。这与科学哲学中关于理论选择的简洁性标准的讨论相关。虚假连接的存在也引发关于因果推断可靠性的认识论问题。",
+    relations: [
+      {target: "006", type: "shares", label: "与006共享SAE评估基准的目标"},
+      {target: "016", type: "shares", label: "与016共享跨层分析的关注"}
+    ]
+  },
+  {
+    id: "026", title: "Polysemantic Experts, Monosemantic Paths: Routing as Control in Mixture of Experts",
+    authors: "Anonymous (under review)",
+    year: 2026,
+    venue: "arXiv: 2604.17837",
+    doi: "10.48550/arXiv.2604.17837",
+    pdf: "papers/026_Author_2026_Polysemantic_Experts.pdf",
+    priority: "ref",
+    tags: ["MoE", "routing", "polysemanticity", "monosemanticity", "feature decomposition"],
+    summary_cn: "发现在MoE模型中，单个专家仍保持多样征性，但专家路径组合变得单语义化——残差流中的控制信号因果驱动路由。",
+    abstract_cn: "本文研究了Mixture of Experts（MoE）架构中的单/多样征性问题。一个反直觉的发现是：在MoE中，单个专家仍然高度多样征化，但专家路径（特定的路由组合序列）变得高度单语义化。作者识别出残差流中存在一个专门的控制信号，因果性地驱动路由决策，而内容处理通道与此正交。这意味着MoE通过路由机制自然地实现了一种形式的稀疏编码——路由本身就是一种可解释的特征分解，虽然这种分解发生在路径空间而非潜在特征空间。",
+    methodology: "MoE路由分析（专家路径追踪），控制信号与内容信号的因果分离实验，路径单语义性量化。",
+    findings: "核心发现：（1）MoE专家仍是多样征的；（2）专家路径组合是单语义的；（3）路由控制信号与内容通道正交；（4）MoE路由自然实现稀疏编码。",
+    limitations: "仅分析特定MoE架构；路径语义性的评估依赖外部标注；路由的可解释性可能比SAE特征更难直接利用。",
+    relevance: "对哲学研究：MoE路径单语义性的发现提供了一种与SAE互补的表征分解视角——不是在潜在空间中找单语义方向，而是在计算路径中找单语义组合。这引发关于表征vs.计算、静态属性vs.动态过程的本体论讨论。",
+    relations: [
+      {target: "001", type: "extends", label: "在MoE架构中延伸001的单语义性分析"},
+      {target: "005", type: "shares", label: "与005共享对特征分解结构的关注"},
+      {target: "010", type: "shares", label: "与010共享对MoE架构的可解释性分析"}
+    ]
+  },
+  {
+    id: "027", title: "Time-Aware Feature Selection: Adaptive Temporal Masking for Stable Sparse Autoencoder Training",
+    authors: "Anonymous (under review)",
+    year: 2025,
+    venue: "arXiv: 2510.08855",
+    doi: "10.48550/arXiv.2510.08855",
+    pdf: "papers/027_Author_2025_Time_Aware_Feature_Selection.pdf",
+    priority: "ref",
+    tags: ["SAE", "temporal", "adaptive masking", "feature selection", "stability"],
+    summary_cn: "提出自适应时间掩码（ATM）方法，与JumpReLU和TopK SAE对比，将特征吸收降低40%，在Gemma-2-2B上实现更稳定的SAE训练。",
+    abstract_cn: "本文提出了Adaptive Temporal Masking（ATM），一个通过在时间维度上自适应选择特征来稳定SAE训练的新方法。ATM利用token之间的时间连续性信息来决定哪些特征应被激活或抑制。与JumpReLU（吸收率0.0114）相比，ATM将特征吸收率降至0.0068（降低约40%），在Gemma-2-2B上实现了更稳定的训练和更高的特征质量。论文还将ATM与TopK、标准ReLU SAE进行了系统基准比较。",
+    methodology: "自适应时间掩码设计，吸收率量化比较（ATM vs. JumpReLU vs. TopK），Gemma-2-2B实验，训练稳定性评估。",
+    findings: "核心发现：（1）ATM将吸收率降至0.0068（优于JumpReLU的0.0114）；（2）训练更加稳定；（3）时间信息是特征选择的强信号；（4）与多种SAE架构兼容。",
+    limitations: "计算开销较标准SAE增加；ATM对非序列数据适用性有限；吸收率改善是否转化为下游任务改善需要更多验证。",
+    relevance: "对哲学研究：ATM利用时间连续性作为特征选择的先验，体现了时间在认知结构中的基础作用——这与现象学关于时间意识（胡塞尔）和关于过程本体论的哲学讨论相关。",
+    relations: [
+      {target: "005", type: "extends", label: "直接针对005的吸收问题提出解决方案"},
+      {target: "008", type: "shares", label: "与008共享时间信息利用的思路"},
+      {target: "017", type: "shares", label: "与017共享改善SAE稳定性的目标"}
+    ]
+  },
+  {
+    id: "028", title: "AbsTopK: Rethinking Sparse Autoencoders For Bidirectional Features",
+    authors: "Anonymous (under review)",
+    year: 2025,
+    venue: "arXiv: 2510.00404",
+    doi: "10.48550/arXiv.2510.00404",
+    pdf: "papers/028_Author_2025_AbsTopK.pdf",
+    priority: "ref",
+    tags: ["SAE", "bidirectional", "AbsTopK", "proximal gradient", "feature activation"],
+    summary_cn: "从近端梯度推导SAE变体（ReLU, JumpReLU, TopK），提出AbsTopK允许双向特征激活，解决了非负性限制，为SAE架构提供统一推导框架。",
+    abstract_cn: "本文从一个统一的近端梯度推导框架出发，重新审视了SAE的主要变体（ReLU, JumpReLU, TopK）。作者揭示了这些架构都可以理解为对同一稀疏优化问题的不同近似。基于此分析，作者提出AbsTopK——一个新的SAE变体，允许特征取正负值（双向激活），克服了ReLU/JumpReLU/TopK的非负性限制。在合成数据和语言模型上的实验表明，AbsTopK在重建保真度和特征可解释性上均优于或匹配标准架构，同时恢复了对立特征（如正面vs.负面情感）。",
+    methodology: "近端梯度统一推导，AbsTopK架构设计（绝对值+TopK），合成数据+语言模型实验，双向特征恢复评估。",
+    findings: "核心发现：（1）SAE变体可统一为近端梯度推导；（2）AbsTopK允许双向特征；（3）双向特征恢复对立概念；（4）重建保真度和可解释性均优。",
+    limitations: "双向特征的语义解释更复杂；AbsTopK的超参数空间不同（需要新的调优策略）；对非对立概念的效果尚不清楚。",
+    relevance: "对哲学研究：双向特征的引入引发关于概念本质的有趣讨论——许多概念以正反对立的形式存在（好/坏、真/假），这表明神经网络天然具有这种结构。这与关于辩证法和概念对立的哲学传统相关。",
+    relations: [
+      {target: "003", type: "extends", label: "扩展003的TopK允许双向激活"},
+      {target: "004", type: "shares", label: "与004共享稀疏优化的统一框架"},
+      {target: "017", type: "shares", label: "与017共享SAE架构改进的目标"}
+    ]
+  }
+];
+
+const NOTES = [
+  {
+    paper_id: "001",
+    title: "阅读笔记：Towards Monosemanticity",
+    date: "2026-05-13",
+    content: "**1. 论文核心论点**\n\nBricken等人论证了多语义神经元（polysemanticity）是机械可解释性的根本障碍——单个神经元同时响应多个无关概念使得基于神经元的因果分析几乎不可能。他们提出稀疏自编码器（SAE）作为解决方案，将神经元激活分解为更多但更单语义的“特征”。核心哲学主张：特征（而非神经元）是模型表征的本体论基本单位。\n\n**2. 方法论评价**\n\nSAE基于弱字典学习——将激活向量x分解为稀疏系数f和字典矩阵W的乘积。方法论的核心假设是可分解性：即叠加的神经元激活可以通过稀疏性约束被解开。盲法人类评估提供了可靠的验证，但“自动可解释性”（用LLM描述特征）引入了循环论证风险。\n\n**3. 与本研究的关系**\n\n本研究项目的核心问题——机械可解释性的哲学基础——直接起源于这篇论文。三个关键哲学问题：(1) 特征的本体论地位：它们是“发现的”还是“构建的”？(2) 普遍性主张的认识论前提是什么？(3) 因果操控实验在何种意义上证明了特征的真实性？\n\n**4. 值得深入的问题**\n- SAE的分解是否唯一？如果不唯一，不同的分解是否同样“有效”？\n- 普遍性的发现依赖于特定的相似性度量——度量选择是否有理论依据？\n- 特征分裂的哲学含义：这是否意味着概念是连续的而非离散的？"
+  },
+  {
+    paper_id: "002",
+    title: "阅读笔记：Scaling Monosemanticity",
+    date: "2026-05-13",
+    content: "**1. 论文核心论点**\n\n将SAE方法扩展到Claude 3 Sonnet（生产级LLM），证明SAE可以在工业规模上工作，且遵循可预测的缩放定律。核心主张：大规模可解释性是可行的，主要障碍是工程而非科学。\n\n**2. 方法论评价**\n\n三个SAE规模（1M/4M/34M特征）提供了缩放定律的实证基础。特征操控实验（如金门大桥Claude）提供了强有力的因果证据。安全特征的发现令人印象深刻但引发“发现≠缓解”的问题。死特征问题（65%在34M规模下死亡）表明缩放并非万能药。\n\n**3. 与本研究的关系**\n\n本研究最直接的实证基础。缩放定律的发现为科学哲学中的“渐近真理”讨论提供了案例——更大的模型/SAE是否渐近于“真实”的表征结构？如果65%的特征在34M规模下死亡，我们离“完整”理解还有多远？\n\n**4. 值得深入的问题**\n- 如果SAE需要在每个规模上重新训练，可解释性是否具有累积性？\n- 安全特征的发现如何改变我们对“AI对齐”的理解？\n- 特征操控在何种意义上证明了理解？如何区分操控和破坏？"
+  },
+  {
+    paper_id: "003",
+    title: "阅读笔记：Scaling and Evaluating Sparse Autoencoders (OpenAI)",
+    date: "2026-05-13",
+    content: "**1. 论文核心论点**\n\nOpenAI从关注SAE架构创新切入：使用TopK（k-稀疏）替代L1惩罚来直接控制稀疏度，提出解决死神经元问题的工程方案，建立了更精细的缩放定律。核心贡献：TopK架构、死神经元解决方案（转置初始化+AuxK损耗）、GPT-4规模的验证。\n\n**2. 方法论评价**\n\nTopK激活函数强制每个输入激活恰好k个特征——这简化了稀疏度控制但引入了“全局等稀疏性”假设，可能不总是最优。转置初始化的直觉（编码器和解码器应“对称”）是理论性的但有效。AuxK损耗代表了工程化的“事后补救”而非根本解决方案。\n\n**3. 与本研究的关系**\n\nOpenAI和Anthropic的同期工作形成了有趣的对比：两者都关注缩放但采用不同的架构哲学（TopK vs. ReLU+L1）。这为本研究的科学知识社会学维度提供了素材——不同的研究团队如何基于不同的预设方法论开发生成知识。\n\n**4. 值得深入的问题**\n- TopK的全局等稀疏性是否在形而上学层面上预设了“所有表征具有同等的结构复杂性”？\n- 转置初始化的有效性说明了关于表征结构的什么原理？\n- GPT-4的16M SAE规模是否已经超过了人类可理解的极限？"
+  },
+  {
+    paper_id: "004",
+    title: "阅读笔记：Unified Theory of Sparse Dictionary Learning",
+    date: "2026-05-13",
+    content: "**1. 论文核心论点**\n\nTang等人首次将SAE、transcoder和crosscoder统一为分段双凸优化问题，从理论上解释了特征吸收、死神经元和多样征性。核心创新：理论形式化帮助识别哪些问题是“固有的”而哪些是可以“工程解决的”。\n\n**2. 方法论评价**\n\n分段双凸优化框架的理论优雅性令人印象深刻。特征锚定技术从理论基础中自然导出——这是好的理论指导实践的案例。然而，理论假设（精确稀疏性）与实际数据分布之间的差距仍需弥合。Linear Representation Bench的评估范围有限。\n\n**3. 与本研究的关系**\n\n本研究项目的理论维度最重要的参考论文。它为关于可识别性（identifiability）的哲学讨论提供了精确的数学语言——在什么条件下我们能唯一地确定表征结构？伪局部最小值的概念为关于“科学进步是否收敛到真理”的讨论提供了模拟。\n\n**4. 值得深入的问题**\n- 可识别性的条件与现实世界的SAE训练有多大的差距？\n- 伪局部最小值的普遍性是否意味着我们对“表征”的理解永远是部分的？\n- 特征锚定是认识论上的“作弊”吗？（利用外部知识恢复可识别性）"
+  },
+  {
+    paper_id: "005",
+    title: "阅读笔记：A is for Absorption",
+    date: "2026-05-13",
+    content: "**1. 论文核心论点**\n\nChanin等人揭示了SAE中一个根本性的缺陷——特征吸收：在概念层级结构中，表面上的单语义特征在特定情况下会默默失效，因为其表征方向被更具体的子特征“吸收”。核心主张：这不是可修复的工程问题，而是优化稀疏性目标的固有结果。\n\n**2. 方法论评价**\n\n玩具模型+真实LLM的双轨验证策略非常有效——玩具模型提供因果可控性，真实模型提供外部有效性。吸收检测指标简单但有辨识力。证明“调整宽度和稀疏度不能解决问题”的方法论（消融实验）全面且令人信服。但解决方案（Meta-SAE, group lasso）的实证验证有限。\n\n**3. 与本研究的关系**\n\n该论文为本研究的怀疑论维度提供了最强的实证支持。如果吸收是SAE的固有局限，那么“特征作为事物本身”的实在论立场受到严重挑战。本研究的核心问题之一——机械可解释性是否是真正的科学知识——可以在这篇论文中找到最尖锐的实证表达。\n\n**4. 值得深入的问题**\n- 如果SAE不能可靠地恢复层级结构，是否意味着任何线性分解都是不完整的？\n- 特征吸收是否反映了大脑/心智中类似的表征问题？\n- 吸收的哲学类比：表象与实在的关系是否永远是层级的？\n- Meta-SAE的回归是否意味着我们需要无限回归才能完全理解？"
+  }
+];
+
+const DOMAIN_ID = '01_sae_features';
+
+let activeFilter = 'all';
+let graphNetwork = null;
+let graphData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderCards(PAPERS);
+  renderNotes();
+  updateStats();
+  initTabs();
+  initFilters();
+});
+
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'graph') initGraph();
+    });
+  });
+}
+
+function initFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.filter === activeFilter) {
+        activeFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+      } else {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      filterCards();
+    });
+  });
+}
+
+function filterCards() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const filtered = PAPERS.filter(p => {
+    const matchesFilter = activeFilter === 'all' || p.priority === activeFilter ||
+      (activeFilter === '2026' && p.year === 2026) ||
+      (activeFilter === '2025' && p.year === 2025) ||
+      (activeFilter === '2024' && p.year <= 2024);
+    const matchesSearch = !query ||
+      p.title.toLowerCase().includes(query) ||
+      p.authors.toLowerCase().includes(query) ||
+      p.tags.some(t => t.toLowerCase().includes(query)) ||
+      p.summary_cn.toLowerCase().includes(query);
+    return matchesFilter && matchesSearch;
+  });
+  renderCards(filtered);
+}
+
+function renderCards(papers) {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = papers.map(p => `
+    <div class="card priority-${p.priority}" onclick="openPaper('${p.id}')">
+      <div class="card-priority-badge ${p.priority}"></div>
+      <div class="card-id">${p.id} · ${p.year}</div>
+      <div class="card-title">${p.title}</div>
+      <div class="card-authors">${p.authors}</div>
+      <div class="card-summary">${p.summary_cn}</div>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+  if (papers.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">没有匹配的文献</div>`;
+  }
+}
+
+function openPaper(id) {
+  const p = PAPERS.find(x => x.id === id);
+  if (!p) return;
+
+  let relHtml = '';
+  if (p.relations && p.relations.length > 0) {
+    relHtml = p.relations.map(r =>
+      `<span class="rel-badge ${r.type}">${r.label} → ${r.target}</span>`
+    ).join('');
+  }
+
+  const html = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="card-priority-badge ${p.priority}" style="position:static;display:inline-block;margin-bottom:0.5rem"></div>
+    <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem">${p.id} · ${p.year} · ${p.priority === 'must' ? '必读' : p.priority === 'important' ? '重要' : '参考'}</span>
+    <h2>${p.title}</h2>
+    <div class="meta">${p.authors}${p.venue ? ' · ' + p.venue : ''}${p.doi ? ' · DOI: ' + p.doi : ''}</div>
+    ${p.pdf ? `<div class="meta"><a href="${p.pdf}" target="_blank">📄 打开PDF</a></div>` : ''}
+
+    <section>
+      <h3>一句话概要</h3>
+      <p>${p.summary_cn}</p>
+    </section>
+
+    <section>
+      <h3>完整摘要</h3>
+      <p>${p.abstract_cn || p.summary_cn}</p>
+    </section>
+
+    ${p.methodology ? `
+    <section>
+      <h3>方法论与实验设计</h3>
+      <p>${p.methodology}</p>
+    </section>` : ''}
+
+    ${p.findings ? `
+    <section>
+      <h3>核心发现与贡献</h3>
+      <p>${p.findings}</p>
+    </section>` : ''}
+
+    ${p.limitations ? `
+    <section>
+      <h3>局限性与批评</h3>
+      <p>${p.limitations}</p>
+    </section>` : ''}
+
+    ${p.relevance ? `
+    <section>
+      <h3>与本研究的相关性</h3>
+      <p>${p.relevance}</p>
+    </section>` : ''}
+
+    ${relHtml ? `
+    <section>
+      <h3>文献关联</h3>
+      <div class="relations">${relHtml}</div>
+    </section>` : ''}
+
+    <section>
+      <h3>关键词</h3>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </section>
+  `;
+
+  document.getElementById('modal').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+function initGraph() {
+  if (graphNetwork) return;
+
+  const nodes = PAPERS.map((p, i) => ({
+    id: p.id,
+    label: `${p.id}\n${p.title.substring(0, 30)}...`,
+    color: {
+      background: p.priority === 'must' ? '#4ade80' : p.priority === 'important' ? '#fbbf24' : '#64748b',
+      border: p.priority === 'must' ? '#22c55e' : p.priority === 'important' ? '#f59e0b' : '#475569'
+    },
+    font: { color: '#dce3f0', size: 10 },
+    size: p.priority === 'must' ? 28 : p.priority === 'important' ? 22 : 16,
+  }));
+
+  const edgeMap = {};
+  const edges = [];
+  const edgeColors = {
+    cites: { color: '#818cf8', dashes: false },
+    extends: { color: '#2dd4bf', dashes: false },
+    contradicts: { color: '#f87171', dashes: true },
+    shares: { color: '#f5a623', dashes: false },
+    empirical: { color: '#a78bfa', dashes: true },
+    philosophical: { color: '#fb923c', dashes: true }
+  };
+
+  PAPERS.forEach(p => {
+    if (!p.relations) return;
+    p.relations.forEach(r => {
+      const key = `${p.id}->${r.target}`;
+      if (!edgeMap[key]) {
+        edgeMap[key] = true;
+        edges.push({
+          from: p.id,
+          to: r.target,
+          label: r.label,
+          ...(edgeColors[r.type] || edgeColors.cites)
+        });
+      }
+    });
+  });
+
+  const container = document.getElementById('graph-container');
+  graphData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+  graphNetwork = new vis.Network(container, graphData, {
+    physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -30, centralGravity: 0.005, springLength: 150 } },
+    edges: { smooth: { type: 'continuous' }, font: { size: 8, color: '#8899bb' } },
+    interaction: { hover: true, tooltipDelay: 200 },
+  });
+
+  graphNetwork.on('click', function(evt) {
+    if (evt.nodes.length > 0) openPaper(evt.nodes[0]);
+  });
+}
+
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!NOTES || NOTES.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted)">暂无阅读笔记。检索完成后将为核心论文撰写笔记。</div>`;
+    return;
+  }
+  list.innerHTML = NOTES.map(n => `
+    <div class="note-card">
+      <h4>${n.title}</h4>
+      <div class="note-meta">${n.paper_id} · ${n.date || ''}</div>
+      <p>${n.content}</p>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('paper-count').textContent = PAPERS.length;
+  document.getElementById('must-count').textContent = PAPERS.filter(p => p.priority === 'must').length;
+  document.getElementById('note-count').textContent = NOTES ? NOTES.length : 0;
+}
+</script>
+
+<div class="wiki-footer">
+  <div class="footer-title">浏览其他领域</div>
+  <div class="footer-domains">
+    <a href="../01_sae_features/wiki.html">01 SAE与特征分解</a>
+    <a href="../02_activation_engineering/wiki.html">02 激活与表征工程</a>
+    <a href="../03_causal_intervention/wiki.html">03 因果干预与心灵哲学</a>
+    <a href="../04_alignment_safety/wiki.html">04 AI对齐理论与安全</a>
+    <a href="../05_ethics_governance/wiki.html">05 AI伦理与治理</a>
+    <a href="../06_philosophy_of_science/wiki.html">06 科学哲学</a>
+    <a href="../07_philosophy_of_mind/wiki.html">07 心灵哲学与AI</a>
+    <a href="../08_representational_ontology/wiki.html">08 表征本体论 (Gap 1)</a>
+    <a href="../09_epistemology_understanding/wiki.html">09 理解认识论 (Gap 2)</a>
+    <a href="../10_causal_sufficiency/wiki.html">10 因果充分性 (Gap 3)</a>
+    <a href="../11_vector_grounding/wiki.html">11 向量奠基 (Gap 4)</a>
+  </div>
+  <div class="footer-back">
+    <a href="../index.html">← 返回文献知识库总览</a>
+  </div>
+</div>
+
+</body>
+</html>

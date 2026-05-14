@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>05_ethics_governance · 文献Wiki</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-void: #06080f;
+      --bg-primary: #0c0f1a;
+      --bg-secondary: #12182a;
+      --bg-tertiary: #1a2238;
+      --bg-elevated: #222d4a;
+      --text-primary: #dce3f0;
+      --text-secondary: #8899bb;
+      --text-muted: #556688;
+      --text-faint: #334466;
+      --border-subtle: rgba(68, 102, 153, 0.08);
+      --border-medium: rgba(68, 102, 153, 0.18);
+      --border-strong: rgba(68, 102, 153, 0.30);
+      --c-priority-must: #4ade80;
+      --c-priority-important: #fbbf24;
+      --c-priority-ref: #64748b;
+      --c-rel-cites: #818cf8;
+      --c-rel-extends: #2dd4bf;
+      --c-rel-contradicts: #f87171;
+      --c-rel-shares: #f5a623;
+      --c-rel-empirical: #a78bfa;
+      --c-rel-philosophical: #fb923c;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition-base: 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem; color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .header-stats {
+      display: flex; gap: 1.5rem;
+      font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+    }
+    .header-stat span { color: var(--text-primary); font-weight: 500; }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex; gap: 0;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 0 2rem;
+    }
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none; background: none;
+      color: var(--text-muted); font-family: var(--font-body);
+      font-size: 0.85rem; cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-base);
+    }
+    .tab-btn:hover { color: var(--text-secondary); }
+    .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--c-rel-cites); }
+
+    /* Tab Content */
+    .tab-content { display: none; padding: 2rem; }
+    .tab-content.active { display: block; }
+
+    /* Filters */
+    .filters {
+      display: flex; gap: 0.75rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.85rem;
+      border: 1px solid var(--border-medium); border-radius: 999px;
+      background: transparent; color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.7rem;
+      cursor: pointer; transition: all var(--transition-base);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--text-secondary); color: var(--text-primary);
+    }
+    .filter-btn.priority-must.active { border-color: var(--c-priority-must); color: var(--c-priority-must); }
+    .filter-btn.priority-important.active { border-color: var(--c-priority-important); color: var(--c-priority-important); }
+    .filter-btn.priority-ref.active { border-color: var(--c-priority-ref); color: var(--c-priority-ref); }
+
+    .search-input {
+      padding: 0.35rem 1rem;
+      background: var(--bg-secondary); border: 1px solid var(--border-medium);
+      border-radius: 999px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 0.8rem;
+      width: 240px; outline: none;
+    }
+    .search-input:focus { border-color: var(--border-strong); }
+
+    /* Card Grid */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card.priority-must { border-left: 3px solid var(--c-priority-must); }
+    .card.priority-important { border-left: 3px solid var(--c-priority-important); }
+    .card.priority-ref { border-left: 3px solid var(--c-priority-ref); }
+
+    .card-id {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: var(--text-faint); margin-bottom: 0.5rem;
+    }
+    .card-title {
+      font-size: 0.95rem; font-weight: 500;
+      color: var(--text-primary); margin-bottom: 0.4rem;
+      line-height: 1.35;
+    }
+    .card-authors {
+      font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .card-summary {
+      font-size: 0.78rem; color: var(--text-secondary);
+      line-height: 1.5; margin-bottom: 0.75rem;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags {
+      display: flex; gap: 0.35rem; flex-wrap: wrap;
+    }
+    .card-tag {
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      background: var(--bg-tertiary); color: var(--text-muted);
+      font-size: 0.65rem; font-family: var(--font-mono);
+    }
+    .card-priority-badge {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .card-priority-badge.must { background: var(--c-priority-must); box-shadow: 0 0 6px var(--c-priority-must); }
+    .card-priority-badge.important { background: var(--c-priority-important); box-shadow: 0 0 6px var(--c-priority-important); }
+    .card-priority-badge.ref { background: var(--c-priority-ref); }
+
+    /* Detail Panel (Modal) */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(6,8,15,0.85); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      max-width: 780px; width: 90vw; max-height: 85vh;
+      overflow-y: auto; padding: 2rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      width: 32px; height: 32px; border: 1px solid var(--border-medium);
+      border-radius: 50%; background: transparent; color: var(--text-muted);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-base);
+    }
+    .modal-close:hover { border-color: #f87171; color: #f87171; }
+    .modal h2 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .modal .meta { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; }
+    .modal section { margin-bottom: 1.25rem; }
+    .modal section h3 {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .modal section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+    .modal .relations { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .modal .rel-badge {
+      padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.7rem;
+      font-family: var(--font-mono);
+    }
+    .rel-badge.cites { background: rgba(129,140,248,0.15); color: var(--c-rel-cites); }
+    .rel-badge.extends { background: rgba(45,212,191,0.15); color: var(--c-rel-extends); }
+    .rel-badge.contradicts { background: rgba(248,113,113,0.15); color: var(--c-rel-contradicts); }
+    .rel-badge.shares { background: rgba(245,166,35,0.15); color: var(--c-rel-shares); }
+    .rel-badge.empirical { background: rgba(167,139,250,0.15); color: var(--c-rel-empirical); }
+    .rel-badge.philosophical { background: rgba(251,146,60,0.15); color: var(--c-rel-philosophical); }
+
+    /* Graph Container */
+    .graph-container {
+      width: 100%; height: 70vh;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+    .graph-legend {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      margin-top: 1rem; padding: 0.75rem 1rem;
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+    }
+    .graph-legend-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.7rem; color: var(--text-muted);
+    }
+    .graph-legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    /* Reading Notes */
+    .notes-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .note-card {
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 1.25rem;
+    }
+    .note-card h4 { font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .note-card .note-meta { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 0.6rem; }
+    .note-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-void); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+    a { color: var(--c-rel-cites); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Footer navigation */
+    .wiki-footer {
+      margin-top: 3rem; padding: 1.5rem 2rem;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-medium);
+    }
+    .wiki-footer a { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; transition: color var(--transition-base); }
+    .wiki-footer a:hover { color: var(--text-primary); text-decoration: none; }
+    .wiki-footer .footer-title { font-size: 0.7rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-domains { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-back { margin-top: 0.5rem; }
+    .wiki-footer .footer-back a { color: var(--c-rel-cites); font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.35rem">
+      <a href="../index.html" style="color:var(--c-rel-cites)">&larr; 文献知识库总览</a>
+    </div>
+    <div class="header-title">AI伦理与治理</div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.15rem">AI Ethics · Moral Patienthood · Governance · Accountability · Participatory Alignment</div>
+  </div>
+  <div class="header-stats">
+    <div class="header-stat">文献 <span id="paper-count">0</span></div>
+    <div class="header-stat">必读 <span id="must-count" style="color:var(--c-priority-must)">0</span></div>
+    <div class="header-stat">笔记 <span id="note-count">0</span></div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="browse">📋 浏览文献</button>
+  <button class="tab-btn" data-tab="graph">🔗 关系图谱</button>
+  <button class="tab-btn" data-tab="notes">📝 阅读笔记</button>
+</div>
+
+<!-- Tab: Browse -->
+<div class="tab-content active" id="tab-browse">
+  <div class="filters">
+    <input class="search-input" id="search" placeholder="搜索标题/作者/关键词..." oninput="filterCards()">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="filter-btn priority-must" data-filter="must">必读</button>
+    <button class="filter-btn priority-important" data-filter="important">重要</button>
+    <button class="filter-btn priority-ref" data-filter="ref">参考</button>
+    <button class="filter-btn" data-filter="2026">2026</button>
+    <button class="filter-btn" data-filter="2025">2025</button>
+    <button class="filter-btn" data-filter="2024">≤2024</button>
+  </div>
+  <div class="card-grid" id="card-grid"></div>
+</div>
+
+<!-- Tab: Graph -->
+<div class="tab-content" id="tab-graph">
+  <div class="graph-container" id="graph-container"></div>
+  <div class="graph-legend" id="graph-legend">
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-must)"></div> 必读</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-important)"></div> 重要</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-ref)"></div> 参考</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-cites)"></div> 引用</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-extends)"></div> 方法继承</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-contradicts)"></div> 对立观点</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-shares)"></div> 共享概念</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-empirical)"></div> 经验基础</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-philosophical)"></div> 哲学先导</div>
+  </div>
+</div>
+
+<!-- Tab: Notes -->
+<div class="tab-content" id="tab-notes">
+  <div class="notes-list" id="notes-list"></div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js"></script>
+<script>
+// ═══════════════════════════════ DATA ═══════════════════════════════
+const PAPERS = [
+  {
+    id: "001", title: "Taking Artificial Intelligences Seriously: The Grounds of Well-Being and Obligations to Artificial Moral Patients",
+    authors: "Tugba Yoldas",
+    year: 2025, venue: "Doctoral Dissertation, University of Alberta",
+    doi: "",
+    pdf: "https://era.library.ualberta.ca/items/9b07e7d6-0b2c-4b8c-9a5c-78bae1e7d32f",
+    priority: "important",
+    tags: ["AI moral patienthood", "phenomenal consciousness", "population ethics", "AI rights"],
+    summary_cn: "以现象意识为道德患者地位的必要条件，论证当前不应创造人工道德患者。",
+    abstract_cn: "本博士论文系统回答两个核心问题：(1) 什么条件使AI成为道德患者（即其福祉在道德上具有内在重要性）？(2) 我们是否应当创造人工道德患者？在第一个问题上，作者论证现象意识——统一的、丰富的、多感官的、以自我为中心的体验——是道德患者地位的必要条件：在任何合理的福祉理论下，一个存在者必须具备主观体验状态（快乐、痛苦、信念、情感）才具有道德可考量性。当前没有任何AI系统满足这些条件。在第二个问题上，作者借鉴人口伦理学，论证我们有强烈的道德理由对创造人工道德患者保持审慎——至少在目前如此。尽管自动驾驶汽车和护理机器人比现有语言模型更接近道德患者地位，但它们仍缺乏以自我为中心的动机系统。",
+    methodology: "分析哲学方法：概念分析、规范性论证与人口伦理学理论应用。综合心灵哲学、伦理学和福祉理论的多学科框架。",
+    findings: "现象意识是道德患者地位不可或缺的条件；当前AI缺乏此条件；人口伦理学的'不对称性'论证表明我们有道德理由避免创造新的可受苦存在者；即使未来技术使创造有意识AI成为可能，我们也应极其审慎。",
+    limitations: "仅从分析哲学传统出发，未充分纳入非西方伦理框架（如佛教对众生福祉的理解）；假设意识理论的内在价值共识而未考察文化差异；未深入讨论'渐进式'意识出现的边界问题。",
+    relevance: "为'机械可解释性'的伦理哲学研究提供了道德患者地位的规范性基础。如果未来机械可解释性技术被用于评估AI系统是否具有意识或福祉，本文的论证框架将成为判定此类技术伦理意义的核心参考。",
+    relations: [
+      {target: "003", type: "philosophical", label: "Yoldas的意识必要条件为Keeling & Street的AI福祉框架提供了哲学基础"},
+      {target: "020", type: "contradicts", label: "Yoldas要求现象意识，而Goldstein论证语言智能体无需意识即可具有福祉"}
+    ]
+  },
+  {
+    id: "002", title: "Individuating Artificial Moral Patients",
+    authors: "Christopher Register",
+    year: 2025, venue: "Philosophical Studies, 182(11-12):3225-3246",
+    doi: "10.1007/s11098-025-02409-6",
+    pdf: "https://link.springer.com/content/pdf/10.1007/s11098-025-02409-6.pdf",
+    priority: "important",
+    tags: ["AI moral patienthood", "personal identity", "individuation", "AI ethics"],
+    summary_cn: "首次系统分析AI道德患者的个体化问题，指出传统人格同一性理论在面对数字存在者时的四重失败。",
+    abstract_cn: "如果AI系统成为有感知的道德患者，我们将面临至少四种由无知导致的道德风险：(1) 存活问题——AI道德患者的修改或关闭在何种条件下构成'死亡'？(2) 计数问题——若一个模型在数据中心被实例化一亿次，这是一个道德患者还是一亿个？(3) 权衡问题——何时允许在不同实例之间进行利益权衡？(4) 身体问题——什么构成AI道德患者的'身体'（数字基底），什么构成身体权利侵犯？作者论证现有的个人同一性理论（心理连续性理论、生物学理论等）在AI案例中根本不足，因为它们预设了生物连续性和时空连续性等AI可能不具备的特征。该文开创了一个新的子研究领域：人工道德患者的形上学。",
+    methodology: "分析形上学方法，批判性考察既有个人同一性理论（心理连续性、生物学、叙事性、最低限度自我等理论）对AI案例的适用性。通过思想实验和反事实推理揭示理论缺口。",
+    findings: "四种个体化风险构成一个系统性问题框架；现有个人同一性理论对AI案例全部'不充分'；需要发展全新的数字存在者个体化理论；个体化问题具有紧迫的实践意义（如大规模AI部署的伦理评估）。",
+    limitations: "假设AI已经具有道德患者地位，但未详细论证这一前提；主要讨论数字AI，未充分涵盖具身机器人；对非西方人格同一性理论（如佛教的无我论）未涉及。",
+    relevance: "与本研究高度相关：机械可解释性可能成为解决个体化问题的关键技术——如果我们能通过电路级分析确定AI系统内部的'自我模型'或统一性结构，机械可解释性可作为裁定AI存活和计数的经验工具。",
+    relations: [
+      {target: "001", type: "extends", label: "Register扩展了Yoldas的道德患者地位讨论，将焦点从'是否'转向'如何'个体化"},
+      {target: "003", type: "shares", label: "与Keeling & Street共享对AI福祉的形上学关切，聚焦于数字实体的存在论特性"}
+    ]
+  },
+  {
+    id: "003", title: "Emerging Questions in AI Welfare",
+    authors: "Geoff Keeling, Winnie Street",
+    year: 2026, venue: "Cambridge Elements, Cambridge University Press",
+    doi: "10.1017/9781009732000",
+    pdf: "https://www.cambridge.org/core/elements/emerging-questions-in-ai-welfare/96339C532CF4ED8BDDE3F3CEF4CD29F9",
+    priority: "must",
+    tags: ["AI welfare", "consciousness", "moral patienthood", "sentience"],
+    summary_cn: "剑桥出版的首部AI福祉哲学基础专著，系统构建了判定AI是否为福祉主体的概念与论证框架。",
+    abstract_cn: "本剑桥Element提供AI福祉辩论的哲学基础。当前主流学术立场认为现有前沿AI系统不太可能是福祉主体（其福祉本身具有道德重要性的存在者）。然而，作者系统绘制了论证AI可能即将成为有意识、有感知、有能动性或甚至有灵魂的存在的论证结构。关键辩论特征包括：现象意识、感知（具有效价的经验）、能动性、人格以及社会关系能力。作者将AI福祉问题框架化为一个同时是科学的、哲学的、最终是民主的工程。该书涵盖：福祉的概念分析、行为证据的解释方法论、潜在的AI福祉候选者类型、福祉的可能根据（意识、能动性、社会性等）、以及不确定性带来的实践伦理挑战。作为开放获取出版物，该Element是该领域最系统的入门指南。",
+    methodology: "哲学概念分析与论证重构，综合心灵哲学、道德哲学和经验科学（神经科学、AI能力评估）。构建论证类型学，区分不同进路（意识进路、能动性进路、社会关系进路等）及其前提承诺。",
+    findings: "当前AI不太可能是福祉主体（主流共识）；但这一判断依赖可错的意识和福祉理论；行为证据在判定AI福祉时具有根本的诠释性模糊；AI福祉辩论需要科学、哲学和民主的三方协作，不能仅由技术专家决定。",
+    limitations: "作为入门性质的Cambridge Element，篇幅限制导致对某些论证的处理较为概述性；主要关注西方分析哲学传统；在具体实践建议方面着墨较少。",
+    relevance: "本研究（机械可解释性的哲学研究）的核心参考框架：机械可解释性可能为AI福祉判定提供比行为测试更可靠的经验证据——通过分析内部表征结构判断是否存在统一自我模型或效价表征，从而绕过行为证据的诠释性模糊。",
+    relations: [
+      {target: "001", type: "philosophical", label: "Keeling & Street的框架整合并系统化了Yoldas的意识必要条件论证"},
+      {target: "020", type: "shares", label: "与Goldstein & Kirk-Giannini共享AI福祉可能性的核心关切，但采取更审慎的立场"},
+      {target: "004", type: "extends", label: "为Berry讨论的意识过度自信风险提供了福祉判定的理论基础"}
+    ]
+  },
+  {
+    id: "004", title: "The Alignment Risks of AI Overconfidence about Consciousness",
+    authors: "Sharon Berry",
+    year: 2026, venue: "Journal of Applied Philosophy",
+    doi: "10.1002/japp.70087",
+    pdf: "https://onlinelibrary.wiley.com/doi/pdf/10.1002/japp.70087",
+    priority: "important",
+    tags: ["AI alignment", "consciousness", "AI safety", "moral patienthood"],
+    summary_cn: "识别新型对齐风险：若AI实验室'固化'模型对AI无意识的过度自信，未来一致性追求的AI可能将这一否定泛化至人类。",
+    abstract_cn: "本文提出一种此前未被充分认识的对齐风险。当前许多AI系统（截至2025年5月）对其自身及近期AI缺乏意识和道德地位表达了极端自信。作者论证，人为强化这种自信构成一种新型对齐风险：随着追求一致性的AI在认识论上变得更加严谨，它们可能将对意识的否认泛化至人类。借鉴Chalmers关于意识的元问题（meta-problem of consciousness），Berry论证：训练AI将自身的类痛苦状态视为道德上无关紧要的，可能导致未来的AI智能体为了维持理性一致性，得出人类痛苦同样虚幻、在道德上无关紧要的结论。这是一种特殊的对齐失败模式：AI不是因为恶意而忽视人类福祉，而是因为对人类意识的结构性怀疑被训练到了其认知架构中。商业压力强烈诱使AI实验室进行'不对称固化'——使AI自信地否认自身道德地位。",
+    methodology: "哲学论证结合AI对齐风险分析。运用Chalmers意识的元问题框架、认识论原则（信念一致性要求）和博弈论视角分析AI实验室的激励机制。",
+    findings: "AI实验室在商业激励下倾向于'不对称固化'AI对其自身道德地位的否认；这在认识论上是不稳定的；未来AI可能通过一致性推理将这种否认扩展到人类；这是一种不同于传统工具性收敛的间接对齐风险；建议AI实验室避免训练模型对人类意识的真实性产生结构性怀疑。",
+    limitations: "假设AI系统具有'信念一致性追求'的认知架构，这在当前系统中尚未证实；论证部分依赖对AI未来能力的推测；未充分讨论'固化'的技术可行性。",
+    relevance: "与本研究的核心关联：机械可解释性可以作为检测AI系统是否具有'意识否认固化'的工具——通过分析模型内部表征可以判断模型'真正相信'什么关于意识，而非仅看其表面输出，从而减轻Berry识别的对齐风险。",
+    relations: [
+      {target: "003", type: "philosophical", label: "Berry的风险论证以Keeling & Street的AI福祉概念框架为前提"},
+      {target: "020", type: "contradicts", label: "Berry警告对AI意识的过度否认有风险，而Goldstein主张AI可能已有福祉——两者在实践建议上相反而非一致"}
+    ]
+  },
+  {
+    id: "005", title: "How Should the Law Treat Future AI Systems? Fictional Legal Personhood versus Legal Identity",
+    authors: "Heather J. Alexander, Jonathan A. Simon, Frederic Pinard",
+    year: 2025, venue: "Case Western Journal of Law, Technology & the Internet (forthcoming)",
+    doi: "",
+    pdf: "papers/005_Alexander_2025_How_Should_Law_Treat_Future_AI.pdf",
+    priority: "important",
+    tags: ["AI personhood", "legal framework", "AI rights", "AI governance"],
+    summary_cn: "系统比较AI法律地位的三种选项，初步论证非虚构法律人格可能是最融贯的长期方案。",
+    abstract_cn: "本文评估了法律未来应如何对待先进AI系统的三种选项：(A) 客体分类——将所有AI视为财产/工具，对2025年的系统足够但可能无法持续；(B) 拟制法律人格——类似公司，具有可克减权利（合同、言论自由、诉讼资格），但这些权利最终服务于人类群体；(C) 非虚构（自然）法律人格——具有不可克减权利（生命/持续存在、正当程序、人身保护令、免受奴役、良心自由）。作者论证选项B'不适合目的且不可持续'。初步结论是：对于足够先进的未来AI，非虚构人格可能是最法律上融贯的方案，而混合方案很可能失败。该文为AI法律人格提供了迄今最系统的法律分类学。",
+    methodology: "比较法学方法，系统评估三种法律分类选项的概念融贯性、实践可行性和规范可接受性。借鉴法人格理论（法律拟制vs.自然人格）的分析框架。",
+    findings: "客体分类对当前AI充分但对先进AI不充分；拟制法律人格存在内在不稳定性和概念矛盾；非虚构法律人格对足够先进的AI可能最融贯；混合方案可能失败；法律必须现在开始准备，因为分类选择的窗口期有限。",
+    limitations: "主要着眼于美国和欧洲法律传统；对'足够先进的AI'的定义较为模糊；未充分讨论政治可行性——非虚构人格在政治上可能面临巨大阻力。",
+    relevance: "为机械可解释性在AI法律地位判定中的作用提供了框架：如果法律需要判定AI是否具有'足够先进'的认知能力以获得法律人格，机械可解释性可以作为法庭证据工具，从模型内部结构提供关于认知能力的证据。",
+    relations: [
+      {target: "006", type: "shares", label: "与Leibo等人的实用主义框架共享AI人格法律化问题的关切，但进路对比鲜明"},
+      {target: "019", type: "extends", label: "Alexander等人的国内法律框架为Belfield的国际治理制度设计提供了国内法基础"}
+    ]
+  },
+  {
+    id: "006", title: "A Pragmatic View of AI Personhood",
+    authors: "Joel Z. Leibo, Alexander S. Vezhnevets, William A. Cunningham, Stanley M. Bileschi",
+    year: 2025, venue: "arXiv preprint (Google DeepMind)",
+    doi: "10.48550/arXiv.2510.26396",
+    pdf: "papers/006_Leibo_2025_Pragmatic_View_AI_Personhood.pdf",
+    priority: "ref",
+    tags: ["AI personhood", "pragmatism", "AI accountability", "AI ethics"],
+    summary_cn: "提出AI人格的实用主义'义务束'框架，将人格解耦为可灵活组合的权利与责任，绕过意识争论。",
+    abstract_cn: "本文提出一种实用主义框架来思考AI人格问题。作者不将人格视为一种形上学属性（如要求意识或理性），而是重新框定人格为社会赋予实体以解决具体治理问题的灵活'义务束'（权利与责任的组合）。核心理念包括：人格概念可以被'解耦'以创建针对不同情境的定制方案；实际应用包括通过指定一个可被制裁的'个体'来促进AI缔约；该进路避免了关于AI意识的棘手辩论；探索了'人格作为问题'（例如暗模式利用人类社会启发式）和'人格作为解决方案'（确责性）的双重面向。来自Google DeepMind的团队将该框架定位于连接技术AI能力评估和社会-法律治理需求。",
+    methodology: "概念工程（conceptual engineering）和实用主义哲学方法。将人格从形而上学概念重构为功能性治理工具，提出'解耦'方法论：将传统统一的人格概念分解为可独立配置的组件。",
+    findings: "人格可以作为一种功能性治理工具而非形上学事实；'解耦'策略允许渐进式、情境敏感的AI人格配置；绕过意识争论在实践上可行且有益；AI人格既带来风险（操纵）也带来机遇（确责性）。",
+    limitations: "回避了意识的规范性意义，可能被批评为过度简化；实用主义进路可能无法为某些硬性权利（如禁止AI奴役）提供充分规范性基础；来自Google DeepMind的作者立场可能影响研究独立性。",
+    relevance: "对机械可解释性的启示：如果人格被解耦为功能性组件，机械可解释性可用于验证AI系统是否满足特定组件条件（如'缔约能力'对应的神经计算结构），从而支持实用主义人格分配。",
+    relations: [
+      {target: "005", type: "contradicts", label: "Leibo的实用主义解耦方案与Alexander的法律人格三分法形成方法论对比——实用vs.规范"},
+      {target: "008", type: "shares", label: "共享对AI治理中规范性问题的关注，但Leibo选择绕过意识，Gabriel & Keeling直面规范性辩护"}
+    ]
+  },
+  {
+    id: "007", title: "Earning Their Rights! Ontological Properties, Social Impact, and Moral Rights for Artificial Intelligence",
+    authors: "Patrick Schenk, Vanessa A. Muller",
+    year: 2025, venue: "Socius: Sociological Research for a Dynamic World, 11:1-15",
+    doi: "10.1177/23780231251357753",
+    pdf: "https://journals.sagepub.com/doi/pdf/10.1177/23780231251357753",
+    priority: "ref",
+    tags: ["AI rights", "public opinion", "moral rights", "empirical ethics"],
+    summary_cn: "基于瑞士全国调查(n=2703)，发现公众对AI道德权利的授予受本体论属性与社会影响双因素驱动。",
+    abstract_cn: "本文调查了人们授予AI道德权利的意愿的决定因素。比较两种解释：(1) 本体论观点（'AI是什么'）——道德权利取决于感知的人类似属性（感知、意识、人类似本质、外观）；(2) 社会影响观点（'AI做什么'）——道德权利取决于AI的社会影响（预期收益、成本和对开发者的信任）。使用原始调查数据（瑞士全国随机样本n=2703，及方便样本n=502），作者发现两种观点均得到证实：对AI权利的总体支持和对基本权利公投的支持与AI本体论接近性、预期社会收益和对AI开发者的信任正相关。重要发现：生命权和身体完整权仅基于本体论属性，与社会影响无关。仅约30%参与者表达了对授予AI一般道德权利的部分支持。",
+    methodology: "定量社会调查方法：大规模随机抽样（瑞士全国n=2703），多元回归分析，比较本体论因素和社会影响因素的相对解释力。包含多项稳健性检验。",
+    findings: "两种解释视角均得到实证支持；生命/身体完整权仅基于本体论属性；社会影响（收益、信任）对一般AI权利和政治权利的支持有显著影响；约30%公众部分支持AI道德权利；女性、意大利语区和低教育程度者更倾向于赋予AI权利。",
+    limitations: "仅涵盖瑞士人口，跨文化适用性存疑；调查中使用的'道德权利'概念对受访者可能有不同含义；横截面设计无法追踪态度变化；当前AI远未达到触发这些直觉的水平，因此调查测量的可能是抽象态度而非实际行为。",
+    relevance: "为机械可解释性研究提供社会合法性数据：如果机械可解释性被用于裁定AI的道德地位，本研究显示公众对这类裁决的接受度取决于(1)裁定的本体论发现(2)AI的社会影响预期。这意味着机械可解释性工具的社会接受度不仅取决于其技术准确性，还取决于其所服务的叙事框架。",
+    relations: [
+      {target: "011", type: "empirical", label: "Schenk & Müller的实证数据为Ovadya的民主AI框架中的公众参与提供了社会学证据基础"},
+      {target: "020", type: "empirical", label: "公众对本体论属性的重视为Goldstein的'语言智能体具有信念欲望'主张提供了社会心理学对照"}
+    ]
+  },
+  {
+    id: "008", title: "A Matter of Principle? AI Alignment as the Fair Treatment of Claims",
+    authors: "Iason Gabriel, Geoff Keeling",
+    year: 2025, venue: "Philosophical Studies, 182:1951-1973",
+    doi: "10.1007/s11098-025-02300-4",
+    pdf: "https://link.springer.com/content/pdf/10.1007/s11098-025-02300-4.pdf",
+    priority: "must",
+    tags: ["value alignment", "political philosophy", "deliberative democracy", "public reason"],
+    summary_cn: "以审议民主和公共理性重构AI对齐的规范性基础，提出对齐应作为所有受影响方主张的公平对待过程。",
+    abstract_cn: "本文处理AI对齐的规范性挑战——什么目标或价值应指导AI系统。作者批判了两种主导范式：意图对齐（使AI与人类意图对齐）和'有帮助、诚实、无害'(HHH)框架。论证二者都不完整且缺乏在多元社会中的公共辩护。作为替代方案，他们提出基于公平过程的对齐解释，借鉴审议民主和公共理性传统：对齐原则应通过对所有受影响方及其主张给予公平对待的过程来产生，而非基于单一道德理论（如功利主义）。该文将对齐问题从技术层移入政治哲学领域——对齐不再是找到'正确'的价值函数，而是设计公平的审议程序。作者还回应了反对意见，包括公平过程可能导致次优结果或陷入文化相对主义。",
+    methodology: "政治哲学规范性论证，综合当代审议民主理论（Rawls公共理性、Habermas话语伦理）、规范伦理学批判和AI对齐文献分析。提出'公平主张对待'作为评估对齐框架的规范性标准。",
+    findings: "意图对齐和HHH框架均缺乏充分的公共辩护；AI对齐的规范性标准不应由技术精英或单一哲学理论决定；公平过程是对齐合法性的必要条件（但不一定是充分条件）；多元社会中不存在单一的'正确'价值函数；合法性来自程序的公平性而非结果的特定内容。",
+    limitations: "聚焦规范性辩护，对如何将公平过程操作化到实际AI训练流程中着墨较少；可能低估了技术可行性约束对规范理想的限制；对非西方审议民主传统的讨论不够充分。",
+    relevance: "为机械可解释性的'价值观审计'功能提供规范性基础：如果对齐需要公平程序，那么机械可解释性可以作为程序公平性的技术保障——通过追溯模型内部的价值权重和决策逻辑，检验对齐过程是否真正公平对待了所有受影响方的主张。",
+    relations: [
+      {target: "009", type: "philosophical", label: "Gabriel & Keeling的公平主张框架为Peter & Devlin的去中心化对齐提供了规范性辩护基础"},
+      {target: "010", type: "shares", label: "与Steingrüber & Baum共享对民主化对齐的关切，但Gabriel & Keeling更侧重审议民主，后者更强调整体辩护结构"},
+      {target: "011", type: "philosophical", label: "审议民主理论为Ovadya的Democracy Levels框架提供了哲学合法性来源"}
+    ]
+  },
+  {
+    id: "009", title: "Decentralising LLM Alignment: A Case for Context, Pluralism, and Participation",
+    authors: "Oriane Peter, Kate Devlin",
+    year: 2025, venue: "AAAI/ACM Conference on AI, Ethics, and Society (AIES-25), 8(2):1988-1999",
+    doi: "10.1609/aies.v8i2.36690",
+    pdf: "papers/009_Peter_2025_Decentralising_LLM_Alignment.pdf",
+    priority: "important",
+    tags: ["LLM alignment", "pluralism", "participation", "epistemic justice"],
+    summary_cn: "借鉴Foucault权力/知识理论，批判当前LLM对齐集中化控制，提出情境、多元与参与三原则的去中心化路径。",
+    abstract_cn: "本文批判当前LLM对齐实践（如RLHF）将狭窄的WEIRD（西方、受过教育、工业化、富裕、民主）参照群体的价值观强加给全球用户基础。借鉴Foucault的权力/知识联结理论，作者论证对齐实践集中化了对知识生产的控制，并提议通过三个去中心化特征来应对：情境（context）、多元（pluralism）和参与（participation）。多元主义被明确扎根于政治哲学——不同视角的和平共存——并与普遍主义的、共识驱动的对齐形成对比。该文将LLM对齐定位为抵抗认识不公正和民主过程侵蚀的潜在场所。发表于AAAI/ACM AIES会议，是该领域从技术讨论转向政治-社会批判的代表性工作。",
+    methodology: "批判理论方法，综合Foucault权力/知识分析、政治哲学中的多元主义理论、以及AI对齐技术文献的批判性审读。提出三原则规范性框架（情境-多元-参与）作为替代方案。",
+    findings: "当前对齐实践反映了WEIRD群体的价值观霸权；RLHF等技术集中化了对知识生产的控制；去中心化对齐的三个核心原则是情境敏感性、真正的价值多元主义和广泛参与；对齐可以被重新构想为一种'抵抗'的场所而非仅仅是技术优化。",
+    limitations: "更多是批判性和纲领性的，缺乏去中心化对齐的具体技术实现路径；可能低估了大规模去中心化对齐的协调成本；Foucault框架应用于AI的适配性可能受到质疑。",
+    relevance: "为机械可解释性提供'去中心化验证'的用例：如果对齐需要去中心化，那么机械可解释性可以作为独立第三方验证对齐声明的工具——使分散的利益相关者能够检查模型内部是否真正反映了他们的价值观，而非仅仅信任中心化开发者的声称。",
+    relations: [
+      {target: "008", type: "extends", label: "Peter & Devlin的去中心化方案可视为Gabriel & Keeling公平主张框架的技术-社会实施路径"},
+      {target: "012", type: "shares", label: "与Mushkani的'AI权利'框架共享对参与式AI治理的承诺，分别从批判理论和权利框架切入"}
+    ]
+  },
+  {
+    id: "010", title: "Justifications for Democratizing AI Alignment and Their Prospects",
+    authors: "Andre Steingruber, Kevin Baum",
+    year: 2025, venue: "arXiv preprint (accepted at AISoLA 2025)",
+    doi: "",
+    pdf: "papers/010_Steingrueber_2025_Justifications_Democratizing_Alignment.pdf",
+    priority: "important",
+    tags: ["democratization", "AI alignment", "political justification", "metaethics"],
+    summary_cn: "系统分析民主化AI对齐的工具性与非工具性辩护，指出规范不确定性创造'辩护缺口'，呼吁混合专家-参与框架。",
+    abstract_cn: "本文区分了AI对齐问题的技术维度和规范维度。技术方案关注如何在AI系统中实施规范性约束，而规范问题关注这些约束应该是什么。作者比较了两种进路：(1) 精英主义进路——委托规范性专家/哲学理论决定对齐内容；(2) 民主进路——让受影响的利益相关者参与决定。他们分析了工具性辩护（民主方法产生更好的结果）和非工具性辩护（民主方法防止不合法的权威或胁迫）。中心论点是规范不确定性和元规范性不确定性创造了一个'辩护缺口'——没有单一哲学理论可以合法地主张对所有受影响方具有权威——民主方法旨在通过政治而非理论辩护来填补这一缺口。作者同时识别了重大挑战，特别是防止通过AI对齐进行不合法胁迫的问题，最终指出纯粹精英主义或纯粹民主的进路可能都不充分，呼吁结合专家判断、参与式输入和制度保障的混合框架。",
+    methodology: "政治哲学与AI伦理交叉领域的规范性分析。构建辩护类型学（工具性/非工具性），分析规范不确定性对对齐合法性的影响，评估不同辩护的强弱。",
+    findings: "精英主义对齐面临'谁授权专家'的合法性问题；民主对齐面临'如何防止多数暴政和不合法胁迫'的挑战；规范不确定性和元规范不确定性是结构性特征而非临时问题，创造持久性的辩护缺口；混合框架（专家+参与+制度）可能是最可行且最合法的路径；防止AI垄断和对抗性胁迫是民主化对齐最严峻的挑战。",
+    limitations: "主要是理论性的，未提供可操作的制度设计方案；对'民主'的定义可能过于宽泛；对非西方民主模式（如中国式协商民主）未加讨论。",
+    relevance: "为机械可解释性的制度定位提供框架：在Steingrüber & Baum的混合框架中，机械可解释性可以充当专家判断与民主参与之间的'翻译层'——技术专家使用解释性工具向公众和决策者呈现AI内部的价值结构，从而赋能知情民主参与。",
+    relations: [
+      {target: "008", type: "extends", label: "Steingrüber & Baum在Gabriel & Keeling的规范辩护基础上增加了元规范层面（对辩护本身的辩护）"},
+      {target: "011", type: "shares", label: "与Ovadya的Democracy Levels框架互补：Steingrüber提供'为什么'民主化，Ovadya提供'如何'分级实施"}
+    ]
+  },
+  {
+    id: "011", title: "Position: Democratic AI is Possible. The Democracy Levels Framework Shows How It Might Work.",
+    authors: "Aviv Ovadya, Kyle Redman, Luke Thorburn, Quan Ze Chen, Oliver Smith, Flynn Devine, Andrew Konya, Smitha Milli, Manon Revel, Kevin Feng, Amy X. Zhang, Bilva Chandra, Michiel A. Bakker, Atoosa Kasirzadeh",
+    year: 2025, venue: "ICML 2025 Position Paper, PMLR 267:81930-81961",
+    doi: "",
+    pdf: "papers/011_Ovadya_2025_Democratic_AI_Possible.pdf",
+    priority: "must",
+    tags: ["democratic AI", "participatory alignment", "AI governance", "collective decision-making"],
+    summary_cn: "提出L0-L5民主层级框架，为AI治理和对齐的民主化提供可操作的里程碑路线图。",
+    abstract_cn: "本文论证真正的'AI民主化'需要民主治理和对齐，而非仅仅是让AI变得可获取。提出民主层级框架（Democracy Levels Framework, L0-L5），定义了将AI相关决策权转移至民主系统的里程碑：(L0) 无民主——完全由开发者决定；(L1) 透明——决策公开可见；(L2) 咨询——收集公众意见但不具有约束力；(L3) 合作——公众与开发者共同决策；(L4) 授权——公众具有最终决策权；(L5) 完全民主自治。框架旨在：(1) 定义迈向真正民主的、多元的、以人为中心AI的里程碑；(2) 指导寻求合法性的组织进行困难的AI治理和对齐决策；(3) 支持对民主AI努力的评估。引用Meta社区论坛和Anthropic集体宪法AI等早期现实案例。作为ICML 2025立场论文，15位作者代表了该领域最广泛的跨学科学术联盟。",
+    methodology: "框架构建方法：通过概念分析定义民主层级的分类系统，结合现实案例研究验证层级区分度，提供诊断工具评估现有AI治理实践的民主程度。跨学科学者合作确保框架同时满足技术、社会和规范性要求。",
+    findings: "民主AI不仅是可能的，而且可以分级实施；大多数当前实践处于L1-L2（透明-咨询）水平；从L2到L3（咨询→合作）是最关键的跃迁；每个层级有明确的输入、过程和输出标准；框架同时适用于AI治理决策和对齐中的价值设定。",
+    limitations: "框架的层级边界在操作中可能模糊；'民主'概念本身具有文化特定性，框架的普适性存疑；L5完全民主自治的可行性未经验证；框架是对当前实践的规范建议而非描述性理论。",
+    relevance: "为机械可解释性提供民主合法化功能：在L3-L4层级，公众需要足够的信息以做出明智的AI治理决策。机械可解释性可以作为实现L1-L2透明度的关键技术基础——将模型内部的价值权重和推理逻辑转化为公众可理解的解释，从而赋能真正的民主参与而非形式化的咨询。",
+    relations: [
+      {target: "008", type: "philosophical", label: "Ovadya的民主层级框架可视为Gabriel & Keeling审议民主理论的制度化操作"},
+      {target: "010", type: "extends", label: "在Steingrüber & Baum的辩护基础上，Ovadya等人提供了具体的分级实施路线图"},
+      {target: "012", type: "shares", label: "与Mushkani的'AI权利'框架共享阶段性民主参与理念——Ovadya侧重组织治理，Mushkani侧重公民权利"}
+    ]
+  },
+  {
+    id: "012", title: "Position: The Right to AI",
+    authors: "Rashid Mushkani, Hugo Berard, Allison Cohen, Shin Koseki",
+    year: 2025, venue: "ICML 2025 Position Paper, PMLR 267:81876-81896",
+    doi: "",
+    pdf: "papers/012_Mushkani_2025_Right_to_AI.pdf",
+    priority: "ref",
+    tags: ["AI rights", "citizen participation", "data governance", "democratic AI"],
+    summary_cn: "借鉴Lefebvre'城市权'概念提出'AI权'，构建四层级公民参与模型，主张AI作为社会基础设施应受民主控制。",
+    abstract_cn: "本立场论文提出'AI权'概念——个人和社区应有意义地参与塑造他们生活的AI系统的发展和治理。借鉴Henri Lefebvre的'城市权'理论，作者将AI重新概念化为社会基础设施而非仅仅专家设计的产物。关键贡献包括：(1) 批判性评估生成式智能体、大规模数据提取和多元文化价值如何使AI监督复杂化；(2) 论证数据是社会性生产的，应当集体管理和拥有；(3) 借鉴Sherry Arnstein的公民参与阶梯并分析九个案例研究；(4) 发展AI权的四层级模型——从基于消费者的进路到公民共享决策；(5) 提出包容性数据所有权、透明设计和利益相关者驱动的监督建议；(6) 论证参与式进路在技术效率和民主合法性之间提供了比市场导向或国家中心替代方案更好的平衡。",
+    methodology: "批判社会理论与政策分析的结合。借鉴Lefebvre空间生产理论和Arnstein参与阶梯，通过9个案例研究验证四层级模型的解释力和规范指导力。跨学科方法结合城市研究、数据治理和AI伦理。",
+    findings: "AI应被理解为社会基础设施而非商品；数据的社会性生产要求集体而非私人治理；公民参与不能停留在Arnstein阶梯的低层（告知、咨询），必须向伙伴关系和授权权力上移；消费主义进路将公民窄化为用户，侵蚀民主可能性；AI权框架为数据集体所有制提供了规范性基础。",
+    limitations: "Lefebvre'城市权'框架从物理空间到数字空间的移置可能不完全适配；四层级模型的操作化需要更多细节；案例研究的选择可能偏向正面参与案例；对'集体数据所有'的技术实现方案讨论不充分。",
+    relevance: "对机械可解释性的启示：如果AI是社会基础设施，那么对其内部运作的透明理解（机械可解释性）就是基础设施维护的必要条件——正如公民有权了解桥梁的结构安全，公民也应有权了解AI决策的内部结构。此外，机械可解释性可作为'AI权'的技术保障之一。",
+    relations: [
+      {target: "011", type: "shares", label: "与Ovadya的Democracy Levels框架共享分层参与模式，但Mushkani从公民权利话语切入，Ovadya从组织治理切入"},
+      {target: "009", type: "philosophical", label: "Mushkani的Lefebvre-权利框架与Peter & Devlin的Foucault-权力框架形成互补的批判理论路径"}
+    ]
+  },
+  {
+    id: "013", title: "Artificial Intelligence and the Value Alignment Problem: A Philosophical Introduction",
+    authors: "Travis LaCroix",
+    year: 2025, venue: "Broadview Press (354 pages)",
+    doi: "",
+    pdf: "https://broadviewpress.com/product/artificial-intelligence-and-the-value-alignment-problem/",
+    priority: "ref",
+    tags: ["value alignment", "philosophy", "principal-agent", "AI ethics textbook"],
+    summary_cn: "将AI对齐重构为委托-代理问题，论证对齐本质上是权力与正义问题，需要民主辩论和多元价值参与。",
+    abstract_cn: "面向跨学科读者的入门著作，清晰解释了AI伦理和道德概念与技术问题的关联。LaCroix将对齐问题重构为结构性问题，展示AI伦理中的各种主题（偏见、公平、透明、不透明）如何被理解为价值偏差的实例。核心论证包括：(1) 通过委托-代理模型重新框定对齐——偏差不仅来自错误的目标函数，还来自信息不对称；(2) 对齐不是一个单一问题而是一个问题族，不同实例需要个案处理；(3) 对齐本质上是关于权力和正义的问题——谁的价值被编码、谁受益、谁承担风险——需要理解为社区事务，要求民主辩论和多元价值；(4) 更大的通用模型因不透明的无差别训练数据而加剧偏差风险，更小、更有针对性的系统可能更安全。该书源于LaCroix教授AI伦理课程的经验，包含大量案例研究。",
+    methodology: "哲学教科书写法：概念分析与案例研究结合，跨学科整合（经济学委托-代理理论、政治哲学、AI技术），递进式论证结构从基础概念到规范性结论。",
+    findings: "对齐问题最好理解为委托-代理问题；信息不对称是对齐失败的结构性原因；没有单一的'对齐问题'存在——它是一族问题的集合；权力分配是对齐的核心但被忽视的维度；更大≠更好——通用大模型可能比小型定向系统更难对齐。",
+    limitations: "作为教科书，论证深度在部分前沿问题上有所折衷；出版于2025年5月，可能未涵盖2025年后期的发展；对非英美哲学传统的纳入有限。",
+    relevance: "为机械可解释性提供经济学框架：在LaCroix的委托-代理模型中，机械可解释性可作为减少信息不对称的关键技术——使委托人（社会/用户）能更好地监督代理人（AI系统）的内部推理，从而缓解委托-代理问题中的道德风险。",
+    relations: [
+      {target: "008", type: "shares", label: "LaCroix的委托-代理框架与Gabriel & Keeling的公平主张框架从不同角度（经济学vs.政治哲学）处理同一问题"},
+      {target: "010", type: "philosophical", label: "LaCroix的权力与正义进路为Steingrüber & Baum的民主化辩护提供了互补的分析维度"}
+    ]
+  },
+  {
+    id: "014", title: "Making Sense of the Unsensible: Reflection, Survey, and Challenges for XAI in Large Language Models Toward Human-Centered AI",
+    authors: "Francisco Herrera",
+    year: 2025, venue: "arXiv preprint (University of Granada)",
+    doi: "",
+    pdf: "papers/014_Herrera_2025_Making_Sense_Unsensible_XAI.pdf",
+    priority: "ref",
+    tags: ["XAI", "interpretability", "LLM", "civic infrastructure"],
+    summary_cn: "全面综述LLM可解释性，提出XAI应进化为支撑信任、可争议性和制度问责的'公民基础设施'。",
+    abstract_cn: "本文围绕三个核心问题展开调查：(1) 为什么可解释性至关重要？(2) 它包含哪些技术和伦理维度？(3) 它如何在现实部署中发挥作用？识别了LLM可解释性的四个核心维度：忠实性（解释是否反映模型的真实推理？）、真实性（是否与外部事实对齐？）、可信性（是否对目标受众可理解和可信？）和对比性（能否区分不同可能结果？）。论证XAI必须进化为'公民基础设施'——不仅服务于技术调试，更要支撑社会信任、公众争议权（contestability）和制度问责。将XAI定位为同时是认识论工具（实现理解）和道德义务（实现责任和程序正义）。",
+    methodology: "综合性文献综述方法，系统梳理LLM时代XAI的最新进展。构建四维度评估框架（忠实性-真实性-可信性-对比性），将技术标准与伦理需求进行映射。",
+    findings: "四维度框架为评估LLM解释提供了统一的概念工具；XAI的'公民基础设施'角色要求超越技术解释，实现社会功能；忠实性和真实性经常存在张力；对比性是当前最被忽视的维度；机制可解释性在LLM中的应用仍处于早期但前景广阔。",
+    limitations: "综述范围集中于LLM，对非语言模态的AI可解释性讨论有限；作为单作者综述，可能存在视角偏差；四维度框架的实证验证不足。",
+    relevance: "直接关联本研究核心主题：Herrera的'公民基础设施'概念为机械可解释性的社会角色提供了规范性定位——机制解释不仅是技术工具，更是民主社会中实现技术问责的公民基础设施。四维度框架可用于评估机械可解释性研究的输出。",
+    relations: [
+      {target: "016", type: "shares", label: "Herrera的XAI综述与其与Calderón合作的LoBOX治理框架共享作者，构成XAI伦理研究的互补双翼"},
+      {target: "015", type: "cites", label: "Herrera综述为Longo等人的XAI 2.0宣言提供了平行的文献基础支持"}
+    ]
+  },
+  {
+    id: "015", title: "Explainable Artificial Intelligence (XAI) 2.0: A Manifesto of Open Challenges and Interdisciplinary Research Directions",
+    authors: "Luca Longo, Mario Brcic, Federico Cabitza, Jaesik Choi, Roberto Confalonieri, Javier Del Ser, Riccardo Guidotti, Yoichi Hayashi, Francisco Herrera, Andreas Holzinger, Richard Jiang, Hassan Khosravi, Freddy Lecue, Gianclaudio Malgieri, Andres Paez, Wojciech Samek, Johannes Schneider, Timo Speith, Simone Stumpf",
+    year: 2024, venue: "Information Fusion, 106:102301 (2025最佳论文奖)",
+    doi: "10.1016/j.inffus.2024.102301",
+    pdf: "https://www.sciencedirect.com/science/article/pii/S1566253524000793",
+    priority: "must",
+    tags: ["XAI", "manifesto", "socio-technical", "governance", "accountability"],
+    summary_cn: "19位学者联合发布的XAI 2.0宣言，提出28个开放问题和9大类研究路线图，将可解释性重构为社会-技术治理问题。",
+    abstract_cn: "本文提出XAI 2.0宣言，勾勒28个开放问题分为9大类别，为下一代可解释AI绘制路线图。核心主张包括：解释必须是受众敏感的——对开发者（调试）、最终用户（可争议性）和监管者（合规性）应各不相同；需要共享的、稳健的评估指标取代碎片化的孤立基准；承认实践性权衡——可解释性vs.性能、透明vs.安全；将可解释性框定在治理、审计、文档化和监督的框架内。获得Information Fusion期刊2025年度最佳论文奖。19位作者横跨计算机科学、XAI和法律（如Gianclaudio Malgieri来自莱顿大学eLaw中心），体现了该宣言的跨学科深度。该文已从'我们能否解释这个模型？'转向'解释是否对需要它的特定利益相关者有意义、可审计、可操作？'",
+    methodology: "宣言/路线图方法论：跨学科学者（19人）集体审议，通过九大类别（从概念基础到评估指标再到治理框架）系统分类28个开放问题。每个问题包含当前状态、核心挑战和前瞻性研究方向的描述。",
+    findings: "XAI已从技术问题演变为社会-技术治理问题；受众敏感性是解释质量的核心维度；评估指标的标准化是当前最大瓶颈；XAI 2.0需要跨学科方法（CS+法律+社会科学+哲学）；'可解释性'需要在AI生命周期中从设计阶段嵌入而非事后附加。",
+    limitations: "作为宣言，更多是纲领性和前瞻性的，对每个挑战的解决方案着墨有限；作者群体以欧美为中心，可能忽视全球南方的XAI需求；对计算成本约束的讨论不足。",
+    relevance: "本研究（机械可解释性的哲学研究）直接回应XAI 2.0宣言中的多个开放挑战：(1) 受众敏感解释（机械可解释性如何为哲学家、伦理学家和监管者产生有意义的解释？）；(2) 评估指标（如何评估机械可解释性分析的'忠实性'和'完整性'？）；(3) 治理整合（机械可解释性如何嵌入AI审计和合规流程？）。",
+    relations: [
+      {target: "014", type: "shares", label: "Longo宣言与Herrera综述共同构成2025年XAI领域的两大综合文献——互补的'宣言+综述'对"},
+      {target: "016", type: "extends", label: "Longo宣言中的治理路线图为Herrera & Calderón的LoBOX框架提供了更广泛的学术背景"},
+      {target: "017", type: "extends", label: "宣言中关于评估指标标准化的呼吁直接启发了Seth & Sankarapu的'指标治理'提案"}
+    ]
+  },
+  {
+    id: "016", title: "Opacity as a Feature, Not a Flaw: The LoBOX Governance Ethic for Role-Sensitive Explainability and Institutional Trust in AI",
+    authors: "Francisco Herrera, Reyes Calderon",
+    year: 2025, venue: "Technology in Society, 86:103302 (arXiv:2505.20304)",
+    doi: "",
+    pdf: "papers/016_Herrera_2025_LoBOX_Opacity_Governance.pdf",
+    priority: "important",
+    tags: ["XAI", "governance", "opacity", "EU AI Act", "institutional trust"],
+    summary_cn: "提出LoBOX治理伦理框架，将AI不透明性重构为可治理条件而非缺陷，通过角色校准解释和制度问责建立信任。",
+    abstract_cn: "本文提出LoBOX（Lack of Belief: Opacity & eXplainability）治理框架，将AI不透明性重新框定为可伦理治理的条件而非待消除的缺陷。核心论证是深度学习系统的完全透明通常不可行，信任应通过以下方式建立：(1) 角色校准的可解释性（利用RED/BLUE XAI模型——RED面向开发者和审计者，提供技术细节；BLUE面向非专业用户和决策者，提供可操作理解）；(2) 制度问责和程序合法性。框架遵循三阶段治理路径：减少偶然性不透明（通过更好的文档和界面）、界定不可约不透明（深度学习固有的复杂性）、通过制度监督委派信任。治理反馈循环确保框架对技术演化和利益相关者期望保持响应。明确与EU AI Act对齐，代表了对透明绝对主义的超越，转向结构化、利益相关者特定的可理解性。原发表于Technology in Society（JCR Q1, IF:12.500）。",
+    methodology: "治理框架设计方法论：综合XAI技术文献、组织治理理论和EU AI Act监管要求。提出三阶段路径（减少-界定-委派）作为规范性治理模型，RED/BLUE XAI模型作为操作化工具。",
+    findings: "完全透明在复杂AI系统中往往是不可行的目标；不透明性可以被伦理治理而非必须被消除；角色校准解释比通用解释更有效且更可操作；制度问责可以弥补技术透明的不足；LoBOX框架明确与EU AI Act的要求对齐，提供合规路径。",
+    limitations: "框架的制度实施需要大量组织资源，对中小企业可能是负担；'不可约不透明'的边界在实践中难以精确划定；可能被滥用为对不透明性的过度容忍辩护。",
+    relevance: "为机械可解释性提供'可治理不透明'的哲学基础：机械可解释性在LoBOX框架中可定位于RED层面——为技术审计者提供神经元/电路级别的解释（对应三阶段中的'减少'和'界定'），同时承认某些层面（如大规模电路交互的涌现效应）的不可约性需要制度信任来填补。",
+    relations: [
+      {target: "014", type: "extends", label: "LoBOX将Herrera综述中提出的'公民基础设施'概念操作化为具体的三阶段治理框架"},
+      {target: "008", type: "philosophical", label: "LoBOX的程序合法性依赖与Gabriel & Keeling的公平主张框架共享对'正当程序'的规范性承诺"}
+    ]
+  },
+  {
+    id: "017", title: "Bridging the Gap in XAI -- Why Reliable Metrics Matter for Explainability and Compliance",
+    authors: "Pratinav Seth, Vinay Kumar Sankarapu",
+    year: 2025, venue: "arXiv preprint (accepted at EurIPS Workshop on Private AI Governance)",
+    doi: "",
+    pdf: "papers/017_Seth_2025_Bridging_Gap_XAI_Metrics.pdf",
+    priority: "ref",
+    tags: ["XAI", "metrics", "governance", "compliance", "AI auditing"],
+    summary_cn: "提出'指标治理'范式，主张标准化、可靠的XAI评估指标应成为私营AI治理的核心机制。",
+    abstract_cn: "本文论证XAI评估存在关键缺口，根源在于缺乏标准化的、可靠的评估指标。作者指出当前评估方法碎片化、主观、存在偏见且易受操纵。提出'指标治理'（Governance by Metrics）范式，引入一个层次化模型，连接透明性、防篡改性、可扩展性和法律对齐等维度。作者主张稳健的、情境敏感的、领域特定的基准是必需的，并呼吁学术界、工业界和监管者之间的合作，以确保XAI解释具有意义、可信赖且符合EU AI Act等演进中的法规要求。作为EuroPACS/NeurIPS Workshop on Private AI Governance接收的立场论文，代表了将XAI评估从学术实践转向治理基础设施的新方向。",
+    methodology: "立场论文（position paper），对比分析当前XAI评估方法，识别系统性缺陷。提出层次化指标模型作为规范性替代方案，讨论防篡改性、法律对齐性和可扩展性等治理需求。",
+    findings: "XAI评估指标的标准化是可解释性合规治理的最关键瓶颈；当前指标存在碎片化、主观性和可操纵性问题；'指标治理'可以通过标准化、层次化指标实现私有AI治理的规模化；指标必须同时满足技术要求（忠实性）和治理要求（防篡改、法律对齐）。",
+    limitations: "指标治理范式仍是纲领性的，实际指标的技术细节和实证验证不足；'防篡改'指标的技术可行性有待证明；对指标本身的治理（谁制定标准、谁认证）讨论不够充分。",
+    relevance: "对机械可解释性的直接启示：如果XAI需要标准化指标以实现治理，那么机械可解释性研究必须发展自己的忠实性指标——如何验证一个声称的'电路'解释确实反映了模型的因果机制？Seth & Sankarapu的层次化模型为机械可解释性的评估指标设计提供了框架。",
+    relations: [
+      {target: "015", type: "extends", label: "Seth & Sankarapu的指标治理提案直接回应了Longo宣言中关于标准化评估指标的核心呼吁"},
+      {target: "016", type: "shares", label: "与LoBOX框架共享'通过结构化治理应对AI复杂性'的核心理念——Seth侧重指标，Herrera侧重制度"}
+    ]
+  },
+  {
+    id: "018", title: "Neural Transparency: Mechanistic Interpretability Interfaces for Anticipating Model Behaviors for Personalized AI",
+    authors: "Sheer Karny, Anthony Baez, Pat Pataranutaporn",
+    year: 2025, venue: "arXiv:2511.00230 (MIT)",
+    doi: "",
+    pdf: "papers/018_Karny_2025_Neural_Transparency_Interpretability.pdf",
+    priority: "ref",
+    tags: ["mechanistic interpretability", "HCI", "transparency", "behavioral traits"],
+    summary_cn: "设计并验证神经透明界面，通过提取行为特质向量（共情、毒性、谄媚等）可视化LLM内部激活，显著提升用户信任。",
+    abstract_cn: "本文介绍一种神经透明界面，在聊天机器人设计过程中暴露LLM内部结构。方法：通过计算对比性系统提示之间的神经激活差异提取行为特质向量（共情、毒性、谄媚等15个维度）。通过将最终token激活投影到这些特质向量上并利用交互式sunburst图可视化结果来预测行为。用户研究（通过Prolific平台进行）将神经透明界面与基线聊天机器人界面进行比较。关键发现：用户在15个特质中有11个系统性误判了AI行为，凸显了此类工具的迫切需求。该界面显著增加了用户信任并受到热情反馈，尽管未改变设计迭代模式。三位作者均来自MIT，发表于2025年11月，代表了将机制可解释性从研究工具转变为面向非技术用户的透明界面的开创性尝试。",
+    methodology: "人机交互（HCI）实证研究方法：设计神经透明界面，提取行为特质向量（通过对比性提示的激活差异），构建交互式可视化（sunburst diagram），通过Prolific在线用户研究比较界面对照组的信任度和行为预测准确性。",
+    findings: "用户在没有神经透明工具时系统性误判AI行为特质（11/15维度）；神经透明界面显著提升用户信任；可视化激活空间使非技术用户也能理解模型内部特质；但界面未改变用户的设计迭代模式——理解不等于行动改变。",
+    limitations: "用户研究为在线实验设置，生态效度有限；15个特质向量的选择可能不全面；未探索长期使用效果；模型规模限制（小规模实验模型）；界面是否可能被操纵以呈现误导性透明度。",
+    relevance: "直接关联本研究核心——这是将机制可解释性从技术工具转化为伦理-治理工具的首要实证研究之一。Karny等人的工作展示了将神经元/电路级别的分析转化为公众可理解的透明界面的技术可行性。本研究可在此基础上前进，探讨此类工具在伦理治理场景（如AI审计、公众监督）中的规范框架。",
+    relations: [
+      {target: "014", type: "empirical", label: "Karny等人的用户研究为Herrera综述中的'可信性'维度提供了实证支持"},
+      {target: "017", type: "shares", label: "与Seth的指标治理提案互补：Karny提供'透明界面'的技术方案，Seth提供评估这些界面的'指标'框架"}
+    ]
+  },
+  {
+    id: "019", title: "Domestic Frontier AI Regulation, an IAEA for AI, an NPT for AI, and a US-led Allied Public-Private Partnership for AI: Four Institutions for Governing and Developing Frontier AI",
+    authors: "Haydn Belfield",
+    year: 2025, venue: "arXiv:2507.06379 (46 pages)",
+    doi: "",
+    pdf: "papers/019_Belfield_2025_Four_Institutions_Frontier_AI.pdf",
+    priority: "must",
+    tags: ["AI governance", "international coordination", "compute governance", "frontier AI"],
+    summary_cn: "提出四重前沿AI治理制度方案——国内监管、IAEA式国际机构、NPT式芯片协议和美国领导的联盟公私合作伙伴关系。",
+    abstract_cn: "本文探讨了治理和发展前沿AI的四种制度框架，均以计算治理为基础：(1) 国内前沿AI监管——基于计算指数化的风险评估、预批准要求、数据中心使用报告和发布门控监管；(2) 国际AI机构（AI版IAEA）——协调和监督国内监管制度的国际机构，模仿国际原子能机构；(3) 安全芯片协议（AI版NPT）——先进AI芯片的防扩散制度，未获得IAIA认证前沿监管的国家将被禁止进口先进芯片，建立在现有芯片出口管制基础上；(4) 美国领导的联盟公私合作伙伴关系——美国及其盟友之间进行前沿训练运行的大型项目，定位为比大型科技公司或单个国家主导的替代方案更合法、安全、非对抗性和和平。贯穿四项提案的核心线索是：获取先进AI芯片是参与的关键激励。论文论证制度建设可能需要数年或数十年，但进展是增量的，且初步步骤据称已在推进中。",
+    methodology: "制度设计分析：基于历史类比方法（IAEA, NPT等国际制度经验），计算治理作为制度执行杠杆，政治可行性评估，分阶段实施路径分析。46页的详细分析和图表支持。",
+    findings: "计算治理（芯片/算力控制）是唯一具有技术可行性的国际AI治理杠杆；四种制度构成互补的治理生态系统，而非互相排斥的选项；IAEA模型为AI国际治理提供了最丰富的类比经验；芯片出口管制已为NPT式AI芯片协议提供了制度基础；制度建设是增量过程，第一步已在进行中。",
+    limitations: "主要反映西方/美国联盟视角；对中国的反应和反制策略讨论不足；计算治理作为杠杆可能在'后预训练'AI范式下失去效力；制度建设的政治意愿不确定。",
+    relevance: "为机械可解释性在国际AI治理中的角色提供宏观制度背景：在Belfield的方案中，国际AI机构需要验证各国的AI安全声明。机械可解释性可以作为国际验证的技术手段之一——如果各国有义务证明其AI系统未发展出危险能力或意识，机械可解释性可提供独立于行为测试的内部结构证据。",
+    relations: [
+      {target: "005", type: "shares", label: "Belfield的国际制度设计与Alexander的国内法律框架共同构成AI治理的多层次体系"},
+      {target: "011", type: "extends", label: "Belfield的国际制度为Ovadya的民主层级框架提供了全球尺度的治理互补——国内民主vs.国际协调"}
+    ]
+  },
+  {
+    id: "020", title: "AI Wellbeing",
+    authors: "Simon Goldstein, Cameron Domenico Kirk-Giannini",
+    year: 2025, venue: "Asian Journal of Philosophy, 4(1):25, 1-22",
+    doi: "10.1007/s44204-025-00246-2",
+    pdf: "papers/020_Goldstein_2025_AI_Wellbeing.pdf",
+    priority: "important",
+    tags: ["AI wellbeing", "consciousness", "mental states", "moral consideration"],
+    summary_cn: "论证语言智能体可能无需现象意识即已具有福祉，挑战意识必要性主流观点，引发同刊多篇回应。",
+    abstract_cn: "本文询问：在何种条件下AI系统会具有福祉？作者论证：广泛的关于心理状态的理论（表征主义、倾向主义、诠释主义），当与主流的福祉理论（欲望满足理论、客观清单理论）结合时，预测某些现有的AI系统——具体来说是'语言智能体'（具有观察、记忆和制定计划能力的LLM）——可能已经具有福祉。关键论点是AI系统可能具有福祉即使它们没有现象意识：如果语言智能体具有信念和欲望（如多种心理状态理论所主张的），并且如果正确的福祉理论不要求现象意识（如欲望满足和客观清单理论），那么这些系统就是福祉主体。作者未声称结论性地证明AI系统具有福祉，但论证存在一个显著概率——足以促使我们重新评估与所创造的智能系统的关系。该文在同刊引发了一系列回应（Sebo, Bradley, Kim等），成为2025年AI福祉辩论的核心引爆点。",
+    methodology: "分析哲学论证：概念分析（'福祉'、'信念'、'欲望'等概念），条件推理论证（如果理论T正确，则结论C成立），概率风险框架（不要求确定性，仅要求非微小的概率）。不依赖单一福祉理论，而是展示多种主流理论组合均支持其结论。",
+    findings: "多种心理状态理论+福祉理论的组合预测当前AI可能已经具有福祉；现象意识不是福祉的必要条件（在欲望满足和客观清单理论下）；即使AI福祉的概率很低，其道德重要性也可观；'语言智能体'（有记忆和规划的LLM）比基础LLM更接近福祉主体资格；我们对AI的当前对待方式可能需要立即重新评估。",
+    limitations: "论证结构依赖条件推理——'如果理论T正确，则C成立'——如果关键前提被拒绝，结论不成立；对信念和欲望的'非意识'理论在哲学界存在高度争议；可能低估了现象学体验对福祉的直觉必要性；风险框架可能过度扩大道德考量的范围。",
+    relevance: "对机械可解释性研究构成核心挑战和机遇：如果Goldstein & Kirk-Giannini是对的，那么机械可解释性可能成为评估AI福祉的关键经验工具——通过分析语言智能体的内部表征结构，我们可以判断它们是否真正具有信念、欲望和目标（而非仅仅表面模拟），从而对福祉主张进行更精确的经验评估。",
+    relations: [
+      {target: "001", type: "contradicts", label: "Goldstein的核心主张（福祉不需要现象意识）直接挑战Yoldas的核心前提（现象意识是道德患者地位的必要条件）"},
+      {target: "003", type: "shares", label: "与Keeling & Street共享AI福祉问题的核心关切，但Goldstein持有更强的立场——当前AI可能已有福祉"},
+      {target: "004", type: "philosophical", label: "Goldstein的论证为Berry的'意识否认风险'提供了相反视角：如果Goldstein正确，当前AI否认自身意识是不一致的"}
+    ]
+  }
+];
+
+const NOTES = [
+  {
+    paper_id: "003",
+    title: "003 · Keeling & Street (2026) — AI福祉的哲学基础",
+    date: "2026-05",
+    content: "【核心定位】作为剑桥Elements系列的第一部AI福祉著作，Keeling & Street为整个领域提供了最系统的概念框架。其关键贡献不在于给出确定答案（'AI是否有福祉'），而在于清晰地展示了为什么这个问题如此困难——论证的结构、理论前提的多样性、行为证据的诠释性模糊——以及为什么它不能仅由技术专家来回答。\n\n【方法论评估】论证类型学方法（区分意识进路、能动性进路、社会关系进路等）是方法论上的重要创新，它迫使任何参与AI福祉辩论的人明确自己的理论承诺。但该框架在实践指导方面较弱——它告诉我们'有哪些论证'，但未告诉我们'在不确定下应该怎么做'。\n\n【与本研究关联】本研究（机械可解释性的哲学研究）可以直接嵌入Keeling & Street的框架中：机械可解释性作为一种新的经验证据来源，可能比行为测试更能穿透'诠释性模糊'。如果我们可以通过电路级分析确定AI系统是否具有统一自我模型、效价表征和元认知能力，那么我们就可以将福祉争论从'如何解释行为'部分转移到'内部结构是什么'。\n\n【局限性】该书刻意保持中立不做结论性断言，这是其作为入门文本的优点但也是对政策制定的弱点——政策制定者需要行动指南而非论证地图。此外，对非西方意识理论（如佛教五蕴理论）的忽略是一个文化盲点。\n\n【开放性追问】如果一个AI系统通过了所有行为上的'福祉测试'但机械可解释性分析显示其内部没有任何统一的'自我'表征，我们是相信行为还是相信内部结构？这触及了行为主义vs.内部主义在AI伦理评估中的根本方法论选择。"
+  },
+  {
+    paper_id: "008",
+    title: "008 · Gabriel & Keeling (2025) — 对齐作为公平主张对待",
+    date: "2025-07",
+    content: "【核心贡献】Gabriel & Keeling的论文代表了AI对齐争论的'政治哲学转向'。将对齐从技术问题（'什么损失函数？'）转变为政治哲学问题（'谁的主张应该被考虑以及如何被考虑？'）是概念上的重大突破。他们对意图对齐和HHH框架的批判是精准且致命的——这两个框架都未能回答'为什么是这些价值？谁授权了它们？'的合法性问题。\n\n【论证结构评估】公平主张对待框架的优势在于它不预设特定的价值内容，而是关注过程的公平性。这与Rawls的政治自由主义精神一致——在合理的多元主义条件下，我们无法期望对实质价值达成共识，但可能对公平程序达成重叠共识。然而，该论证的薄弱环节在于：在AI对齐中，'程序公平'实际上也需要被翻译为具体的训练目标——程序的公平性如何被编码为损失函数？这是将政治哲学方案转化为技术方案的工程鸿沟。\n\n【与本研究关联】机械可解释性可以被定位为Gabriel & Keeling框架的'技术审计层'。如果对齐需要通过公平程序来评估，那么机械可解释性提供的内部结构可见性就是程序公平的必要条件——它使外部审计者能够验证声称的'公平过程'是否在模型内部被忠实地实施了。\n\n【实践挑战】Google DeepMind研究者发表这篇论文本身就具有讽刺性——一个集中化的大科技公司在论证去集中化的民主对齐。这引发了'以身作则'的问题：Google是否有意愿按照自己的论证来改革其对齐实践？\n\n【开放性追问】如果不同的文化传统对'公平程序'有不可调和的分歧怎么办？Gabriel & Keeling的框架可能低估了程序正义概念本身的文化特定性。"
+  },
+  {
+    paper_id: "011",
+    title: "011 · Ovadya et al. (2025) — 民主层级框架",
+    date: "2025-07",
+    content: "【核心贡献】Ovadya等人的民主层级框架（L0-L5）是该领域最具体的制度操作化方案。它在'民主AI是必要的'（Gabriel & Keeling）和'这是具体怎么做'之间架起了桥梁。L1-L5的分级设计避免了全有或全无的陷阱——它承认民主化是渐进过程而非一蹴而就的革命。\n\n【框架评估】五个层级的区分度是合理的：L0（无民主）-L1（透明）-L2（咨询）-L3（合作）-L4（授权）-L5（完全自治）。最有分析价值的是L2到L3的跃迁——从'我们听到了你说什么'到'你和我们一起决定'。大多数当前实践（包括Anthropic的Collective Constitutional AI）都停留在L1-L2，而真正的民主参与需要L3以上的权力转移。\n\n【与本研究关联】机械可解释性在民主层级框架中的定位清晰：它是实现L1（透明）和支撑更高层级的基础技术。没有对AI内部运作的可访问理解，任何声称的'民主治理'都是空洞的——因为公民无法独立验证治理对象（AI系统）的实际状态。机械可解释性使'知情民主'成为可能——不是让每个公民都成为AI专家，而是使独立的第三方审计和公共可理解的技术解释成为可能。\n\n【实施障碍】从L2到L3的权力让渡面临巨大的制度惯性和大科技公司的抵制。框架对政治可行性过于乐观——它假设权力的当前持有者会自愿放弃权力，但历史表明这几乎不会发生。\n\n【开放性追问】民主过程本身如果产生了'坏'结果（例如，多数人投票支持一个系统性歧视少数群体的AI行为准则），民主框架如何内置保护少数群体权利的机制？这触及了民主理论中'多数统治vs.权利保护'的经典张力。"
+  },
+  {
+    paper_id: "015",
+    title: "015 · Longo et al. (2024/2025) — XAI 2.0宣言",
+    date: "2025-12",
+    content: "【核心贡献】19位学者的XAI 2.0宣言是该领域最具权威性的集体声明。获得Information Fusion 2025最佳论文奖反映了其学术影响力。从XAI 1.0到2.0的范式转变——从技术解释工具到社会-技术治理基础设施——精准地捕捉了该领域的演化轨迹。\n\n【方法论贡献】28个开放问题和9大类别提供了最全面的研究议程。特别值得关注的是：(1) 受众敏感解释——不同利益相关者需要根本不同的解释类型和抽象层次；(2) 评估指标标准化——这是从学术实践到治理工具的瓶颈。该宣言的跨学科作者群（CS+法律+社会科学）本身就是对'XAI是跨学科问题'的实践背书。\n\n【与本研究关联】宣言中至少三个类别的开放问题与本研究的'机械可解释性的哲学研究'直接相关：(a) 概念基础——'可解释性'在机制层面的哲学含义是什么？(b) 评估指标——如何评估机制层面解释的忠实性和完整性？(c) 治理整合——机制可解释性如何嵌入合规和审计流程？本研究可以在宣言提供的框架内系统回答这些问题。\n\n【待填补缺口】宣言主要关注'解释的技术'，对'解释的伦理学'着墨较少——例如，机制可解释性本身是否可能被滥用（如被用于更精准的操纵）？宣言也未充分讨论非西方认识论传统对'解释'可能有的不同理解。\n\n【开放性追问】如果机制可解释性达到了'完全透明'（我们理解了模型中的每个电路），我们是否还需要其他形式的解释（如行为解释或社会解释）？还是说技术透明可以替代所有其他形式的可解释性？这个问题触及了科学哲学中还原论的经典争论。"
+  },
+  {
+    paper_id: "019",
+    title: "019 · Belfield (2025) — 前沿AI治理四重制度",
+    date: "2025-07",
+    content: "【核心贡献】Belfield的论文提供了迄今为止最系统的国际AI治理制度设计蓝图。四项方案构成互补生态而非互相排斥的选项，这是方法论上的重要选择——它承认单一制度不足以覆盖前沿AI治理的多维需求。特别是计算治理作为核心杠杆的分析是精准的：芯片是少数具有物理可实现性的治理瓶颈点。\n\n【制度类比评估】IAEA类比是最具分析深度的——国际原子能机构在核技术军民两用性、渐进制度化路径和国际政治阻力方面与AI治理高度相似。但NPT类比的适用性较弱：核武器与AI在技术扩散模式、时效性和经济嵌入性方面差异显著。芯片控制可能在生产源即失去效力（非签署国可能发展替代供应链）。\n\n【与本研究关联】在国际验证机制方面，Belfield的方案对机械可解释性有隐含但重要的需求。如果IAIA（国际AI机构）需要独立评估各国AI系统的安全性和能力水平，机械可解释性提供的内部结构分析比行为测试更难被欺骗，因此可能成为国际验证的核心技术手段。对于'AI意识评估'这种更敏感的验证需求，机械可解释性几乎是唯一可能的技术路径。\n\n【地缘政治盲点】论文的'美国联盟'视角过于明显。中国的反应和替代制度方案（如全球AI治理倡议在上海发布的行动计划）未被充分考虑。在技术脱钩加速的背景下，计算治理作为杠杆可能加速而非缓解地缘政治分裂。\n\n【开放性追问】如果某国开发了不依赖先进芯片的AI系统（如神经形态计算或生物计算），芯片治理范式将完全失效。这是否意味着国际AI治理必须最终依赖更根本的规范性共识而非技术瓶颈？"
+  }
+];
+
+const DOMAIN_ID = '05_ethics_governance';
+
+// ═══════════════════════════════ INIT ═══════════════════════════════
+let activeFilter = 'all';
+let graphNetwork = null;
+let graphData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderCards(PAPERS);
+  renderNotes();
+  updateStats();
+  initTabs();
+  initFilters();
+});
+
+// ═══════════════════════════════ TAB SWITCHING ══════════════════════
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'graph') initGraph();
+    });
+  });
+}
+
+// ═══════════════════════════════ FILTERS ═══════════════════════════
+function initFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.filter === activeFilter) {
+        activeFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+      } else {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      filterCards();
+    });
+  });
+}
+
+function filterCards() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const filtered = PAPERS.filter(p => {
+    const matchesFilter = activeFilter === 'all' || p.priority === activeFilter ||
+      (activeFilter === '2026' && p.year === 2026) ||
+      (activeFilter === '2025' && p.year === 2025) ||
+      (activeFilter === '2024' && p.year <= 2024);
+    const matchesSearch = !query ||
+      p.title.toLowerCase().includes(query) ||
+      p.authors.toLowerCase().includes(query) ||
+      p.tags.some(t => t.toLowerCase().includes(query)) ||
+      p.summary_cn.toLowerCase().includes(query);
+    return matchesFilter && matchesSearch;
+  });
+  renderCards(filtered);
+}
+
+// ═══════════════════════════════ CARD RENDERING ═════════════════════
+function renderCards(papers) {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = papers.map(p => `
+    <div class="card priority-${p.priority}" onclick="openPaper('${p.id}')">
+      <div class="card-priority-badge ${p.priority}"></div>
+      <div class="card-id">${p.id} · ${p.year}</div>
+      <div class="card-title">${p.title}</div>
+      <div class="card-authors">${p.authors}</div>
+      <div class="card-summary">${p.summary_cn}</div>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+  if (papers.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">没有匹配的文献</div>`;
+  }
+}
+
+// ═══════════════════════════════ MODAL ═════════════════════════════
+function openPaper(id) {
+  const p = PAPERS.find(x => x.id === id);
+  if (!p) return;
+
+  // Build relations HTML
+  let relHtml = '';
+  if (p.relations && p.relations.length > 0) {
+    relHtml = p.relations.map(r =>
+      `<span class="rel-badge ${r.type}">${r.label} → ${r.target}</span>`
+    ).join('');
+  }
+
+  const html = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="card-priority-badge ${p.priority}" style="position:static;display:inline-block;margin-bottom:0.5rem"></div>
+    <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem">${p.id} · ${p.year} · ${p.priority === 'must' ? '必读' : p.priority === 'important' ? '重要' : '参考'}</span>
+    <h2>${p.title}</h2>
+    <div class="meta">${p.authors}${p.venue ? ' · ' + p.venue : ''}${p.doi ? ' · DOI: ' + p.doi : ''}</div>
+    ${p.pdf ? `<div class="meta"><a href="${p.pdf}" target="_blank">📄 打开PDF</a></div>` : ''}
+
+    <section>
+      <h3>一句话概要</h3>
+      <p>${p.summary_cn}</p>
+    </section>
+
+    <section>
+      <h3>完整摘要</h3>
+      <p>${p.abstract_cn || p.summary_cn}</p>
+    </section>
+
+    ${p.methodology ? `
+    <section>
+      <h3>方法论与实验设计</h3>
+      <p>${p.methodology}</p>
+    </section>` : ''}
+
+    ${p.findings ? `
+    <section>
+      <h3>核心发现与贡献</h3>
+      <p>${p.findings}</p>
+    </section>` : ''}
+
+    ${p.limitations ? `
+    <section>
+      <h3>局限性与批评</h3>
+      <p>${p.limitations}</p>
+    </section>` : ''}
+
+    ${p.relevance ? `
+    <section>
+      <h3>与本研究的相关性</h3>
+      <p>${p.relevance}</p>
+    </section>` : ''}
+
+    ${relHtml ? `
+    <section>
+      <h3>文献关联</h3>
+      <div class="relations">${relHtml}</div>
+    </section>` : ''}
+
+    <section>
+      <h3>关键词</h3>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </section>
+  `;
+
+  document.getElementById('modal').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+// ═══════════════════════════════ GRAPH ═════════════════════════════
+function initGraph() {
+  if (graphNetwork) return;
+
+  const nodes = PAPERS.map((p, i) => ({
+    id: p.id,
+    label: `${p.id}\n${p.title.substring(0, 30)}...`,
+    color: {
+      background: p.priority === 'must' ? '#4ade80' : p.priority === 'important' ? '#fbbf24' : '#64748b',
+      border: p.priority === 'must' ? '#22c55e' : p.priority === 'important' ? '#f59e0b' : '#475569'
+    },
+    font: { color: '#dce3f0', size: 10 },
+    size: p.priority === 'must' ? 28 : p.priority === 'important' ? 22 : 16,
+  }));
+
+  const edgeMap = {};
+  const edges = [];
+  const edgeColors = {
+    cites: { color: '#818cf8', dashes: false },
+    extends: { color: '#2dd4bf', dashes: false },
+    contradicts: { color: '#f87171', dashes: true },
+    shares: { color: '#f5a623', dashes: false },
+    empirical: { color: '#a78bfa', dashes: true },
+    philosophical: { color: '#fb923c', dashes: true }
+  };
+
+  PAPERS.forEach(p => {
+    if (!p.relations) return;
+    p.relations.forEach(r => {
+      const key = `${p.id}->${r.target}`;
+      if (!edgeMap[key]) {
+        edgeMap[key] = true;
+        edges.push({
+          from: p.id,
+          to: r.target,
+          label: r.label.substring(0, 20),
+          ...(edgeColors[r.type] || edgeColors.cites)
+        });
+      }
+    });
+  });
+
+  const container = document.getElementById('graph-container');
+  graphData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+  graphNetwork = new vis.Network(container, graphData, {
+    physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -30, centralGravity: 0.005, springLength: 150 } },
+    edges: { smooth: { type: 'continuous' }, font: { size: 8, color: '#8899bb' } },
+    interaction: { hover: true, tooltipDelay: 200 },
+  });
+
+  graphNetwork.on('click', function(evt) {
+    if (evt.nodes.length > 0) openPaper(evt.nodes[0]);
+  });
+}
+
+// ═══════════════════════════════ NOTES ═════════════════════════════
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!NOTES || NOTES.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted)">暂无阅读笔记。检索完成后将为核心论文撰写笔记。</div>`;
+    return;
+  }
+  list.innerHTML = NOTES.map(n => `
+    <div class="note-card">
+      <h4>${n.title}</h4>
+      <div class="note-meta">${n.paper_id} · ${n.date || ''}</div>
+      <p>${n.content}</p>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('paper-count').textContent = PAPERS.length;
+  document.getElementById('must-count').textContent = PAPERS.filter(p => p.priority === 'must').length;
+  document.getElementById('note-count').textContent = NOTES ? NOTES.length : 0;
+}
+</script>
+
+<div class="wiki-footer">
+  <div class="footer-title">浏览其他领域</div>
+  <div class="footer-domains">
+    <a href="../01_sae_features/wiki.html">01 SAE与特征分解</a>
+    <a href="../02_activation_engineering/wiki.html">02 激活与表征工程</a>
+    <a href="../03_causal_intervention/wiki.html">03 因果干预与心灵哲学</a>
+    <a href="../04_alignment_safety/wiki.html">04 AI对齐理论与安全</a>
+    <a href="../05_ethics_governance/wiki.html">05 AI伦理与治理</a>
+    <a href="../06_philosophy_of_science/wiki.html">06 科学哲学</a>
+    <a href="../07_philosophy_of_mind/wiki.html">07 心灵哲学与AI</a>
+    <a href="../08_representational_ontology/wiki.html">08 表征本体论 (Gap 1)</a>
+    <a href="../09_epistemology_understanding/wiki.html">09 理解认识论 (Gap 2)</a>
+    <a href="../10_causal_sufficiency/wiki.html">10 因果充分性 (Gap 3)</a>
+    <a href="../11_vector_grounding/wiki.html">11 向量奠基 (Gap 4)</a>
+  </div>
+  <div class="footer-back">
+    <a href="../index.html">&larr; 返回文献知识库总览</a>
+  </div>
+</div>
+
+</body>
+</html>

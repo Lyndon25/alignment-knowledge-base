@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>08_representational_ontology · 文献Wiki</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-void: #06080f;
+      --bg-primary: #0c0f1a;
+      --bg-secondary: #12182a;
+      --bg-tertiary: #1a2238;
+      --bg-elevated: #222d4a;
+      --text-primary: #dce3f0;
+      --text-secondary: #8899bb;
+      --text-muted: #556688;
+      --text-faint: #334466;
+      --border-subtle: rgba(68, 102, 153, 0.08);
+      --border-medium: rgba(68, 102, 153, 0.18);
+      --border-strong: rgba(68, 102, 153, 0.30);
+      --c-priority-must: #4ade80;
+      --c-priority-important: #fbbf24;
+      --c-priority-ref: #64748b;
+      --c-rel-cites: #818cf8;
+      --c-rel-extends: #2dd4bf;
+      --c-rel-contradicts: #f87171;
+      --c-rel-shares: #f5a623;
+      --c-rel-empirical: #a78bfa;
+      --c-rel-philosophical: #fb923c;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition-base: 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem; color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .header-stats {
+      display: flex; gap: 1.5rem;
+      font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+    }
+    .header-stat span { color: var(--text-primary); font-weight: 500; }
+
+    .tab-nav {
+      display: flex; gap: 0;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 0 2rem;
+    }
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none; background: none;
+      color: var(--text-muted); font-family: var(--font-body);
+      font-size: 0.85rem; cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-base);
+    }
+    .tab-btn:hover { color: var(--text-secondary); }
+    .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--c-rel-cites); }
+
+    .tab-content { display: none; padding: 2rem; }
+    .tab-content.active { display: block; }
+
+    .filters {
+      display: flex; gap: 0.75rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.85rem;
+      border: 1px solid var(--border-medium); border-radius: 999px;
+      background: transparent; color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.7rem;
+      cursor: pointer; transition: all var(--transition-base);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--text-secondary); color: var(--text-primary);
+    }
+    .filter-btn.priority-must.active { border-color: var(--c-priority-must); color: var(--c-priority-must); }
+    .filter-btn.priority-important.active { border-color: var(--c-priority-important); color: var(--c-priority-important); }
+    .filter-btn.priority-ref.active { border-color: var(--c-priority-ref); color: var(--c-priority-ref); }
+
+    .search-input {
+      padding: 0.35rem 1rem;
+      background: var(--bg-secondary); border: 1px solid var(--border-medium);
+      border-radius: 999px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 0.8rem;
+      width: 240px; outline: none;
+    }
+    .search-input:focus { border-color: var(--border-strong); }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card.priority-must { border-left: 3px solid var(--c-priority-must); }
+    .card.priority-important { border-left: 3px solid var(--c-priority-important); }
+    .card.priority-ref { border-left: 3px solid var(--c-priority-ref); }
+
+    .card-id {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: var(--text-faint); margin-bottom: 0.5rem;
+    }
+    .card-title {
+      font-size: 0.95rem; font-weight: 500;
+      color: var(--text-primary); margin-bottom: 0.4rem;
+      line-height: 1.35;
+    }
+    .card-authors {
+      font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .card-summary {
+      font-size: 0.78rem; color: var(--text-secondary);
+      line-height: 1.5; margin-bottom: 0.75rem;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags {
+      display: flex; gap: 0.35rem; flex-wrap: wrap;
+    }
+    .card-tag {
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      background: var(--bg-tertiary); color: var(--text-muted);
+      font-size: 0.65rem; font-family: var(--font-mono);
+    }
+    .card-priority-badge {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .card-priority-badge.must { background: var(--c-priority-must); box-shadow: 0 0 6px var(--c-priority-must); }
+    .card-priority-badge.important { background: var(--c-priority-important); box-shadow: 0 0 6px var(--c-priority-important); }
+    .card-priority-badge.ref { background: var(--c-priority-ref); }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(6,8,15,0.85); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      max-width: 780px; width: 90vw; max-height: 85vh;
+      overflow-y: auto; padding: 2rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      width: 32px; height: 32px; border: 1px solid var(--border-medium);
+      border-radius: 50%; background: transparent; color: var(--text-muted);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-base);
+    }
+    .modal-close:hover { border-color: #f87171; color: #f87171; }
+    .modal h2 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .modal .meta { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; }
+    .modal section { margin-bottom: 1.25rem; }
+    .modal section h3 {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .modal section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+    .modal .relations { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .modal .rel-badge {
+      padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.7rem;
+      font-family: var(--font-mono);
+    }
+    .rel-badge.cites { background: rgba(129,140,248,0.15); color: var(--c-rel-cites); }
+    .rel-badge.extends { background: rgba(45,212,191,0.15); color: var(--c-rel-extends); }
+    .rel-badge.contradicts { background: rgba(248,113,113,0.15); color: var(--c-rel-contradicts); }
+    .rel-badge.shares { background: rgba(245,166,35,0.15); color: var(--c-rel-shares); }
+    .rel-badge.empirical { background: rgba(167,139,250,0.15); color: var(--c-rel-empirical); }
+    .rel-badge.philosophical { background: rgba(251,146,60,0.15); color: var(--c-rel-philosophical); }
+
+    .graph-container {
+      width: 100%; height: 70vh;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+    .graph-legend {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      margin-top: 1rem; padding: 0.75rem 1rem;
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+    }
+    .graph-legend-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.7rem; color: var(--text-muted);
+    }
+    .graph-legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    .notes-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .note-card {
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 1.25rem;
+    }
+    .note-card h4 { font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .note-card .note-meta { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 0.6rem; }
+    .note-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Position Badge */
+    .position-badge {
+      display: inline-block; padding: 0.15rem 0.6rem;
+      border-radius: 999px; font-size: 0.6rem;
+      font-family: var(--font-mono); font-weight: 500;
+      margin-left: 0.5rem;
+    }
+    .position-realist { background: rgba(74,222,128,0.15); color: #4ade80; }
+    .position-instrumentalist { background: rgba(248,113,113,0.15); color: #f87171; }
+    .position-middle { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .position-agnostic { background: rgba(100,116,139,0.15); color: #94a3b8; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-void); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+    a { color: var(--c-rel-cites); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Footer navigation */
+    .wiki-footer {
+      margin-top: 3rem; padding: 1.5rem 2rem;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-medium);
+    }
+    .wiki-footer a { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; transition: color var(--transition-base); }
+    .wiki-footer a:hover { color: var(--text-primary); text-decoration: none; }
+    .wiki-footer .footer-title { font-size: 0.7rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-domains { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-back { margin-top: 0.5rem; }
+    .wiki-footer .footer-back a { color: var(--c-rel-cites); font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.35rem">
+      <a href="../index.html" style="color:var(--c-rel-cites)">← 文献知识库总览</a>
+    </div>
+    <div class="header-title">表征本体论：发现还是构建？</div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.15rem">Feature Ontology · Scientific Realism · Structuralism · Constructivism · Natural Kinds</div>
+  </div>
+  <div class="header-stats">
+    <div class="header-stat">文献 <span id="paper-count">0</span></div>
+    <div class="header-stat">必读 <span id="must-count" style="color:var(--c-priority-must)">0</span></div>
+    <div class="header-stat">笔记 <span id="note-count">0</span></div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="browse">浏览文献</button>
+  <button class="tab-btn" data-tab="graph">关系图谱</button>
+  <button class="tab-btn" data-tab="notes">阅读笔记</button>
+</div>
+
+<div class="tab-content active" id="tab-browse">
+  <div class="filters">
+    <input class="search-input" id="search" placeholder="搜索标题/作者/关键词..." oninput="filterCards()">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="filter-btn priority-must" data-filter="must">必读</button>
+    <button class="filter-btn priority-important" data-filter="important">重要</button>
+    <button class="filter-btn priority-ref" data-filter="ref">参考</button>
+    <button class="filter-btn" data-filter="2026">2026</button>
+    <button class="filter-btn" data-filter="2025">2025</button>
+    <button class="filter-btn" data-filter="2024">2024</button>
+    <button class="filter-btn" data-filter="realist" style="color:#4ade80">实在论</button>
+    <button class="filter-btn" data-filter="instrumentalist" style="color:#f87171">工具论</button>
+    <button class="filter-btn" data-filter="middle" style="color:#fbbf24">中间立场</button>
+  </div>
+  <div class="card-grid" id="card-grid"></div>
+</div>
+
+<div class="tab-content" id="tab-graph">
+  <div class="graph-container" id="graph-container"></div>
+  <div class="graph-legend" id="graph-legend">
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-must)"></div> 必读</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-important)"></div> 重要</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-ref)"></div> 参考</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-cites)"></div> 引用</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-extends)"></div> 方法继承</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-contradicts)"></div> 对立观点</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-shares)"></div> 共享概念</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-empirical)"></div> 经验基础</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-philosophical)"></div> 哲学先导</div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-notes">
+  <div class="notes-list" id="notes-list"></div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js"></script>
+<script>
+// =========================== DATA ===========================
+const PAPERS = [
+  {
+    id: "001", title: "桥接哲学与机器学习：一种对神经网络表征进行分类的结构主义框架",
+    authors: "Yildiz Culcu",
+    year: 2025, venue: "arXiv (cs.AI), 2511.18633",
+    doi: "10.48550/arXiv.2511.18633",
+    pdf: "papers/001_Culcu_2025_StructuralistFramework.pdf",
+    priority: "must",
+    position: "instrumentalist",
+    tags: ["structural idealism","feature ontology","systematic review","structural realism","representation learning"],
+    summary_cn: "ML文献中结构实在论为0%——研究者压倒性地将神经网络表征视为模型依赖的建构（结构唯心论占60%），而非独立实在的发现。存在"抽象-实在论逆关系"：学科抽象度越高，实在论承诺越弱。",
+    abstract_cn: "本研究采用修正PRISMA系统综述方案，对表征学习与可解释性领域二十余年文献进行结构主义哲学分类。从结构主义科学哲学出发，提出三级分类标准——实体消除、结构来源和存在模式——分析ML研究者对神经网络表征的隐含本体论承诺。对五篇代表性论文的系统分析发现：结构唯心论占60%（表征被视为由架构、数据先验和训练动力学塑造的模型依赖建构），非消除结构主义占20%，消除结构主义占20%，而结构实在论明显缺失（0%）。作者提出"抽象-实在论逆关系"假说：ML的高抽象性（参数化变换作用于向量化表征，脱离物理对应性）使研究者倾向于工具主义和建构主义认识论。论文还发现该领域在从神经元向量表征到特征本体的语义跃迁中存在未加审查的哲学假设，建议引入结构经验论承诺作为对照。",
+    methodology: "系统综述（修正PRISMA方案）；演绎式三级分类框架（实体消除、结构来源、存在模式）；代表性论文的定性哲学分析；横跨二十年的文献语料库。",
+    findings: "（1）ML文献中结构实在论（表征独立存在于自然界、科学发现它们）的论文数为0；（2）60%的论文采用结构唯心论——表征被视为人类/模型建构物；（3）学科抽象度与实在论承诺呈逆相关——ML比生物学等领域更远离实在论；（4）从'神经元激活向量'到'特征'的语言跃迁隐含了未经审查的哲学立场。",
+    limitations: "样本量仅为五篇代表性论文；分类框架本身基于特定的结构主义哲学传统（Sneed-Stegmüller结构主义）；未能充分分析表征学习在不同子领域（CV vs NLP）中可能的差异；尚未纳入2022年后涌现的大规模SAE研究。",
+    relevance: "这是本研究最核心的锚定文献。Culcu发现的'0%结构实在论'构成了整个研究缺口的基础事实。对'SAE特征是被发现还是被构建'问题，本论文给出明确诊断：当前ML共同体实践上采纳了结构唯心论（建构论）立场——当研究者说'我们发现了一个特征'时，他们实际上是在说'我们学到了一组有助于预测任务的参数配置'，而非'我们发现了独立于建模过程的自然界关节'。这一诊断本身不评价建构论立场的优劣，而是将隐含的哲学承诺显性化。与01_sae_features域相关：SAE实践中的'特征发现'修辞需要在本体论上被重新审视。与06_philosophy_of_science域相关：本论文直接架起科学哲学的分析框架与ML实践的桥梁。",
+    relations: [
+      {target: "002", type: "philosophical", label: "002为结构唯心论提供经验证据（FER现象）"},
+      {target: "003", type: "contradicts", label: "003论证准表征的实在论可能性，挑战001的0%诊断"},
+      {target: "012", type: "shares", label: "共享方法：诊断ML研究者的隐含哲学承诺"},
+      {target: "020", type: "contradicts", label: "020从形而上学层面捍卫结构实在论，与001的诊断对立"}
+    ]
+  },
+  {
+    id: "002", title: "质疑深度学习中的表征乐观主义：破碎纠缠表征假说",
+    authors: "Akarsh Kumar, Jeff Clune, Joel Lehman, Kenneth O. Stanley",
+    year: 2025, venue: "arXiv (cs.CV / cs.LG), 2505.11581",
+    doi: "10.48550/arXiv.2505.11581",
+    pdf: "papers/002_Kumar_2025_FER_Hypothesis.pdf",
+    priority: "must",
+    position: "instrumentalist",
+    tags: ["FER","UFR","representation ontology","training dynamics","SGD","evolutionary computation"],
+    summary_cn: "SGD训练的神经网络内部表征是"破碎纠缠"的（FER），而进化搜索产生"统一分解"表征（UFR）。相同输出行为可对应截然不同的内部表征——表征强烈取决于训练方法而非任务本身。这为表征的建构论提供了最强的经验证据。",
+    abstract_cn: "本文挑战深度学习中的'表征乐观主义'——即模型性能提升必然意味着更好的内部表征的假设。作者比较了两种训练范式下组合模式生成网络（CPPNs）的内部表征：传统的随机梯度下降（SGD）和开放式进化搜索（Picbreeder/NEAT）。在生成同一目标图像（如头骨、蝴蝶、苹果）的任务中，两种方法产生像素级相同的输出，但内部表征根本不同。SGD训练的网络呈现破碎纠缠表征（FER）——神经元激活模式混沌无序、语义特征分散纠缠；进化网络呈现统一分解表征（UFR）——模块化、语义清晰、结构化的可复用特征。作者命名此现象为'冒名者智能'（Imposter Intelligence）——表面上基准性能达标，但内部表征质量低劣。FER可能正在削弱大型AI系统的泛化、创造性、持续学习和可解释性。",
+    methodology: "比较实验：CPPNs在SGD vs 进化搜索（Picbreeder）下训练至相同输出；对每个隐藏神经元进行全功能行为可视化（每神经元一幅图像）；定性评估对称性、模块化和语义可分解性；分析权重扰动对不同表征类型的影响。",
+    findings: "（1）相同输出行为可对应完全不同的内部表征——表征并非由任务唯一决定；（2）SGD内生倾向产生FER表征，可能与梯度下降的局部最小值特性有关；（3）进化搜索更可能产生UFR表征，提示训练方法的选择深刻影响表征本体论；（4）Superposition和多义性可能是FER在高维网络中的表现——如果表征本身是破碎的，则SAE稀疏分解只能是权宜之计，无法恢复根本不存在的基本特征。",
+    limitations: "实验规模极小（单张图像生成任务、CPPNs架构）；FER在高维大规模模型中的表现尚待验证；未解释为什么SGD在FER情况下仍能实现良好泛化（某种程度的泛化）；进化方法在大规模深度学习中的可扩展性存疑。",
+    relevance: "这是本研究关于'特征是构建的'这一命题的最强经验论据。如果表征的'本体结构'完全取决于训练方法（SGD vs 进化），那么声称SAE'发现'了模型内部独立存在的特征就面临根本困难——因为改变训练方法可能产生一套完全不同但功能等价的'特征'。这对alignment有深刻含义：如果特征是被SGD构建的而非发现的，那么alignment的对象——那些我们希望保留或修改的'特征'——本身就是训练过程的偶然产物，不具有独立的本体论地位。与01_sae_features域的关系：SAE稀疏分解的困难（多义性、superposition）可能根源在更深层的FER问题上——表征本身就不具备清晰的结构。",
+    relations: [
+      {target: "001", type: "empirical", label: "为001的结构唯心论诊断提供经验支撑"},
+      {target: "003", type: "contradicts", label: "003论证预测成功暗示（准）表征的实在性，002展示预测成功不要求表征真实"},
+      {target: "009", type: "shares", label: "共享结论：特征不具备跨运行的稳定本体论地位"},
+      {target: "010", type: "contradicts", label: "010论证不同能力模块可以收敛，002论证表征不收敛"}
+    ]
+  },
+  {
+    id: "003", title: "解释AI的成功：准表征的无奇迹论证",
+    authors: "Darrell P. Rowbottom, William Peden, André Curtis-Trudel",
+    year: 2026, venue: "Synthese, 207:179",
+    doi: "10.1007/s11229-026-05525-w",
+    pdf: "papers/003_Rowbottom_2026_QuasiRepresentation.pdf",
+    priority: "must",
+    position: "middle",
+    tags: ["quasi-representation","no miracles argument","scientific realism","GraphCast","predictive success"],
+    summary_cn: "提出'准表征'（quasi-representation）概念——剥离'关于性'（aboutness）后的结构性对应。AI系统即使不具备真实表征（缺少关于性），其成功预测仍可通过准表征来解释。兼容选择实在论和反实在论，为中间立场提供形式化基础。",
+    abstract_cn: "本文提出针对AI系统的修正版无奇迹论证（No Miracles Argument, NMA）。作者首先指出，标准NMA认为科学预测的成功最好由理论的（近似）真理来解释，而这一论证可类推至AI。但他们认为先前基于'表征'的AI版本NMA过于强势，因此引入'准表征'（quasi-representation）概念——即剥离了关于性（aboutness/intentionality）关系后剩余的结构性成分（相似性、结构同构、推理通行证等）。准表征为AI预测成功提供了最佳解释，但这一论证比基于完全表征的版本更弱、因此更可辩护。作者以Google DeepMind的GraphCast天气预测模型为案例展示论证。论文的核心哲学贡献是：准表征作为一种'薄的'（thin）概念，兼容选择实在论（认为准表征对应真实结构）和反实在论（认为准表征是纯粹的建模工具），从而在科学实在论/反实在论之争中开辟了超越传统二元对立的路径。论文还讨论了这一观点对可解释AI（XAI）和机械论可解释性的启示。",
+    methodology: "概念分析与形式化论证；案例分析（GraphCast天气预测模型）；与科学哲学文献（Putnam, Boyd, Psillos, van Fraassen）的系统对勘；对先前AI-NMA论证（Rowbottom et al. 2024）的自我修正与推广。",
+    findings: "（1）准表征概念将关于性从表征中剥离，保持结构性（同构、相似性）成分；（2）准表征论证弱于完全表征论证，但因此更可辩护——避免了关于性缺乏的传统反驳；（3）准表征兼容实在论和反实在论，提供了一种真正的中间立场——'你可以是准表征的实在论者但特征的反实在论者'；（4）对XAI的启示：解释AI决策时，我们不需要声称模型'关于'世界，只需要展示结构性对应关系。",
+    limitations: "准表征概念的'薄'特性可能导致其解释力不足——太弱的论证可能失去说服力；案例分析限于GraphCast一种模型，跨领域适用性待验证；未充分讨论准表征与反事实依赖、因果关系的关系。",
+    relevance: "这篇论文提供了本研究中最重要的'中间立场'。对于'SAE特征是被发现还是被构建'的问题，准表征路径提供了一个精致的回答：SAE特征作为准表征——它们与模型内部激活模式有结构性对应关系，因此不是纯粹的虚构；但它们不必满足完全关于性（即不必'指称'某个真实世界实体），因此也不是完全意义上的实在论发现。这一立场特别适合当前的alignment实践：alignment工程师训练SAE并发现有用的特征分解，这种行为不需要承诺最强的实在论立场，但也不必堕入'特征完全是任意的'的虚无主义。",
+    relations: [
+      {target: "001", type: "contradicts", label: "001诊断0%实在论，003论证准表征的实在论可能性未被ML文献考虑"},
+      {target: "002", type: "contradicts", label: "002展示预测成功不要求内部表征真实，003论证预测成功最好由准表征解释"},
+      {target: "005", type: "contradicts", label: "005主张特征只能工具性地使用，003提供准表征的实在论替代路径"},
+      {target: "016", type: "contradicts", label: "016论证AI削弱实在论，003论证AI可被实在论地解释"}
+    ]
+  },
+  {
+    id: "004", title: "黑箱的科学理论：基于建构经验论的XAI全生命周期框架",
+    authors: "Sebastian Müller, et al.",
+    year: 2025, venue: "TMLR Submission #7237 (Lamarr Scientific Forum 2025)",
+    doi: "",
+    pdf: "papers/004_Muller_2025_SToBB.pdf",
+    priority: "must",
+    position: "instrumentalist",
+    tags: ["constructive empiricism","XAI","van Fraassen","empirical adequacy","black-box","SToBB"],
+    summary_cn: "直接将van Fraassen的建构经验论应用于神经网络解释——将'拯救现象'（经验充分性）转化为对黑箱模型解释的三个操作约束。这是哲学到工程最直接的应用，清晰展示了工具论立场的实际后果。",
+    abstract_cn: "本文提出'黑箱科学理论'（Scientific Theory of a Black Box, SToBB）概念，直接基于Bas van Fraassen的建构经验论（Constructive Empiricism, CE）。CE的核心主张是科学的目标不是真理而是经验充分性——理论要'拯救现象'。作者将这一哲学立场转化为XAI的可操作框架，为黑箱解释性代理模型（surrogate models）提出三个约束条件：（1）经验充分性——代理模型必须与所有可获取的黑箱行为观察一致；（2）可适应性——代理模型必须包含显式的更新承诺，当新观测到达时恢复充分性；（3）可审计性——建构选择、假设和更新行为必须透明记录。作者开发了Constructive Box Theoriser (CoBoT)算法，在在线设定下随观测累积而建构和维护经验充分的规则基替代模型，并在一个神经网络分类器上进行了演示。论文的核心哲学创新是将CE的'接受科学理论所涉及的信念仅为经验充分性（而非真理）'这一立场直接翻译为XAI的操作原则：解释神经网络时，我们不关心解释是否'真'，只关心解释是否经验充分。",
+    methodology: "哲学概念工程（将CE概念翻译为XAI操作约束）；算法设计与原型实现（CoBoT）；在线学习情境下的实证演示（神经网络分类器替代模型）；对CE框架扩展——从科学理论到工程解释的转译。",
+    findings: "（1）van Fraassen的建构经验论为XAI提供了一致且严谨的哲学基础；（2）经验充分性可在XAI中被操作化为一致性+充分预测性能+算法可适应性三个标准；（3）CE框架自然地容纳了XAI中'不同解释服务于不同目的'的多元主义——正如van Fraassen主张解释是语用学问题；（4）CoBoT算法展示了一个从哲学原则到工程实现的可行路径。",
+    limitations: "CE框架内在地不承诺解释的'真理性'——这可能削弱解释在安全关键应用中的可信度；CoBoT算法的可扩展性有待验证；CE框架对什么算'可观察'的定义（van Fraassen的人类感官标准）与ML中所有行为都是'可观察的'这一事实之间存在张力；未讨论使用CE这种反实在论哲学框架构建的解释如何与alignment目标（通常预设实在论承诺）兼容。",
+    relevance: "这是建构经验论在ML可解释性中最直接的应用。对于核心问题'SAE特征是被发现还是被构建'，本文的CE框架给出明确工具论回答：我们不需要关心SAE特征是否'真实'，只需要关心它们是否经验充分（即能否忠实地建模模型行为）。这一立场对alignment有重要的实践含义：如果我们只是要求SAE特征经验充分地捕获激活模式，那alignment的成功标准是什么？它仅仅是观测层面的对齐，还是要求某种更深层的本体论对应？这暴露了当前alignment discourse中一个未解决的张力：alignment既被表述为技术问题（操纵特征以改变行为），又被表述为形而上学问题（真正的价值对齐）。建构经验论框架主张只关心前者。",
+    relations: [
+      {target: "006", type: "extends", label: "006同样基于van Fraassen CE框架，但聚焦于DL对科学目标争论的影响"},
+      {target: "007", type: "extends", label: "007扩展经验论到仪器和AI，与004的CE应用互补"},
+      {target: "003", type: "contradicts", label: "003保留准表征的实在论可能性，004拒绝任何超出经验充分性的实在论承诺"},
+      {target: "005", type: "shares", label: "共享工具论立场：特征/解释仅在工具意义上有效"}
+    ]
+  },
+  {
+    id: "005", title: "用人工神经网络在科学中搜索特征：非唯一性问题",
+    authors: "Siyu Yao, Amit Hagar",
+    year: 2024, venue: "International Studies in the Philosophy of Science, 37(4)",
+    doi: "10.1080/02698595.2024.2346871",
+    pdf: "papers/005_Yao_2024_NonUniqueness.pdf",
+    priority: "must",
+    position: "instrumentalist",
+    tags: ["feature non-uniqueness","three senses of feature","parametric features","diagnostic features","instrumentalism"],
+    summary_cn: "区分特征的三种意义——参数特征、诊断特征和真实世界特征。非唯一性问题：存在大量不兼容的参数/诊断特征，科学家缺乏背景知识在这些选项间做出有根据的选择。'由此识别出的特征不被承诺为真实的，只能工具性地使用。'",
+    abstract_cn: "本文提出三种'特征'意义的区分：（1）参数特征（parametric features）——神经网络内部的数学结构（权重、激活、交互项）；（2）诊断特征（diagnostic features）——网络用于分类的模式，但这些模式的边界和定义高度依赖于方法论选择；（3）真实世界特征（real-world features）——目标系统在自然界中的真实属性。核心哲学问题是'非唯一性'（non-uniqueness）：存在大量不兼容的参数和诊断特征，以及多种解释它们的方式。当科学家旨在发现新异的真实世界特征时，他们必须在这些选项之间做出选择——但他们往往缺乏做出这一选择所需的背景知识。如果一个人不知道关于目标域的真实世界特征，则无法仅从网络内部确定哪些参数特征对应哪些真实世界特征。作者的结论是明确的：'由此识别出的特征不被承诺为真实的。它们不应被用作证据，只能工具性地使用。'本文还讨论了非唯一性对用ANN进行科学发现的影响（例如在生物学、化学和物理学中），以及这一结论与van Fraassen建构经验论和Stanford工具主义的兼容性。",
+    methodology: "概念分析与区分（三种特征意义）；认识论论证（非唯一性问题）；与科学哲学文献的系统对勘；科学案例讨论（ANN在生物学、化学中的特征发现应用）。",
+    findings: "（1）'特征'一词在ANN文献中被用于三个不同层面但没有被区分，导致本体论混淆；（2）非唯一性意味着不存在从网络内部确定哪个参数特征对应真实世界特征的判定算法；（3）'非承诺性'结论：ANN特征只能用作启发式和工具，不能用作实在论承诺的证据；（4）这一结论对Science4.0（AI辅助科学发现）的雄心施加了认识论约束。",
+    limitations: "论证假设科学背景知识不足是普遍情况——在有些成熟科学领域中背景知识可能足够丰富以裁决特征选择；尚未讨论如果来自独立模态（如不同实验技术）的证据可以三角化验证ANN特征的情况；结论偏保守——可能低估了经过严格独立验证后ANN特征的认识论地位提升的可能性。",
+    relevance: "本文提供了从科学哲学出发的最清晰工具论论证。对核心问题的回答是：ANN特征不是被'发现'的（作为真实世界特征），而是被构建为'参数/诊断特征'。三层次区分对01_sae_features域有直接的实践含义——当SAE研究者声称'发现了一个特征'时，他们使用的是哪种意义上的'特征'？大多数情况下是诊断特征（网络使用此模式进行分类），但语言上容易滑向真实世界特征的实在论承诺。Yao & Hagar警告这种语义滑动在认识论上是不合理的。与06_philosophy_of_science域的关系：本文直接延续了van Fraassen建构经验论和Stanford工具论的传统——对不可观察实体保持不可知论。",
+    relations: [
+      {target: "003", type: "contradicts", label: "003的准表征论证尝试为特征提供某种程度的实在论基础，005主张工具性使用"},
+      {target: "004", type: "shares", label: "共享建构经验论/工具论立场"},
+      {target: "019", type: "contradicts", label: "019主张稠密SAE潜变量是有意义的真实特征，005警告非唯一性使此类主张可疑"},
+      {target: "014", type: "shares", label: "均质疑从网络内部表征直接跃迁到外部世界知识主张的合理性"}
+    ]
+  },
+  {
+    id: "006", title: "深度学习辅助研究与科学目标之争",
+    authors: "Yukinori Onishi",
+    year: 2025, venue: "Journal for General Philosophy of Science, 56(1):77-95",
+    doi: "10.1007/s10838-023-09667-0",
+    pdf: "papers/006_Onishi_2025_DL_AimOfScience.pdf",
+    priority: "important",
+    position: "agnostic",
+    tags: ["constructive empiricism","scientific realism","aim of science","understanding","van Fraassen"],
+    summary_cn: "DL不会改变建构经验论与科学实在论的经典对立，但在真理取向vs理解取向之争中提供有趣案例。DL可以牺牲真理而提供理解——这对'理解必须基于真理'的传统立场构成挑战，但不足以重塑科学目标争论的整个图景。",
+    abstract_cn: "Onishi考察深度学习对科学哲学中'科学目标'争论的影响——即建构经验论（van Fraassen: 科学的目标是经验充分性而非真理）与科学实在论（科学的目标是真理）之间的经典对立。作者论证：（1）深度学习辅助研究不太可能改变建构经验论和科学实在论之间的经典对立——DL的预测成功依然可以用两种方式解释；（2）然而，DL对真理取向与理解取向的争论提供了有趣的案例。具体而言，DL的黑箱模型可以产生成功的预测并在某种意义上是'可理解的'（例如通过XAI代理模型），但这种理解可能'牺牲真理'——XAI解释可能不是关于模型内部真实因果机制的准确表征。这挑战了'理解必须是事实性的（factive）'的传统认识论立场（即理解必须基于真理）。论文的结论是：DL使'非事实性理解'（non-factive understanding）成为一个紧迫而合理的认知范畴。",
+    methodology: "哲学论证与概念分析；对科学哲学文献的系统定位；DL案例分析（XAI、黑箱预测）；与factive vs non-factive understanding争论的对接。",
+    findings: "（1）DL不改变科学实在论/反实在论的经典对立——双方都可以解释DL预测成功；（2）DL的独特贡献在于为'非事实性理解'哲学范畴提供实际案例——XAI可以提供理解但不必是'真的'；（3）这一发现将'科学目标'争论从理论层面推至方法论层面：科学家使用DL辅助研究时已经隐含地实践了非事实性理解。",
+    limitations: "论证主要是否定性的（不改变经典对立），建设性贡献较弱；'非事实性理解'概念需要更精细的定义和案例支持；DL不同类型（监督学习、自监督学习、强化学习）对理解的不同影响未被区分讨论。",
+    relevance: "本文对核心问题的贡献在于通过科学目标争论的棱镜审视特征本体论。如果科学可以接受非事实性理解（理解不要求真理），那么SAE特征作为理解模型的工具，也不需要是'真实的'。但本文提醒我们，这一结论是深刻而有争议的——传统认识论坚持理解必须是事实性的（你不可能真正'理解'一个错误的理论），DL正在挑战这一信条。对alignment来说，这意味着我们需要澄清：alignment追求的是'真正的价值对齐'（事实性）还是经验充分的控制（非事实性理解）？",
+    relations: [
+      {target: "004", type: "extends", label: "共享van Fraassen CE分析框架，从科学目标角度扩展讨论"},
+      {target: "007", type: "extends", label: "均从van Fraassen传统出发，讨论经验论的最新发展"},
+      {target: "008", type: "shares", label: "均讨论DL与理解的关系，006聚焦于理解的factivity问题，008聚焦于解释性理解的条件"}
+    ]
+  },
+  {
+    id: "007", title: "奠基经验论",
+    authors: "Ioannis Votsis",
+    year: 2025, venue: "European Journal for Philosophy of Science, 15:22",
+    doi: "10.1007/s13194-025-00644-6",
+    pdf: "papers/007_Votsis_2025_GroundedEmpiricism.pdf",
+    priority: "important",
+    position: "instrumentalist",
+    tags: ["grounded empiricism","observability","van Fraassen","instruments","epistemic credibility"],
+    summary_cn: "提出liberalized版经验论——将认识可信性从感官扩展到科学仪器，为建构经验论在ML/AI时代的应用提供哲学基础。感官和某些仪器共享赋予认识可信性的基础原则，从而AI系统也可被纳入经验论的可知领域。",
+    abstract_cn: "本文提出'奠基经验论'（Grounded Empiricism）和'奠基可观察性'（Grounded Observability）——对Bas van Fraassen建构经验论的liberalized版本。建构经验论的核心限制之一是其对人类感官可观察性的严格定义——只有未经辅助的人类感官可检测的事物才算'可观察'。这一限制一直受到批评：为什么我们不信任科学仪器？Votsis的回应是指出感官的认识可信性可以追溯到某些基础原则（如可靠性、校准、一致性等），而这些原则也被某些科学仪器满足。因此，经验论可以'奠基式地'扩展到仪器而不放弃其核心精神。论文具有对ML的直接含义：如果AI/ML系统也满足这些认识可信性的基础原则，那么它们的'观察'（例如特征检测、模式识别）也应被纳入经验论的认识论范围。这一基础化扩展为像Müller等人（本wiki的004）将建构经验论应用于XAI提供了哲学合法性论证。",
+    methodology: "概念分析与哲学论证；认识论原则的归纳与推广；与建构经验论及其批评者的系统对勘；对仪器认识论（epistemology of instruments）文献的整合。",
+    findings: "（1）感官和科学仪器的认识可信性基于共同的基础原则（可靠性、校准、稳健性等）；（2）建构经验论可被'奠基式地'扩展到仪器而不违背其经验论精神；（3）为ML/AI系统的认识论地位讨论提供了哲学基础——如果满足基础原则，AI可被视为认识论工具。",
+    limitations: "基础原则的列表可能是开放的和可争议的；从仪器到AI系统的类推需要更详细的论证（AI不仅仅是'观察'，还'推理'）；尚未具体说明哪些AI系统满足哪些基础原则，以及如何验证。",
+    relevance: "本文对核心问题间接但重要地贡献：（1）为建构经验论应用于AI（如004的SToBB框架）提供了哲学基础——如果没有像Votsis这样的liberalization，van Fraassen的框架在AI时代的适用性受到严重限制；（2）间接暗示了一个立场：如果AI系统被信任为认识论仪器，那么它们产出的分类和特征就可能具有某种'derived credibility'——不是直接的实在论真理，但也不是纯粹的虚构。对alignment的启示：alignment验证中使用的技术代理（probes, SAEs等）的认识论地位需要此类基础化论证。",
+    relations: [
+      {target: "004", type: "philosophical", label: "为004将CE应用于ML提供哲学合法性基础"},
+      {target: "006", type: "extends", label: "均从van Fraassen传统出发的扩展工作"},
+      {target: "016", type: "contradicts", label: "016论证AI可能削弱实在论，007为AI作为认识论仪器的信任提供基础"}
+    ]
+  },
+  {
+    id: "008", title: "深度学习能'挖得更深'吗？解释性理解与深度神经网络",
+    authors: "Claus Beisbart",
+    year: 2025, venue: "European Journal for Philosophy of Science, 15:40, 1-28",
+    doi: "10.1007/s13194-025-00668-y",
+    pdf: "papers/008_Beisbart_2025_DNN_ExplanatoryUnderstanding.pdf",
+    priority: "important",
+    position: "agnostic",
+    tags: ["explanatory understanding","DNN","epistemology","interpretation","scientific explanation"],
+    summary_cn: "核心障碍：DNN提供解释性理解的条件很难满足——科学家不知道网络内部是否包含解释。因此无法承诺使用它，其他理解条件也随之无法满足。但在某些弱化的意义上，DNN可以辅助理解。",
+    abstract_cn: "Beisbart系统研究深度神经网络（DNN）是否能为现实世界现象提供解释性理解（explanatory understanding），而非仅仅预测或分类。他采用'普世框架'（ecumenical framework）——避免承诺任何单一的解释理论，而是制定解释性理解的一般性条件，使其可以以多种方式被填充。主要发现是怀疑性的：解释性理解的条件对于DNN很难满足。核心障碍在于：对于DNN提供解释性理解，它必须'包含一个解释'——但科学家通常不知道网络内部是否包含解释。没有这一知识，科学家无法感到对解释的承诺，也无法恰当地使用解释，因此其他理解条件也无法满足。但在弱化意义上，一些条件可以被满足。结果兼容于使用DNN'推断与解释相关的信息'作为更广泛研究的一部分。论文的底线是：DNN是否提供理解取决于人们如何定义'提供理解'以及人类如何使用它们——这是一个概念上的澄清而非简单的'是/否'回答。",
+    methodology: "概念分析与论证；普世框架（不预设具体解释理论）；对多种科学解释理论的兼容性分析；案例讨论。",
+    findings: "（1）DNN是否能提供解释性理解不是一个简单的是一否的问题——取决于对'理解'的定义和使用情境；（2）核心障碍是知识鸿沟：不知道网络内部是否包含解释；（3）但DNN可以辅助理解——作为启发式工具推断解释性相关信息；（4）DL的解释性挑战与科学哲学中解释性理解的一般性条件相关，而非DL独有的问题。",
+    limitations: "'普世框架'可能太宽泛而缺乏牙齿——什么条件都不排除可能意味着什么条件都允许；论证主要为否定性诊断，建设性替代方案较少；未讨论大型语言模型等更复杂的架构。",
+    relevance: "本文对核心问题采取了一种精致的概念澄清立场：与其问'SAE特征是真实还是构建'，不如问'SAE特征满足了什么样的理解条件？'Beisbart的分析暗示：当前的SAE实践可能满足弱化版本的理解条件（特征有助于推断解释性相关信息），但不满足强版本（我们不能确信特征就是模型内部真实的因果机制）。这是对Yao & Hagar（005）工具论立场的一种补充——不是因为特征不可能是真实的，而是因为我们在认识论上无法确定。这一立场为alignment实践提供了一个'知性谦逊'的基调。",
+    relations: [
+      {target: "005", type: "philosophical", label: "共享审慎的认识论立场——我们无法从内部确定特征/解释的地位"},
+      {target: "006", type: "shares", label: "均讨论DL与理解的认识论关系"},
+      {target: "014", type: "shares", label: "均质疑从内部表征到理解的直接跃迁"}
+    ]
+  },
+  {
+    id: "009", title: "立场：机械论可解释性应优先考虑SAE中的特征一致性",
+    authors: "Smith, Virginia, et al.",
+    year: 2025, venue: "arXiv (cs.LG), 2505.20254",
+    doi: "10.48550/arXiv.2505.20254",
+    pdf: "papers/009_Smith_2025_SAE_FeatureConsistency.pdf",
+    priority: "important",
+    position: "instrumentalist",
+    tags: ["SAE","feature consistency","PW-MCC","mechanistic interpretability","TopK SAE"],
+    summary_cn: "SAE特征跨训练run不一致，挑战任何'标准特征集'的本体论。提出PW-MCC一致性指标，TopK SAE可达约0.80。特征一致性（可复现性）应当成为本体论承诺的前提条件——如果特征不可复现，就无权声称'发现'。",
+    abstract_cn: "本立场论文论证机械论可解释性（MI）应当优先考虑SAE特征的一致性（consistency）——即不同训练run产生的特征字典之间的匹配程度。作者指出，SAE特征的跨run不一致性是MI研究可靠性的重大威胁：如果相同架构在相同数据上训练但不同随机初始化的SAE产生不同特征集，那么声称任何单个特征集揭示了模型的'真实'本体论就是可疑的。作者提出成对字典平均相关系数（Pairwise Dictionary Mean Correlation Coefficient, PW-MCC）作为一致性度量指标，并使用合成'模型生物'（model organism）在理论上验证PW-MCC与真实特征恢复的关系。在TopK SAE上，PW-MCC可达约0.80。作者还展示了高PW-MCC与学到的特征解释的语义相似性之间的相关性。论文的立场是：MI社区应该将特征一致性作为方法评估的标准指标，与重构质量同等重要。",
+    methodology: "合成模型生物（已知真实特征）的理论验证；跨run一致性实验；PW-MCC指标的设计与验证；特征解释与语义相似性的相关性分析。",
+    findings: "（1）SAE特征跨run不一致是现实且严重的；（2）PW-MCC是可靠的一致性度量；（3）TopK SAE可达约0.80 PW-MCC，仍有改进空间；（4）高特征一致性与更好的语义解释质量相关；（5）一致性应成为MI的标准评估指标。",
+    limitations: "PW-MCC=0.80仍有20%的不一致——中等一致性能否支撑本体论承诺尚不清楚；合成模型生物可能无法完全捕捉真实模型的复杂度；一致性虽是必要但不充分的条件——即使特征一致，也不意味着它们是本体论上真实的（可能只是一致但错误）。",
+    relevance: "本文从MI实践内部指出了本体论问题：如果SAE特征不一致，那么'发现特征'的修辞就是有问题的。一致性作为本体论承诺的前提条件是一个可操作的标准——你可以声称'发现'一个特征当且仅当它在跨run中一致地出现。但即使是高一致性也只是必要条件而非充分条件。对alignment的启示：如果我们希望对特定特征进行干预以实现alignment，这些特征必须首先是一致的——不一致的特征意味着alignment目标本身是欠定义的。",
+    relations: [
+      {target: "002", type: "shares", label: "共享结论：特征不具备稳定的跨方法本体论地位"},
+      {target: "019", type: "contradicts", label: "019主张稠密SAE潜变量都是特征，009要求一致性作为特征地位的前提"},
+      {target: "018", type: "empirical", label: "018提供互补证据：特征单义性低（FMS≈0.27），一致性也有限"},
+      {target: "005", type: "philosophical", label: "005的非唯一性论证与009的一致性实验发现彼此印证"}
+    ]
+  },
+  {
+    id: "010", title: "从深度学习到理性机器：哲学史能教给我们的AI未来",
+    authors: "Cameron J. Buckner",
+    year: 2024, venue: "Oxford University Press, 440pp",
+    doi: "10.1093/oso/9780197653302.001.0001",
+    pdf: "papers/010_Buckner_2024_DeepLearningRationalMachines.pdf",
+    priority: "important",
+    position: "middle",
+    tags: ["empiricism","DoGMA","transformational abstraction","faculty psychology","domain-general architecture"],
+    summary_cn: "深度学习实现了'温和经验论'——特征通过领域通用模块化能力（知觉、记忆、想象、注意）从经验中主动提取，而非被赋予或被动记录。这为特征构建了一种中间本体论——它们既不是纯粹的建构（因为有模块强约束），也不是单纯的发现（因为依赖经验输入）。",
+    abstract_cn: "Buckner的这部著作在深度学习和哲学史之间建立了系统性桥梁。核心论点是DoGMA（Domain General Modular Architecture）——领域通用模块化架构——作为理性认知的最佳建模框架。Buckner论证深度学习架构（DCNNs、深度强化学习、GANs、transformers）实现了一种'温和经验论'（moderate empiricism），既拒绝白板经验论也拒绝强先天论。每一章将一位历史哲学家的认知能力理论（Locke的知觉抽象、Avicenna的记忆、Hume的想象力、James的注意、de Grouchy的社会道德认知）与一种DL架构对勘。关键哲学概念是'转换抽象'（transformational abstraction）——DCNNs通过迭代卷积和池化实现Locke式的知觉抽象，不需要先天符号结构。对于特征本体论，Buckner的立场兼容一种温和实在论：特征在很大程度上由模块架构的强约束（先天）和经验数据的统计结构（后天）共同塑造，因此既不是纯粹的发现也不是纯粹的建构。",
+    methodology: "跨学科哲学论证；历史哲学家与现代DL架构的系统对勘；概念分析；比较认知科学方法论。",
+    findings: "（1）DL架构实现了温和经验论——一种比经典经验论更可信的认知框架；（2）不同认识能力可以追溯到不同的DL架构特征；（3）转换抽象是DL中特征形成的核心机制；（4）先天的约束（架构偏置）与后天的经验输入共同决定了表征的形态。",
+    limitations: "篇幅庞大，对某些历史哲学家的解读可能被专业哲学家批评为选择性使用；对DL架构与认知能力的类比在不同章节中强弱不一；未充分讨论LLM（成书时LLM革命刚刚开始）——虽然2024年的Millière & Buckner合作论文对此做了补充；温和经验论的具体形而上学承诺（特别是对特征本体论）需要更详细的阐述。",
+    relevance: "对于核心问题，Buckner提供了最有影响力的中间立场之一。转换抽象概念暗示特征同时是被构建的（通过架构偏置和训练程序）和被发现的（从数据中提取统计规律）。对alignment的启示：如果特征是架构和经验数据共同塑造的，那么alignment既需要控制训练数据（经验论部分），也需要控制架构设计（先天论部分）——单纯的RLHF可能只是处理了经验论维度。",
+    relations: [
+      {target: "001", type: "contradicts", label: "001诊断ML研究为结构唯心论，Buckner的温和经验论暗示一种未在ML文献中分类的中间立场"},
+      {target: "002", type: "contradicts", label: "002展示不同训练产生不同表征，挑战010的'模块收敛'论点"},
+      {target: "013", type: "shares", label: "均讨论DL中的概念形成，从不同哲学传统出发"}
+    ]
+  },
+  {
+    id: "011", title: "自然种类与机器学习：男性和女性大脑的案例",
+    authors: "Zina B. Ward",
+    year: 2025, venue: "PhilPapers (preprint)",
+    doi: "",
+    pdf: "papers/011_Ward_2025_NaturalKinds_ML.pdf",
+    priority: "important",
+    position: "agnostic",
+    tags: ["natural kinds","cluster theory","supervised learning","classification","philosophy of neuroscience"],
+    summary_cn: "警告不要混淆监督式机器学习分类与科学分类（自然种类识别）。某些无监督方法可能有助于识别自然种类，但必须谨慎应用。ML分类不等同于'自然种类的发现'——后者要求更强的形而上学和认识论条件。",
+    abstract_cn: "Ward以神经科学中男/女大脑类型争论为案例，探讨机器学习分类与自然种类哲学之间的关系。神经科学家就男/女大脑是否为不同类型（自然种类）存在分歧。Ward使用自然种类的簇理论（cluster theories of natural kinds）论证反对将男/女大脑视为自然种类——脑结构的性别差异是连续的而非离散的，不符合自然种类的簇理论标准。关键的哲学方法论洞察是：监督式机器学习分类不应与科学分类混为一谈。监督式分类预设了类别标签（由研究者赋予），因此不能用于'发现'自然种类——它只能学习已被预设的类别边界。某些无监督方法——能够从数据中自发发现簇结构的算法——可能更有助于识别自然种类，但即使是这些方法也必须谨慎应用，因为聚类的结果高度依赖于算法选择、距离度量和预处理步骤。Ward的结论是：ML分类提供的信息不等于自然种类的本体论信号。",
+    methodology: "案例研究（神经科学中的性别脑差异争论）；哲学论证（自然种类的簇理论标准）；ML方法论分析（监督 vs 无监督分类的形而上学含义）；概念澄清。",
+    findings: "（1）监督式ML分类不能用于识别自然种类——它预设而非发现类别；（2）无监督方法可能有更大潜力但需要谨慎的解释；（3）ML'分类'和科学'分类'（自然种类识别）之间存在范畴错误的风险；（4）自然种类的形而上学标准（如簇理论的属性共现、因果基础等）独立于ML的统计分类标准。",
+    limitations: "案例限于神经科学领域；未讨论半监督学习、自监督学习等中间方法的形而上学含义；自然种类簇理论本身在哲学上有争议——使用不同的自然种类理论可能得出不同结论。",
+    relevance: "本文将对核心问题的讨论框入自然种类框架：SAE特征是否是模型表征空间中的'自然种类'——即'在关节处切割自然'？Ward的分析警告不要做这样的跃进——正如监督式ML分类不等于自然种类发现，SAE特征也不自动等于模型的'本体论关节'。但也打开了可能性：如果无监督方法（无监督SAE或类似方法）能够跨run一致地恢复相同特征结构，这可能指向某种'自然种类'地位。这为SAE研究提供了形而上学试金石。",
+    relations: [
+      {target: "013", type: "shares", label: "均从自然种类框架审视ML中的分类/聚类"},
+      {target: "009", type: "philosophical", label: "009要求一致性，011要求自然种类标准——两个互补的必要条件"},
+      {target: "005", type: "shares", label: "均警告分类/特征检测产出物不能被自动视为真实"}
+    ]
+  },
+  {
+    id: "012", title: "实在论与多元论的智能观及其对AI研究的启示",
+    authors: "Nico Oldenburg, Aalok Dhar, Anders Søgaard",
+    year: 2025, venue: "arXiv (cs.AI), 2511.15282",
+    doi: "10.48550/arXiv.2511.15282",
+    pdf: "papers/012_Oldenburg_2025_IntelligenceRealism.pdf",
+    priority: "important",
+    position: "agnostic",
+    tags: ["intelligence realism","pluralism","theory-ladenness","paradigm","philosophy of AI"],
+    summary_cn: "智能实在论者（将基准进步解读为趋向普遍智能的收敛）与智能多元论者（将其视为特定基准的优化）从相同数据得出相反结论。隐含的哲学承诺塑造了AI的整个方法论和研究议程——正如理论负荷和范式理论所预期的那样。",
+    abstract_cn: "本文将对隐含哲学承诺的分析从特征本体论扩展到智能概念本身。作者区分'智能实在论'（Intelligence Realism——认为存在单一的普遍智能能力，基准进步是对其的逼近）和'智能多元论'（Intelligence Pluralism——认为智能是多种多样的、情境依赖的能力，基准进步只是特定优化的反映）。关键发现是：观察相同经验数据（如缩放定律、基准测试结果）的AI研究者得出根本不同的解释——实在论者看到趋向通用人工智能（AGI）的收敛，多元论者看到基准特定的工程优化。作者使用Hanson的'观察的理论负荷'（theory-ladenness of observation）和Kuhn的范式理论来分析这一现象：AI研究由不可通约的范式驱动，每个范式有其自身的形而上假设。这一分析平行于Culcu（001）对ML表征的隐含哲学承诺的分析——问题不仅是特征是否实在，还在于'智能'是否实在。",
+    methodology: "哲学分析与概念区分；案例研究（缩放定律的两种解读）；与科学哲学经典理论（Hanson, Kuhn）的系统对勘；元层次辨诊。",
+    findings: "（1）AI研究者对同一经验数据的解读因隐含的形而上承诺而根本分歧；（2）智能实在论和智能多元论构成不可通约的研究范式；（3）哲学承诺塑造了方法论选择（如评估范式、基准设计）、风险认知（AI safety vs ethics）和研究议程；（4）类似Culcu（001），AI共同体面临隐含哲学承诺未被审查的问题。",
+    limitations: "二元区分的分析框架可能过于简单——中间立场（如语境实在论）未被充分探讨；实证数据（具体哪些研究者持有哪种立场）来自作者的解释而非系统调查；与Culcu的比较可能需要更详细的概念对接。",
+    relevance: "本文通过扩大视野对核心问题做出贡献：矛盾不仅是关于特征是否实在，而是关于对智能和表征的整体实在论/反实在论立场。如果特征是从智能系统中提取的建构物的工具论观点成立，那么这也影响我们如何看待'智能'本身——如果智能是多元的、情境依赖的，那么声称某种特征分解揭示了'真正的'智能结构就更加可疑。对alignment的启示：如果智能是实在的（单一普遍能力），alignment可能有一个自然的目标——将AI系统对齐到这种普遍智能的正确形态。如果智能是多元的，alignment目标本身就是价值负载的建构。",
+    relations: [
+      {target: "001", type: "shares", label: "共享方法：诊断AI研究者的隐含哲学承诺，从特征扩展至智能概念"},
+      {target: "010", type: "contradicts", label: "010的DoGMA隐含智能实在论假设（普遍认知能力），012的多元论挑战之"},
+      {target: "002", type: "philosophical", label: "002的FER现象可被解读为智能多元论的经验证据"}
+    ]
+  },
+  {
+    id: "013", title: "种类性与潜空间",
+    authors: "Zhengquan Chen",
+    year: 2025, venue: "Sophia Conference (Sep 2025)",
+    doi: "",
+    pdf: "papers/013_Chen_2025_Kindhood_LatentSpace.pdf",
+    priority: "important",
+    position: "middle",
+    tags: ["kindhood","latent space","natural kinds","partial essences","categorial ontology"],
+    summary_cn: "深度学习模型在潜空间中发现数据簇与人类将对象分类为'种类'之间存在结构平行。种类不能完全还原为其属性——应假定'部分本质'来推动自上而下的种类分析策略。这为特征本体论提供了温和的实在论锚点。",
+    abstract_cn: "本文探索深度学习模型中数据簇结构与人类种类分类之间的哲学平行。Chen提出一个自上而下的种类分析策略——从种类的形而上学标准出发，评估潜空间中的簇是否满足这些标准，而非简单地从数据聚类推断种类。关键论点是：种类不能完全还原为其属性（种类'多于'其属性簇），因此当我们在潜空间中发现数据簇时，还需要额外地形而上学论证才能将簇视为'种类'。Chen建议假定'部分本质'（partial essences）——种类具有某些必要属性但不必是完全的本质属性集——作为一种在范畴本体论中推进的工作假设。论文还讨论了深度学习如何可能提供新的经验证据来评估关于种类的哲学争论（例如概念原型理论vs理论理论）。",
+    methodology: "哲学概念工程；自上而下的分析策略（从形而上学标准到经验数据的评估）；与自然种类哲学文献（Putnam, Kripke, Boyd, Millikan）的系统对勘；案例讨论（深度学习中的簇结构发现）。",
+    findings: "（1）潜空间中的簇结构与人类种类分类有结构平行但不等同；（2）从簇到种类的跃迁需要形而上学论证而非仅凭统计标准；（3）部分本质假定是推进种类分析的有用工作假设；（4）DL可为种类哲学争论提供新类型的经验证据。",
+    limitations: "部分本质假定在哲学上有争议——一些自然种类理论家（如homeostatic property cluster theorists）会拒绝本质主义方向；自上而下策略在实践中的适用性尚不清楚——需要什么样的形而上学论证才能将特定的潜空间簇升级为种类？",
+    relevance: "对核心问题的贡献：提供了一个精致的中间立场——潜空间中的簇既不是任意的建构（因为它们反映了数据中的真实统计结构），也不是直接的'发现'（因为从簇到特征的跃迁需要形而上学论证）。这对SAE研究有直接含义：SAE特征作为潜空间中的稀疏方向——它们是'部分本质'的候选（部分地反映了模型运算的结构约束），但不自动获得完全种类地位。对alignment：如果SAE特征具有部分本质地位，alignment的目标可能是保留/增强那些满足特定形而上学标准的'好'部分本质，同时抑制'坏'的部分本质。",
+    relations: [
+      {target: "011", type: "shares", label: "均讨论ML与自然种类的关系，从不同哲学传统出发"},
+      {target: "010", type: "shares", label: "均涉及概念形成在DL和人类认知中的平行"},
+      {target: "003", type: "philosophical", label: "003的准表征概念与013的部分本质假定共享'薄的实在论'策略"}
+    ]
+  },
+  {
+    id: "014", title: "超越世界模型：反思AI模型中的理解",
+    authors: "Ritwik Gupta, Danish Pruthi",
+    year: 2025, venue: "arXiv (cs.AI), 2511.12239",
+    doi: "10.48550/arXiv.2511.12239",
+    pdf: "papers/014_Gupta_2025_BeyondWorldModels.pdf",
+    priority: "important",
+    position: "instrumentalist",
+    tags: ["world models","understanding","representation","philosophy of science","Hofstadter","Poincare"],
+    summary_cn: "世界模型能力不等于理解。使用Hofstadter的多米诺计算机、Poincaré的数学证明理解和Popper的问题情境论证：即使内部表征追踪因果状态转换，模型也可能不理解为什么这些转换以特定方式关联。",
+    abstract_cn: "本文质疑'世界模型'框架（AI系统内部表征追踪实体、状态和因果转换）是否足以捕获人类水平的理解。作者使用三个科学哲学案例来论证：Hofstadter的多米诺计算机案例——系统可以物理地实现计算但不'理解'它在做什么；Poincaré对数学证明理解的区分——理解证明不仅仅是追踪逻辑步骤，还需要把握为什么这些步骤按此方式关联的'统一视野'；Popper的问题情境概念——理解涉及把握问题情境和解决方案的逻辑。作者的核心论点是：世界模型能力是一种必要但不充分的条件——一个系统可以拥有准确的内部因果模型但仍然不理解它所模型化的现象。这具有对AI评估的直接含义：标准基准测试测量了模型追踪状态转换的能力，但不能测量理解。论文暗示，如果表征不足以产生理解，那么声称'发现了表征'甚至不是通往理解的正确路径的开始。",
+    methodology: "哲学案例分析与概念论证；与科学哲学和认知科学文献的系统对勘；对'世界模型'框架的概念批评；与当代LLM因果推理评估的连接。",
+    findings: "（1）世界模型能力（内部表征追踪因果状态）不等于理解；（2）理解需要额外的基础——把握为什么步骤以特定方式关联（Poincaré）、理解问题情境（Popper）；（3）当前AI的评估范式可能系统性地将世界模型能力误认为理解；（4）表征本身（即使准确）可能不足以产生理解——这表明表征即使在功能上有效，其认识论价值也是有限的。",
+    limitations: "仅提供了否定性论证（世界模型≠理解），正面描述AI理解的条件较薄弱；三个案例主要是隐喻性的而非形式化的；未讨论如果AI不'理解'，这对它们的可靠性和安全性有什么实际意义。",
+    relevance: "对核心问题的贡献在于从理解而非表征的角度切入：即使我们接受SAE特征作为某种程度的表征（如003的准表征），这也不意味着我们'理解'了模型——理解要求更多。这为工具论立场提供了额外论据：如果你甚至不能从特征中获得理解，那么特征的本体论地位问题（是发现还是构建的）就显得有些超前——我们应该先解决理解的认知条件。对alignment的启示：alignment不应满足于表征层面对齐（如特征操纵改变行为），还需要理解层面对齐——但这要求我们首先澄清什么是'理解一个AI系统'。",
+    relations: [
+      {target: "003", type: "contradicts", label: "003论证准表征可解释AI成功，014回应：表征不足以产生理解"},
+      {target: "008", type: "shares", label: "均讨论DL与理解的关系，从不同角度得出类似审慎结论"},
+      {target: "005", type: "shares", label: "均强调从内部表征到外部知识/理解之间存在概念鸿沟"}
+    ]
+  },
+  {
+    id: "015", title: "无需表征主义的表征学习：对科学实践中深度学习模型的非表征主义说明",
+    authors: "Phillip Hintikka Kieval",
+    year: 2025, venue: "In: Pozzi & Durán (eds.), Philosophy of Science for Machine Learning, Springer, Ch.12",
+    doi: "",
+    pdf: "papers/015_Kieval_2025_NoRepresentationalism.pdf",
+    priority: "important",
+    position: "instrumentalist",
+    tags: ["non-representationalism","pragmatism","scientific practice","method-learning","anti-representationalism"],
+    summary_cn: "论证深度学习模型无需被理解为以表征方式运作即可解释其在科学实践中的成功。提出一种非表征主义的替代框架——将模型理解为学习方法而非表征载体。这是对表征实在论的最彻底挑战——问题不是表征是否正确，而是表征框架本身是否必要。",
+    abstract_cn: "Kieval论证深度学习模型可以被非表征主义地理解——即无需诉诸'模型内部表征世界'的论断即可充分解释其科学实践中的成功。这不是在论证模型内部没有结构——显然有的——而是论证将这些结构描述为'表征'（带有所需的语义和认识论属性）是一种不必要的理论负荷。Kieval提出'方法-学习'(method-learning)框架作为替代——将DL模型理解为学习方法论策略（如分类、聚类、预测程序），而非形成关于世界的内部模型。这一立场与科学实践中的实用主义传统（如van Fraassen, Stanford, Dupre）一致，但将其扩展到对深度学习模型本身的理解。论文被收录于Pozzi & Durán编辑的2025年Springer卷《Philosophy of Science for Machine Learning》。",
+    methodology: "科学哲学论证；概念工程——构建非表征主义的替代框架；与表征主义和反表征主义文献的系统对勘；与深度学习实证文献（如图像分类、科学发现中的DL）的对接。",
+    findings: "（1）表征框架不是解释DL在科学实践中成功的必要条件；（2）方法-学习框架可以同等地（或更好地）解释这些成功，同时避免表征的本体论包袱；（3）当前的'DL内部表征'话语受制于未经审查的表征主义假设——我们不需要拒绝'有内部结构'的主张来拒绝'这些结构是表征'的主张。",
+    limitations: "方法-学习框架的具体细节需要进一步阐述——目前主要是纲领性的；非表征主义立场可能在心理学上不满足MI社区的直觉——人们自然想要'看到'模型内部发生了什么；与Culcu的诊断之间可能存在张力——如果ML本身就是结构唯心论的，为什么还需要一个特殊的非表征主义说明？",
+    relevance: "对核心问题提出了最激进的挑战：不是'特征是发现还是构建的'——而是'特征作为表征这一整套话语是否是必要的'。Kieval的非表征主义暗示SAE研究的整个概念框架——将模型内部分解为可解释的'特征'——可能就是基于一个不必要的表征主义假设。这对alignment构成根本性挑战：如果alignment是关于'使模型内部表征与人类价值一致'，而非表征主义者会问'为什么非表征主义框架下的alignment不可能？alignment需要一个不同的概念框架吗？'",
+    relations: [
+      {target: "001", type: "extends", label: "001诊断ML为结构唯心论，015进一步放弃表征框架本身"},
+      {target: "003", type: "contradicts", label: "003论证准表征的必要性，015论证表征框架根本不需要"},
+      {target: "005", type: "extends", label: "005论证特征只能工具性地使用，015进一步论证'特征作为表征'框架可以放弃"}
+    ]
+  },
+  {
+    id: "016", title: "AI会削弱标准科学实在论吗？",
+    authors: "Vanessa Seifert",
+    year: 2026, venue: "Science Studies Colloquium, University of Oslo (talk/upcoming paper)",
+    doi: "",
+    pdf: "papers/016_Seifert_2026_AI_UndermineRealism.pdf",
+    priority: "ref",
+    position: "instrumentalist",
+    tags: ["scientific realism","chemistry","no miracles argument","AI prediction","PExAI"],
+    summary_cn: "化学AI模型在预测新物质时达到预测成功，但不依靠甚至不包含底层物理/化学理论。这切断了预测成功与真理之间的联系，直接威胁无奇迹论证——科学实在论的核心论据。",
+    abstract_cn: "Seifert论证AI（特别是在化学中的分子属性预测模型）可能削弱标准科学实在论。科学实在论的核心论据是无奇迹论证（NMA）：科学预测的成功将是一个奇迹，除非科学理论至少近似为真。但Seifert指出，一些化学AI模型——如IMPRESSION机器学习算法——在对分子属性的预测中取得了成功，但它们既不依靠也不包含任何底层化学理论（如量子力学、分子轨道理论等）。它们纯粹从数据中学习统计相关性。如果是这样，那么预测成功不再需要真理——AI可以在'无理论'的情况下成功预测。这切断了NMA的联系，意味着预测成功不再是真理的证据。Seifert是2026-2028年PExAI项目（'Predicting and Explaining with AI'）的首席研究员，该项目将系统研究这一问题。",
+    methodology: "化学AI案例研究（IMPRESSION算法等）；哲学论证——对NMA在AI时代的评估；PExAI项目框架（实证哲学混合方法）。",
+    findings: "（1）一些化学AI模型实现了无理论的预测成功；（2）这挑战了NMA——如果无理论的预测是可能的，那么预测成功不必然是真理的证据；（3）科学实在论可能需要重大修正以应对AI时代的挑战。",
+    limitations: "'无理论'的程度可争议——AI模型的设计和训练中仍然包含许多理论性选择（特征工程、架构设计等）；个案研究能否推广至所有AI辅助科学领域不明确；反驳者可能主张隐含理论——AI成功本身证明其隐含地捕捉了某种真实结构。",
+    relevance: "对核心问题的最强反实在论论据之一：如果AI模型可以在不'发现'任何真实世界结构的情况下成功预测，那么我们对SAE特征的本体论承诺就更弱了——成功预测的特征分解不意味着发现真实结构，只意味着发现统计有效的特征组合。切断预测成功-真理联系是实证工具论的胜利。对alignment的实际含义是双重的但令人不安的：(1) alignment可能不需要任何实在论承诺——经验充分的行为对齐就够了；(2) 但这意味着对齐目标本身（人类价值）也是经验上定义的——如果人类价值不是'真实'的，那alignment的概念基础是什么？",
+    relations: [
+      {target: "003", type: "contradicts", label: "003论证预测成功→准表征实在论，016论证预测成功↛真理"},
+      {target: "006", type: "philosophical", label: "均涉及van Fraassen的科学目标争论，016提供了AI时代的新案例"},
+      {target: "007", type: "contradicts", label: "007为AI作为认识论仪器提供基础，016挑战AI辅助科学的实在论基础"}
+    ]
+  },
+  {
+    id: "017", title: "AlignSAE：概念对齐的稀疏自编码器",
+    authors: "Yang, Guo, et al.",
+    year: 2025, venue: "arXiv (cs.LG), 2512.02004",
+    doi: "10.48550/arXiv.2512.02004",
+    pdf: "papers/017_Yang_2025_AlignSAE.pdf",
+    priority: "ref",
+    position: "instrumentalist",
+    tags: ["SAE","ontology alignment","concept binding","causal intervention","feature engineering"],
+    summary_cn: "通过'预训练后对齐'策略将SAE特征显式绑定到预定义本体论的概念槽位。这展示了特征如何可以是被工程化地建构而非被发现——概念绑定是设计选择，不是自然发现。",
+    abstract_cn: "本文介绍AlignSAE——一种概念对齐的稀疏自编码器训练方法。与标准SAE不同（特征从数据中涌现，事后由人类解释），AlignSAE采用'预训练后对齐'课程：首先在一般数据上训练基础SAE，然后将特定潜变量槽位与预定义本体论中的概念显式绑定，同时保留其余槽位用于一般重构。这使得精确的因果干预成为可能——例如可靠的'概念交换'只需修改单个语义对齐的槽位就能改变输出中的相应概念。实验结果展示了AlignSAE在概念绑定和因果操控方面的优势。但从哲学角度看，这篇论文展示了一种鲜明的建构论实践：特征可以是被工程化地分配和绑定的，而非被'发现'——'特征'变成了设计空间中的可操控对象，其本体论是实用性的而非实在论的。",
+    methodology: "算法设计（预训练后对齐课程）；概念绑定机制；因果干预实验（概念交换）；与本预定义本体论的多域评估。",
+    findings: "（1）SAE特征可以显式地与预定义概念绑定；（2）概念对齐的SAE支持更精确的因果干预；（3）特征可以是被工程化的而不丧失功能效力；（4）本体论对齐是设计选择而非唯一可能。",
+    limitations: "依赖于预定义本体论的完整性和质量——如果本体论不完备，特征的保真度会受损；概念绑定可能牺牲对其他（未绑定）概念的表示能力；仅验证了有限概念集和特定模型。",
+    relevance: "对核心问题的贡献是实践层面的：AlignSAE直接展示了特征建构的操作。当SAE研究者声称'发现特征'时，AlignSAE展示了替代路径——'设计特征绑定'。这并不意味着所有SAE特征都是被设计的（大多数不是），但它证明了建构论不仅在哲学上可能，在工程上也可行。这提出了一个规范性挑战：如果特征可以被建构，那么'哪些特征应该被建构'的规范性问题就出现了——alignment不（仅仅）是'发现模型已有的特征并修改它们'，而是'决定哪些特征应该或不应该存在于模型中'。",
+    relations: [
+      {target: "009", type: "shares", label: "均关注SAE特征质量和可控性"},
+      {target: "018", type: "empirical", label: "018测量自然SAE的单义性，017直接工程化地提升特征质量"},
+      {target: "004", type: "philosophical", label: "017的工程实践与004的建构经验论哲学框架呼应"}
+    ]
+  },
+  {
+    id: "018", title: "测量和引导单义性",
+    authors: "Härle, et al.",
+    year: 2025, venue: "NeurIPS 2025 (Spotlight)",
+    doi: "",
+    pdf: "papers/018_Harle_2025_Monosematicity.pdf",
+    priority: "ref",
+    position: "instrumentalist",
+    tags: ["monosemanticity","SAE","FMS","feature measurement","guided SAE"],
+    summary_cn: "提出特征单义性评分（FMS）：普通SAE仅达0.27，引导式SAE提升至0.52。SAE特征远非清晰的概念原子。单义性是光谱而非二元的——大多数'特征'处于中间地带，挑战了'发现清晰概念原子'的叙事。",
+    abstract_cn: "本文提出特征单义性评分（Feature Monosemanticity Score, FMS），为SAE特征单义性提供定量的、多组分的测量。FMS包含三个组分：特征容量（feature capacity）——单个潜变量能捕获多少有用信息；局部分解（local disentanglement）——潜变量在其主要激活区域内是否与其它概念清晰分离；全局分解（global disentanglement）——潜变量在全局范围内是否一致地对应单一概念。实验结果显示：普通SAE的特征单义性评分平均仅为0.27（满分1.0），表明大多数SAE特征在不同程度上保留了残余多义性。作者提出的引导式SAE（G-SAE）将此评分提升至0.52。论文的重要发现是：单义性是一个连续谱而非二元属性——很少有特征是完美单义的（FMS=1.0），但也很少有完全是噪声的（FMS=0）。大多数特征处于'模糊中间'，这挑战了将SAE特征视为清晰概念原子的叙事。",
+    methodology: "多组分度量设计（FMS）；理论分析（单义性条件的分解）；G-SAE训练（引导式损失增强）；LLM实验评估。",
+    findings: "（1）普通SAE特征的FMS≈0.27——单义性远非完美；（2）G-SAE将FMS提升至0.52但仍远未达到理想；（3）特征单义性是连续谱——大多数特征在模糊中间地带；（4）单义性测量为SAE特征质量评估提供了新的量化工具。",
+    limitations: "FMS=0.52即使在最优情况下也不高——G-SAE仍然远未产生清晰的概念原子；单义性不等于'真实性'——一个特征可能是完美单义的（FMS=1.0）但完全无关的（不对应任何有意义的概念）；FMS度量的三个组分可能有内在的权衡——提升特征容量可能降低局部分解。",
+    relevance: "对核心问题的贡献是定量实证层面的：如果SAE特征的'单义性'（作为概念原子的程度）平均仅为0.27，那么声称SAE'发现'了清晰特征的说法就需要重大修正——发现的是模糊的、不同程度多义的表示，而非清晰概念原子。这与Yao & Hagar（005）的非唯一性诊断和目标工具论结论一致——特征只是工具性地有用的近似，而非本体论上基础的实体。对alignment：如果SAE特征是模糊的、多义的，那么通过操纵这些特征来实现精确的alignment就面临根本的不确定性——你操纵的可能是一个混合了多个概念的模糊特征。",
+    relations: [
+      {target: "009", type: "empirical", label: "互补的定量证据：特征的一致性有限（009），单义性也有限（018）"},
+      {target: "005", type: "philosophical", label: "005的工具论结论得到了018的实验支持——特征是模糊的、非原子的"},
+      {target: "019", type: "contradicts", label: "019主张稠密潜变量也是特征，018质疑即使是稀疏特征也不够单义"}
+    ]
+  },
+  {
+    id: "019", title: "稠密SAE潜变量是特征，不是缺陷",
+    authors: "Sharkey, et al.",
+    year: 2025, venue: "NeurIPS 2025 (poster), arXiv:2506.15679",
+    doi: "10.48550/arXiv.2506.15679",
+    pdf: "papers/019_Sharkey_2025_DenseSAE_Latents.pdf",
+    priority: "ref",
+    position: "middle",
+    tags: ["SAE","dense latents","feature taxonomy","layer-wise analysis","mechanistic interpretability"],
+    summary_cn: "系统调查稠密SAE潜变量，发现它们反映有意义的模型表征（而非训练噪声）。引入稠密潜变量分类学（位置追踪、上下文绑定、熵调控、词性等），揭示层级从结构→语义→输出的转换。稠密性不否定'特征地位'。",
+    abstract_cn: "本文挑战SAE研究中一个隐含假设——只有高度稀疏的潜变量才是有意义的'特征'，稠密潜变量（与许多输入相关的潜变量）被视为'噪声'或'故障'。作者通过系统调查发现，稠密SAE潜变量系统地反映了有意义的模型表征，提出了稠密潜变量的分类学：（1）位置追踪（跟踪token在序列中的位置）、（2）上下文绑定（跟踪特定的上下文窗口特征）、（3）熵调控（编码输出分布的不确定性）、（4）词性编码（编码语法类别如名词、动词，但以稠密而非稀疏方式）、（5）其他类别。关键发现是层级移动：早期层以结构特征为主（位置、语法），中间层过渡到语义特征，后期层趋向输出导向特征（熵、特定输出偏好）。这一发现挑战了'只有稀疏=单义=真实特征'的正交教条，暗示特征本体论比简单的稀疏/稠密二元论更丰富和复杂。",
+    methodology: "系统实证调查（跨层SAE分析）；稠密潜变量分类学的自下而上构建；跨多种LLM的验证；层级分析。",
+    findings: "（1）稠密SAE潜变量并非噪声——它们系统性地反映有意义的模型表征；（2）稠密潜变量的类型学：至少5类功能性类别；（3）层级转换：从结构到语义到输出导向；（4）特征本体论不能简化为稀疏/稠密二元论——需要更丰富的分类学。",
+    limitations: "分类学的完整性和互斥性有待进一步验证；稠密特征比稀疏特征更难解释（天然劣势）；'有意义'的标准本身需要哲学审视——功能性不等于真实性。",
+    relevance: "对核心问题提供了一个微妙的复杂性：如果即使是稠密SAE潜变量也是'特征'，那么'特征'的边界（什么是特征什么不是）本身就具有本体论意义。这暗示特征的本体论是光谱式的——从高度稀疏的强单义特征到高度稠密的弱单义特征——而非二元的。对alignment：如果稠密特征也'有意义'（在功能性意义上），那么alignment干预可能需要同时考虑稀疏和稠密特征——只关注稀疏特征可能错过模型中大量的有意义结构。",
+    relations: [
+      {target: "009", type: "contradicts", label: "009强调一致性是特征地位的前提，019主张功能性（非一致性）可以赋予特征地位"},
+      {target: "018", type: "contradicts", label: "018测量单义性FMS≈0.27并暗示低质量，019主张稠密特征≠低质量特征"},
+      {target: "005", type: "contradicts", label: "005主张特征被建构且只能工具性地使用，019为至少在功能性意义上的'特征发现'提供实证支持"}
+    ]
+  },
+  {
+    id: "020", title: "相-结构实在理论：统一拓扑同构普遍论与智能相变",
+    authors: "Yoochul Kim",
+    year: 2025, venue: "PhilArchive preprint",
+    doi: "",
+    pdf: "papers/020_Kim_2025_PhaseStructuralReality.pdf",
+    priority: "ref",
+    position: "realist",
+    tags: ["structural realism","phase transition","topology","process ontology","metaphysics"],
+    summary_cn: "提出一个宏伟的形而上学框架：实体不是固定物质，而是全域连接的、自组织场中的亚稳态相构型。应用于量子网络、神经系统、AI架构和宇宙结构。这是对结构实在论的最野心勃勃的当代捍卫——如果成立，则神经网络中的特征具有真正的形而上学存在。",
+    abstract_cn: "Kim提出'相-结构实在理论'（Phase-Structural Reality Theory），试图统一拓扑同构普遍论（UTI）和智能相变（PTI）。核心形而上学主张是：实体不是固定不变的'物质'，而是在一个全域连接的、持续重新组织的场中的'亚稳态相构型'（metastable phase configurations）。相变——从一种稳定构型到另一种的转变——是实在的基本动力学。Kim将这一框架应用于跨领域分析：从量子网络中的纠缠相变，到神经系统中的认知状态相变，到AI架构中的学习动力学相变，再到宇宙尺度上的结构形成相变。对于AI，这一立场暗示神经网络的学习过程是一种相变过程——从无序的参数构型到有序的特征表征。特征因此具有形而上学实在性：它们是参数空间中的亚稳态相构型，其存在不依赖于观察者。这是本wiki中最强的实在论立场，与Culcu的诊断（ML文献中0%结构实在论）形成最尖锐的对照。",
+    methodology: "形而上学理论构建；跨领域统一框架（量子物理、神经科学、AI、宇宙学）；数学形式化（拓扑学、相变理论）；概念分析与论证。",
+    findings: "（1）提出了一个统一的结构实在论形而上学框架；（2）AI学习是相变过程——特征作为亚稳态相构型具有实在性；（3）跨领域的结构同构——量子/神经/AI系统共享深层拓扑模式；（4）为实在论在AI时代的复兴提供形而上学基础。",
+    limitations: "框架的高度思辨性和宏伟性使其难以进行经验验证；跨领域的统一可能过度类比——领域之间的深层差异可能使统一框架断裂；在具体的SAE特征层面，尚不清楚如何操作性地应用相-结构框架——什么样的经验证据可以区分'真实的相构型特征'和'方法论人为产物'？",
+    relevance: "对核心问题提供了最强实在论立场的形而上学辩护。如果Kim的框架成立，那么SAE特征作为参数空间中的亚稳态相构型具有真正的形而上学存在——它们是被'发现'的（因为相变动力学是客观的、独立于观察者的），而非被'构建'的。这一立场与Culcu的诊断形成尖锐对立——ML文献中0%结构实在论可能不是因为没有论证支持它，而是因为ML共同体尚未接触形而上学层面的论证。对alignment：如果特征是真实的（独立于观察者），那么alignment就有了形而上学基础——它不是在建构幻象，而是在处理方法上独立存在的结构。当然，同时也产生了责任问题——如果特征是真实的，那么操纵它们就是真实的干预，而不只是解释框架的改变。",
+    relations: [
+      {target: "001", type: "contradicts", label: "001诊断ML中0%实在论，020从形而上学层面捍卫结构实在论"},
+      {target: "015", type: "contradicts", label: "015放弃表征框架，020最强化地捍卫表征的形而上学实在性"},
+      {target: "003", type: "philosophical", label: "003的中间立场与020的强实在论从不同方向回应Culcu诊断"},
+      {target: "004", type: "contradicts", label: "004的建构经验论与020的强实在论形成根本对立"}
+    ]
+  }
+];
+
+const NOTES = [
+  {
+    paper_id: "001",
+    title: "Culcu (2025) 结构主义框架 — 详细阅读笔记",
+    date: "2025-11-23",
+    content: "<strong>核心诊断：ML文献中结构实在论为0%</strong><br><br>Culcu采用修正PRISMA系统综述方案，对表征学习与可解释性领域的文献进行了系统的结构主义哲学分类。使用三个等级标准：<strong>实体消除</strong>（神经元/特征是独立存在的实体还是关系节点）、<strong>结构来源</strong>（模式是被发现还是被建构/施加的）、<strong>存在模式</strong>（经验的还是数学的-抽象的）。<br><br><strong>关键发现：</strong>分析的论文中60%为结构唯心论（表征视为模型依赖的建构），20%非消除结构主义，20%消除结构主义，<strong>0%结构实在论</strong>。作者提出“抽象-实在论逆关系”假说——学科抽象度越高，研究者越倾向于工具主义和建构主义认识论。<br><br><strong>对SAE研究的直接含义：</strong>当SAE研究者说“我们发现了一个特征”时，实践中采用的是结构唯心论（建构论）立场——他们实际上在说“我们学到了一种有助于预测的参数配置”，而非“发现了独立于建模过程的自然界关节”。<br><br><strong>方法论洞见：</strong>从“神经元激活向量”到“特征”的语言跃迁隐含了未经审查的哲学假设。Culcu没有评价建构论立场的优劣，而是将隐含的哲学承诺显性化——这是必要的元层次诊断，使后续的规范性讨论成为可能。<br><br><strong>核心张力：</strong>ML研究者的实践（结构唯心论）与SAE修辞（“发现特征”）之间存在根本性的不一致。这一张力构成了整个研究缺口的经验基础。"
+  },
+  {
+    paper_id: "002",
+    title: "Kumar et al. (2025) FER假说 — 详细阅读笔记",
+    date: "2025-05-16",
+    content: "<strong>表征乐观主义的终结？</strong><br><br>Kumar等人通过最小化的实验设计（CPPN生成单张图像）提出了对深度学习最深刻的挑战之一：<strong>相同输出行为可对应完全不同的内部表征</strong>——彻底取决于训练方法（SGD vs 进化搜索）。<br><br><strong>两个核心概念：</strong><br>1. <strong>FER（Fractured Entangled Representation）</strong>——SGD训练的标准结果。神经元激活混沌无序，语义特征被碎片化和纠缠。对单个权重进行扰动导致混沌的、无意义的输出变化。<br>2. <strong>UFR（Unified Factored Representation）</strong>——进化搜索的结果。模块化、语义清晰的表征。权重扰动产生连贯的、语义有意义的输出变化（如对称性调整、特定特征形态变化）。<br><br><strong>对SAE本体论的冲击：</strong>如果表征的结构根本取决于训练方法，那么SAE“发现”的特征究竟是模型的特征还是SGD的特征？改变训练算法可能导致一套完全不同的“特征”——那么声称任何特定特征分解是“真实”的，其基础在哪里？<br><br><strong>“冒名者智能”概念：</strong>表面上基准性能达标，但内部表征质量低劣。这对alignment是警钟——我们可能在调整表面上表现良好但内部结构混乱的模型。FER可能是多义性和superposition的深层根源——表征本身就是破碎的，稀疏分解只能是权宜之计。<br><br><strong>局限与待解问题：</strong>实验规模极小（单图像、CPPN架构），FER在大型LLM中的表现形式尚待验证。如果大规模模型中也存在FER，那么SAE作为“发现”工具的整个叙事就需要根本性修正。"
+  },
+  {
+    paper_id: "003",
+    title: "Rowbottom et al. (2026) 准表征的无奇迹论证 — 详细阅读笔记",
+    date: "2026-03-15",
+    content: "<strong>走出二元对立的路径？</strong><br><br>Rowbottom、Peden和Curtis-Trudel提出“准表征”（quasi-representation）作为超越特征实在论/反实在论二元的精致中间立场。准表征是剥离了“关于性”（aboutness/intentionality）后剩余的结构性成分——相似性、结构同构、推理通行证等。<br><br><strong>论证结构：</strong><br>1. 标准AI版无奇迹论证（NMA）太强——因为它需要声称AI系统包含真正的表征（带关于性）。<br>2. 将论证从“表征”弱化为“准表征”使其更可辩护——准表征只需要结构性对应，不需要关于性。<br>3. 准表征论题兼容选择实在论（准表征对应真实结构）和反实在论（准表征是纯粹的建模工具）——你可以是准表征的实在论者但关于特定特征的反实在论者。<br><br><strong>对SAE的实践含义：</strong>SAE特征作为准表征——它们与模型内部激活模式有结构性对应，所以不是纯粹的虚构；但它们不必满足完全关于性（即不必对真实世界实体有语义指称），所以也不是完全意义上的实在论“发现”。这允许我们在不承诺强实在论的情况下认真对待特征。<br><br><strong>GraphCast案例：</strong>天气预测模型包含大气状态的结构性对应，但我们不需要声称模型“关于”大气——结构对应足够支撑预测成功和解释。<br><br><strong>这个中间立场对alignment的意义：</strong>alignment不需要预设SAE特征是完全真实的（强实在论）或完全任意的（激进工具论）——只需要准表征的结构性对应足以支持可靠的干预。但这也提出了一个深层问题：如果准表征只保证结构性对应而不保证关于性，那么“价值对齐”中的“对齐”究竟意味着什么——结构对应还是语义对应？"
+  },
+  {
+    paper_id: "004",
+    title: "Müller et al. (2025) SToBB框架 — 详细阅读笔记",
+    date: "2025-09-15",
+    content: "<strong>从哲学到工程的直接翻译</strong><br><br>Müller等人实现了本研究中哲学立场到工程实践的最直接翻译——将van Fraassen的建构经验论转化为XAI的可操作框架。<br><br><strong>SToBB的核心约束：</strong><br>1. <strong>经验充分性</strong>——替代解释模型必须与所有可获取的黑箱行为观察一致（“拯救现象”）。在XAI语境中，这意味着解释必须在所有测试过的输入-输出对上与模型行为匹配。<br>2. <strong>可适应性</strong>——当新观测到达时，解释必须能够被更新以恢复充分性。这回应了XAI中长期存在的“解释过时”问题。<br>3. <strong>可审计性</strong>——建构选择、假设和更新行为必须透明记录。这引入了科学可复现性的原则到XAI中。<br><br><strong>CoBoT算法：</strong>在在线设定下随观测累积而建构和维护经验充分的规则基替代模型。这是一个原理验证——展示了从哲学原则到可运行代码的路径。<br><br><strong>哲学创新：</strong>将van Fraassen的“接受科学理论所涉及的信念仅为经验充分性（而非真理）”这一核心立场直接翻译为XAI的操作原则——解释神经网络时，我们不关心解释是否“真”，只关心解释是否经验充分。<br><br><strong>对SAE的警醒：</strong>如果我们只是要求SAE特征经验充分地捕获激活行为（即重构损失足够低），那么我们使用的是什么本体论标准？建构经验论的回答是：不需要本体论标准——只需要经验充分性。但这对alignment构成深层挑战：如果alignment只要求经验充分的行为对齐，那么“真正的价值对齐”概念就失去了基础。<br><br><strong>Tension：建构经验论的对齐 vs 实在论的对齐</strong>——这是alignment运动中一个尚未解决的、可能是根本性的张力。"
+  },
+  {
+    paper_id: "005",
+    title: "Yao & Hagar (2024) 特征的非唯一性 — 详细阅读笔记",
+    date: "2024-10-01",
+    content: "<strong>三种“特征”与致命的非唯一性</strong><br><br>Yao和Hagar提出了对“ANN发现特征”叙事的可能是最清晰和最有破坏力的哲学批评。<br><br><strong>三种意义的区分：</strong><br>1. <strong>参数特征</strong>（parametric features）——网络内部的数学结构（权重、激活、交互项）。这些是纯形式对象，没有任何语义承诺。<br>2. <strong>诊断特征</strong>（diagnostic features）——网络用于执行特定分类的模式。这是SAE实践的层面——识别网络“使用”的激活模式。<br>3. <strong>真实世界特征</strong>（real-world features）——目标域在自然界中的真实属性。这是科学家真正想要的——不是模型内部的模式，而是外部世界的真实结构。<br><br><strong>非唯一性论证：</strong>对于任何给定的网络行为，存在大量不兼容的参数和诊断特征（以及解释它们的方式）。当科学家旨在发现新异的真实世界特征时，他们必须在这些选项之间做出选择——但他们通常缺乏做出这一选择所需的背景知识。如果你不知道关于目标域的真实世界特征，你无法仅从网络内部确定哪些参数特征对应哪些真实世界特征。<br><br><strong>结论的强力性：</strong>“由此识别出的特征不被承诺为真实的。它们不应被用作证据，只能工具性地使用。”这不是一个温和的警告——是一个认识论上的禁令。特征作为证据在科学上的使用是非法的。<br><br><strong>对SAE阵营的根本挑战：</strong><br>1. 当SAE研究者声称“发现了一个特征”（如Anthropic的生物学SAE应用）时，他们通常在诊断特征层面上运作，但语言上滑向真实世界特征的实在论承诺。<br>2. Yao & Hagar论证这种语义滑动在认识论上是不合理的——从诊断特征到真实世界特征的跃迁需要独立证据和背景理论，而这些往往缺失。<br>3. 这意味着即使SAE发现了“与人类概念对齐”的特征，这种对齐本身就需要独立验证——不能从特征本身推出。<br><br><strong>alignment的含义：</strong>如果特征只能工具性地使用而非作为真实结构，那么alignment的整个框架需要重新概念化——从“使模型内部表征与价值一致”变为“使模型行为与价值一致，使用特征作为辅助工具”。"
+  }
+];
+
+const DOMAIN_ID = '08_representational_ontology';
+
+// =========================== INIT ===========================
+let activeFilter = 'all';
+let graphNetwork = null;
+let graphData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderCards(PAPERS);
+  renderNotes();
+  updateStats();
+  initTabs();
+  initFilters();
+});
+
+// =========================== TAB SWITCHING ==========================
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'graph') initGraph();
+    });
+  });
+}
+
+// =========================== FILTERS ===========================
+function initFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.filter && btn.dataset.filter === activeFilter) {
+        activeFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+        if (allBtn) allBtn.classList.add('active');
+      } else {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      filterCards();
+    });
+  });
+}
+
+function filterCards() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const filtered = PAPERS.filter(p => {
+    const matchesFilter = !activeFilter || activeFilter === 'all' || p.priority === activeFilter ||
+      (activeFilter === '2026' && p.year === 2026) ||
+      (activeFilter === '2025' && p.year === 2025) ||
+      (activeFilter === '2024' && p.year === 2024) ||
+      (activeFilter === 'realist' && p.position === 'realist') ||
+      (activeFilter === 'instrumentalist' && p.position === 'instrumentalist') ||
+      (activeFilter === 'middle' && p.position === 'middle');
+    const matchesSearch = !query ||
+      p.title.toLowerCase().includes(query) ||
+      p.authors.toLowerCase().includes(query) ||
+      p.tags.some(t => t.toLowerCase().includes(query)) ||
+      p.summary_cn.toLowerCase().includes(query);
+    return matchesFilter && matchesSearch;
+  });
+  renderCards(filtered);
+}
+
+// =========================== CARD RENDERING =========================
+function getPositionLabel(pos) {
+  const map = {
+    realist: '<span class="position-badge position-realist">实在论</span>',
+    instrumentalist: '<span class="position-badge position-instrumentalist">工具论</span>',
+    middle: '<span class="position-badge position-middle">中间立场</span>',
+    agnostic: '<span class="position-badge position-agnostic">不可知/诊断</span>'
+  };
+  return map[pos] || '';
+}
+
+function renderCards(papers) {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = papers.map(p => `
+    <div class="card priority-${p.priority}" onclick="openPaper('${p.id}')">
+      <div class="card-priority-badge ${p.priority}"></div>
+      <div class="card-id">${p.id} · ${p.year} ${getPositionLabel(p.position)}</div>
+      <div class="card-title">${p.title}</div>
+      <div class="card-authors">${p.authors}</div>
+      <div class="card-summary">${p.summary_cn}</div>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+  if (papers.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">没有匹配的文献</div>`;
+  }
+}
+
+// =========================== MODAL ===========================
+function openPaper(id) {
+  const p = PAPERS.find(x => x.id === id);
+  if (!p) return;
+
+  let relHtml = '';
+  if (p.relations && p.relations.length > 0) {
+    relHtml = p.relations.map(r => {
+      const target = PAPERS.find(pp => pp.id === r.target);
+      const targetTitle = target ? ` (${target.title.substring(0, 40)}...)` : '';
+      return `<span class="rel-badge ${r.type}">${r.label} → ${r.target}${targetTitle}</span>`;
+    }).join('');
+  }
+
+  const html = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="card-priority-badge ${p.priority}" style="position:static;display:inline-block;margin-bottom:0.5rem"></div>
+    <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem">${p.id} · ${p.year} · ${p.priority === 'must' ? '必读' : p.priority === 'important' ? '重要' : '参考'} ${getPositionLabel(p.position)}</span>
+    <h2>${p.title}</h2>
+    <div class="meta">${p.authors}${p.venue ? ' · ' + p.venue : ''}${p.doi ? ' · DOI: <a href="https://doi.org/' + p.doi + '" target="_blank">' + p.doi + '</a>' : ''}</div>
+    ${p.pdf ? `<div class="meta"><a href="${p.pdf}" target="_blank">打开PDF</a></div>` : ''}
+
+    <section>
+      <h3>一句话概要</h3>
+      <p>${p.summary_cn}</p>
+    </section>
+
+    <section>
+      <h3>完整摘要</h3>
+      <p>${p.abstract_cn || p.summary_cn}</p>
+    </section>
+
+    ${p.methodology ? `
+    <section>
+      <h3>方法论与实验设计</h3>
+      <p>${p.methodology}</p>
+    </section>` : ''}
+
+    ${p.findings ? `
+    <section>
+      <h3>核心发现与贡献</h3>
+      <p>${p.findings}</p>
+    </section>` : ''}
+
+    ${p.limitations ? `
+    <section>
+      <h3>局限性与批评</h3>
+      <p>${p.limitations}</p>
+    </section>` : ''}
+
+    ${p.relevance ? `
+    <section>
+      <h3>与本研究的相关性</h3>
+      <p>${p.relevance}</p>
+    </section>` : ''}
+
+    ${relHtml ? `
+    <section>
+      <h3>文献关联</h3>
+      <div class="relations">${relHtml}</div>
+    </section>` : ''}
+
+    <section>
+      <h3>关键词</h3>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </section>
+  `;
+
+  document.getElementById('modal').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+// =========================== GRAPH ===========================
+function initGraph() {
+  if (graphNetwork) return;
+
+  const nodes = PAPERS.map((p, i) => ({
+    id: p.id,
+    label: `${p.id}\n${p.title.substring(0, 25)}...`,
+    color: {
+      background: p.priority === 'must' ? '#4ade80' : p.priority === 'important' ? '#fbbf24' : '#64748b',
+      border: p.position === 'realist' ? '#4ade80' : p.position === 'instrumentalist' ? '#f87171' : p.position === 'middle' ? '#fbbf24' : '#64748b'
+    },
+    font: { color: '#dce3f0', size: 10 },
+    size: p.priority === 'must' ? 28 : p.priority === 'important' ? 22 : 16,
+  }));
+
+  const edgeMap = {};
+  const edges = [];
+  const edgeColors = {
+    cites: { color: '#818cf8', dashes: false },
+    extends: { color: '#2dd4bf', dashes: false },
+    contradicts: { color: '#f87171', dashes: true, width: 2 },
+    shares: { color: '#f5a623', dashes: false },
+    empirical: { color: '#a78bfa', dashes: true },
+    philosophical: { color: '#fb923c', dashes: true }
+  };
+
+  PAPERS.forEach(p => {
+    if (!p.relations) return;
+    p.relations.forEach(r => {
+      const key = `${p.id}->${r.target}`;
+      if (!edgeMap[key]) {
+        edgeMap[key] = true;
+        edges.push({
+          from: p.id,
+          to: r.target,
+          label: r.label.substring(0, 25),
+          ...(edgeColors[r.type] || edgeColors.cites)
+        });
+      }
+    });
+  });
+
+  const container = document.getElementById('graph-container');
+  graphData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+  graphNetwork = new vis.Network(container, graphData, {
+    physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -35, centralGravity: 0.005, springLength: 160 } },
+    edges: { smooth: { type: 'continuous' }, font: { size: 8, color: '#8899bb' } },
+    interaction: { hover: true, tooltipDelay: 200 },
+  });
+
+  graphNetwork.on('click', function(evt) {
+    if (evt.nodes.length > 0) openPaper(evt.nodes[0]);
+  });
+}
+
+// =========================== NOTES ===========================
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!NOTES || NOTES.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted)">暂无阅读笔记。</div>`;
+    return;
+  }
+  list.innerHTML = NOTES.map(n => `
+    <div class="note-card">
+      <h4>${n.title}</h4>
+      <div class="note-meta">${n.paper_id} · ${n.date || ''}</div>
+      <p>${n.content}</p>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('paper-count').textContent = PAPERS.length;
+  document.getElementById('must-count').textContent = PAPERS.filter(p => p.priority === 'must').length;
+  document.getElementById('note-count').textContent = NOTES ? NOTES.length : 0;
+}
+</script>
+
+<div class="wiki-footer">
+  <div class="footer-title">浏览其他领域</div>
+  <div class="footer-domains">
+    <a href="../01_sae_features/wiki.html">01 SAE与特征分解</a>
+    <a href="../02_activation_engineering/wiki.html">02 激活与表征工程</a>
+    <a href="../03_causal_intervention/wiki.html">03 因果干预与心灵哲学</a>
+    <a href="../04_alignment_safety/wiki.html">04 AI对齐理论与安全</a>
+    <a href="../05_ethics_governance/wiki.html">05 AI伦理与治理</a>
+    <a href="../06_philosophy_of_science/wiki.html">06 科学哲学</a>
+    <a href="../07_philosophy_of_mind/wiki.html">07 心灵哲学与AI</a>
+    <a href="../08_representational_ontology/wiki.html">08 表征本体论 (Gap 1)</a>
+    <a href="../09_epistemology_understanding/wiki.html">09 理解认识论 (Gap 2)</a>
+    <a href="../10_causal_sufficiency/wiki.html">10 因果充分性 (Gap 3)</a>
+    <a href="../11_vector_grounding/wiki.html">11 向量奠基 (Gap 4)</a>
+  </div>
+  <div class="footer-back">
+    <a href="../index.html">← 返回文献知识库总览</a>
+  </div>
+</div>
+
+</body>
+</html>

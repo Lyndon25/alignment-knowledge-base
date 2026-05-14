@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10_causal_sufficiency · 文献Wiki</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-void: #06080f;
+      --bg-primary: #0c0f1a;
+      --bg-secondary: #12182a;
+      --bg-tertiary: #1a2238;
+      --bg-elevated: #222d4a;
+      --text-primary: #dce3f0;
+      --text-secondary: #8899bb;
+      --text-muted: #556688;
+      --text-faint: #334466;
+      --border-subtle: rgba(68, 102, 153, 0.08);
+      --border-medium: rgba(68, 102, 153, 0.18);
+      --border-strong: rgba(68, 102, 153, 0.30);
+      --c-priority-must: #4ade80;
+      --c-priority-important: #fbbf24;
+      --c-priority-ref: #64748b;
+      --c-rel-cites: #818cf8;
+      --c-rel-extends: #2dd4bf;
+      --c-rel-contradicts: #f87171;
+      --c-rel-shares: #f5a623;
+      --c-rel-empirical: #a78bfa;
+      --c-rel-philosophical: #fb923c;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition-base: 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem; color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .header-stats {
+      display: flex; gap: 1.5rem;
+      font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+    }
+    .header-stat span { color: var(--text-primary); font-weight: 500; }
+
+    .tab-nav {
+      display: flex; gap: 0;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 0 2rem;
+    }
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none; background: none;
+      color: var(--text-muted); font-family: var(--font-body);
+      font-size: 0.85rem; cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-base);
+    }
+    .tab-btn:hover { color: var(--text-secondary); }
+    .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--c-rel-cites); }
+
+    .tab-content { display: none; padding: 2rem; }
+    .tab-content.active { display: block; }
+
+    .filters {
+      display: flex; gap: 0.75rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.85rem;
+      border: 1px solid var(--border-medium); border-radius: 999px;
+      background: transparent; color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.7rem;
+      cursor: pointer; transition: all var(--transition-base);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--text-secondary); color: var(--text-primary);
+    }
+    .filter-btn.priority-must.active { border-color: var(--c-priority-must); color: var(--c-priority-must); }
+    .filter-btn.priority-important.active { border-color: var(--c-priority-important); color: var(--c-priority-important); }
+    .filter-btn.priority-ref.active { border-color: var(--c-priority-ref); color: var(--c-priority-ref); }
+
+    .search-input {
+      padding: 0.35rem 1rem;
+      background: var(--bg-secondary); border: 1px solid var(--border-medium);
+      border-radius: 999px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 0.8rem;
+      width: 240px; outline: none;
+    }
+    .search-input:focus { border-color: var(--border-strong); }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card.priority-must { border-left: 3px solid var(--c-priority-must); }
+    .card.priority-important { border-left: 3px solid var(--c-priority-important); }
+    .card.priority-ref { border-left: 3px solid var(--c-priority-ref); }
+
+    .card-id {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: var(--text-faint); margin-bottom: 0.5rem;
+    }
+    .card-title {
+      font-size: 0.95rem; font-weight: 500;
+      color: var(--text-primary); margin-bottom: 0.4rem;
+      line-height: 1.35;
+    }
+    .card-authors {
+      font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .card-summary {
+      font-size: 0.78rem; color: var(--text-secondary);
+      line-height: 1.5; margin-bottom: 0.75rem;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags {
+      display: flex; gap: 0.35rem; flex-wrap: wrap;
+    }
+    .card-tag {
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      background: var(--bg-tertiary); color: var(--text-muted);
+      font-size: 0.65rem; font-family: var(--font-mono);
+    }
+    .card-priority-badge {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .card-priority-badge.must { background: var(--c-priority-must); box-shadow: 0 0 6px var(--c-priority-must); }
+    .card-priority-badge.important { background: var(--c-priority-important); box-shadow: 0 0 6px var(--c-priority-important); }
+    .card-priority-badge.ref { background: var(--c-priority-ref); }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(6,8,15,0.85); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      max-width: 780px; width: 90vw; max-height: 85vh;
+      overflow-y: auto; padding: 2rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      width: 32px; height: 32px; border: 1px solid var(--border-medium);
+      border-radius: 50%; background: transparent; color: var(--text-muted);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-base);
+    }
+    .modal-close:hover { border-color: #f87171; color: #f87171; }
+    .modal h2 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .modal .meta { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; }
+    .modal section { margin-bottom: 1.25rem; }
+    .modal section h3 {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .modal section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+    .modal .relations { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .modal .rel-badge {
+      padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.7rem;
+      font-family: var(--font-mono);
+    }
+    .rel-badge.cites { background: rgba(129,140,248,0.15); color: var(--c-rel-cites); }
+    .rel-badge.extends { background: rgba(45,212,191,0.15); color: var(--c-rel-extends); }
+    .rel-badge.contradicts { background: rgba(248,113,113,0.15); color: var(--c-rel-contradicts); }
+    .rel-badge.shares { background: rgba(245,166,35,0.15); color: var(--c-rel-shares); }
+    .rel-badge.empirical { background: rgba(167,139,250,0.15); color: var(--c-rel-empirical); }
+    .rel-badge.philosophical { background: rgba(251,146,60,0.15); color: var(--c-rel-philosophical); }
+
+    .graph-container {
+      width: 100%; height: 70vh;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+    .graph-legend {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      margin-top: 1rem; padding: 0.75rem 1rem;
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+    }
+    .graph-legend-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.7rem; color: var(--text-muted);
+    }
+    .graph-legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    .notes-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .note-card {
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 1.25rem;
+    }
+    .note-card h4 { font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .note-card .note-meta { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 0.6rem; }
+    .note-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-void); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+    a { color: var(--c-rel-cites); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Footer navigation */
+    .wiki-footer {
+      margin-top: 3rem; padding: 1.5rem 2rem;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-medium);
+    }
+    .wiki-footer a { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; transition: color var(--transition-base); }
+    .wiki-footer a:hover { color: var(--text-primary); text-decoration: none; }
+    .wiki-footer .footer-title { font-size: 0.7rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-domains { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-back { margin-top: 0.5rem; }
+    .wiki-footer .footer-back a { color: var(--c-rel-cites); font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.35rem">
+      <a href="../index.html" style="color:var(--c-rel-cites)">← 文献知识库总览</a>
+    </div>
+    <div class="header-title">因果充分性：干预相关性还是真正因果？</div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.15rem">Causal Sufficiency · Interchange Intervention · Faithfulness · Counterfactuals · Pearl Hierarchy</div>
+  </div>
+  <div class="header-stats">
+    <div class="header-stat">文献 <span id="paper-count">0</span></div>
+    <div class="header-stat">必读 <span id="must-count" style="color:var(--c-priority-must)">0</span></div>
+    <div class="header-stat">笔记 <span id="note-count">0</span></div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="browse">浏览文献</button>
+  <button class="tab-btn" data-tab="graph">关系图谱</button>
+  <button class="tab-btn" data-tab="notes">阅读笔记</button>
+</div>
+
+<div class="tab-content active" id="tab-browse">
+  <div class="filters">
+    <input class="search-input" id="search" placeholder="搜索标题/作者/关键词..." oninput="filterCards()">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="filter-btn priority-must" data-filter="must">必读</button>
+    <button class="filter-btn priority-important" data-filter="important">重要</button>
+    <button class="filter-btn priority-ref" data-filter="ref">参考</button>
+    <button class="filter-btn" data-filter="2026">2026</button>
+    <button class="filter-btn" data-filter="2025">2025</button>
+    <button class="filter-btn" data-filter="foundational">基础</button>
+  </div>
+  <div class="card-grid" id="card-grid"></div>
+</div>
+
+<div class="tab-content" id="tab-graph">
+  <div class="graph-container" id="graph-container"></div>
+  <div class="graph-legend" id="graph-legend">
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-must)"></div> 必读</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-important)"></div> 重要</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-ref)"></div> 参考</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-cites)"></div> 引用</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-extends)"></div> 方法继承</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-contradicts)"></div> 对立观点</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-shares)"></div> 共享概念</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-empirical)"></div> 经验基础</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-philosophical)"></div> 哲学先导</div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-notes">
+  <div class="notes-list" id="notes-list"></div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js"></script>
+<script>
+// ========================================= DATA =========================================
+const PAPERS = [
+  {
+    id: "001", title: "非线性表示困境：因果抽象足以满足机械可解释性吗？",
+    authors: "Denis Sutter, Julian Minder, Thomas Hofmann, Tiago Pimentel",
+    year: 2025, venue: "NeurIPS 2025 (Spotlight)",
+    doi: "10.48550/arXiv.2507.08802",
+    pdf: "papers/001_Sutter_2025_NonLinearDilemma.pdf",
+    priority: "must",
+    tags: ["causal abstraction", "non-linear dilemma", "interchange intervention", "faithfulness"],
+    summary_cn: "核心发现：在允许非线性对齐映射时，任何神经网络（包括随机初始化模型）都可完美映射到任何高层因果模型，使得因果抽象变得空洞——高IIA不等于真正的因果忠实性。",
+    abstract_cn: "因果抽象是机械可解释性的核心框架，通过交换干预（interchange intervention）将神经网络映射到高层算法模型。本文揭示了一个根本性困境：如果对齐映射允许任意复杂的非线性函数，则任何深度神经网络都可以完美对齐到任何算法——即使该网络完全不能执行该任务。作者在理论上证明，在输入内射性和输出满射性的温和条件下，任意DNN都可以通过足够强大的非线性对齐映射实现100%的交换干预准确率。在IOI任务上的实验验证了这一预测：即使对随机初始化的Pythia语言模型，非线性对齐映射也能达到完美的IIA。随着训练推进，实现完美IIA所需的对齐映射复杂度降低，表明训练后的模型确实趋向更简单的（更线性的）表示。文章的结论是：因果抽象本身不足以支持机械可解释性——它必须辅以关于模型如何编码信息的明确假设（如线性表示假设）。",
+    methodology: "理论证明（输入内射性+输出满射性下的存在性定理）+ 实证验证（IOI任务上训练不同程度非线性对齐映射，包括随机初始化baseline）",
+    findings: "1) 非线性对齐映射使因果抽象空洞化：任意模型可完美对齐到任意算法；2) 训练使对齐映射趋向更线性化——训练程度越高，实现完美IIA需要的非线性越少；3) 当前没有原则性方法平衡对齐映射复杂度与准确性的权衡；4) 因果抽象需要额外的编码假设才能有意义。",
+    limitations: "理论证明依赖输入内射性和输出满射性假设，某些架构可能不满足；未提出具体的复杂度约束标准；仅在小模型上验证",
+    relevance: "这是对因果充分性问题最直接的技术批判。Sutter的'非线性困境'表明，IIA高并不等于模型真正实现了目标算法——可能是非线性对齐映射'过拟合'了因果测试。这一发现直接质疑所有基于交换干预的因果抽象研究的认识论基础，其核心论点与本研究'干预相关性不等于真正因果'的中心问题完全一致。该文使因果充分性从哲学关切转变为可证明的技术问题。",
+    relations: [
+      {target: "002", type: "contradicts", label: "挑战Geiger因果抽象框架的认识论基础：高IIA可能是非线性映射的过拟合"},
+      {target: "009", type: "shares", label: "PLOT试图通过最优传输缓解非线性困境的对齐搜索问题"},
+      {target: "005", type: "shares", label: "与Faithfulness失败形成双重否定：线性困境+忠实性困境"}
+    ]
+  },
+  {
+    id: "002", title: "因果抽象：机械可解释性的理论基础",
+    authors: "Atticus Geiger, Duligur Ibeling, Amir Zadeh, Noah Goodman, Thomas Icard, Christopher Potts",
+    year: 2025, venue: "Journal of Machine Learning Research (JMLR), 26(83):1-64",
+    doi: "10.48550/arXiv.2301.04709",
+    pdf: "papers/002_Geiger_2025_CausalAbstraction.pdf",
+    priority: "must",
+    tags: ["causal abstraction", "mechanistic interpretability", "interchange intervention", "distributed alignment search", "faithfulness"],
+    summary_cn: "系统性理论统一：将激活修补、因果追踪、DAS、SAE等几乎所有MI方法统一在因果抽象框架下，提供分级忠实性（graded faithfulness）概念。",
+    abstract_cn: "本文提供机械可解释性的第一个统一的理论基础——因果抽象。因果抽象将神经网络的高层因果模型（常以符号算法表示）与低层神经网络计算联系起来，通过交换干预（interchange intervention）测试这种映射的忠实性。文章形式化了核心概念：多语义神经元、线性表示假设、模块化特征、分级忠实性等。作者展示了因果抽象框架如何统一激活/路径修补、因果中介分析、因果擦除、因果追踪、电路分析、稀疏自编码器、分布式对齐搜索等多种方法。该框架的关键贡献在于：为不同MI方法提供了可比较的忠实性度量（IIA），使我们可以谈论'一个解释有多好'，而不仅仅是'找到什么'。",
+    methodology: "理论形式化（范畴论启发的抽象映射）+ 统一的实验方法论框架（交换干预的实验设计标准）",
+    findings: "1) 因果抽象为MI提供了统一的数学语言；2) 分级忠实性使因果解释可在不同精度下评估；3) 交换干预准确率（IIA）是核心度量标准；4) 因果抽象兼容线性表示假设和多语义编码；5) 框架可解释已有的多种MI方法的共性与差异。",
+    limitations: "未处理非线性对齐映射导致的空洞性问题（Sutter 2025的分析表明IIA在非线性映射下可被平凡化）；框架本身的因果基础——交换干预是否测量真正因果——未被充分质疑；理论依赖干预主义因果观的正确性。",
+    relevance: "本文是因果充分性辩论的核心参照点。Geiger框架被广泛采纳为MI的因果标准，但其对IIA的依赖在Sutter(2025)的非线性困境下受到严峻挑战。本研究需追问：Geiger的因果抽象提供的究竟是真正的因果解释，还是仅是一种方便的描述约定？换言之，因果抽象的'因果性'来自框架本身还是来自网络的实际因果结构？",
+    relations: [
+      {target: "001", type: "contradicts", label: "被Sutter揭示非线性映射可使IIA空洞化，动摇其核心有效性标准"},
+      {target: "006", type: "extends", label: "Pîslar在同一框架内提出多模型组合以提高忠实性"},
+      {target: "003", type: "extends", label: "Grant揭示干预可能产生分布外表征，质疑交换干预的忠实性"}
+    ]
+  },
+  {
+    id: "003", title: "因果干预导致的发散表征：对神经网络干预忠实性的挑战",
+    authors: "Satchel Grant, Simon Jerome Han, Alexa Tartaglini, Christopher Potts",
+    year: 2026, venue: "ICLR 2026",
+    doi: "10.48550/arXiv.2511.04638",
+    pdf: "papers/003_Grant_2025_DivergentRepresentations.pdf",
+    priority: "must",
+    tags: ["causal intervention", "divergent representations", "faithfulness", "out-of-distribution", "activation patching"],
+    summary_cn: "关键区分：因果干预常使表征偏离自然分布。'无害'发散在行为零空间中，'有害'发散激活隐藏通路——干预忠实性不等于因果忠实性。",
+    abstract_cn: "本文从理论和实验两个层面证明：常见的因果干预技术（激活修补、交换干预等）经常导致神经表征偏离自然分布（即产生'发散表征'）。作者区分了两类发散：（1）'无害'发散——位于行为零空间中，不影响模型输出决策；（2）'有害'发散——激活了在自然输入下不被使用的隐藏网络通路，导致不可预测的行为变化。作者提出改进的Counterfactual Latent (CL)损失函数，使干预后的表征更接近自然分布，从而提升干预结果的可信度。在GPT-2和多个视觉模型上的实验表明，标准干预方法在相当比例的情况下产生有害发散，而CL损失能有效减轻这一问题。",
+    methodology: "理论分析（行为零空间的线性代数刻画）+ 实证验证（GPT-2和视觉模型上的发散度量与控制实验）+ 提出改进方法（CL损失）",
+    findings: "1) 因果干预造成表征发散是普遍现象，非偶然；2) 区分无害与有害发散对判断干预有效性至关重要；3) CL损失可有效将干预表征拉回自然分布；4) 忽视发散问题可能导致对因果关系的错误推断——看似'有效'的干预可能激活了不相关的隐藏通路。",
+    limitations: "CL损失仅在特定条件下保证收敛；行为零空间的精确刻画依赖对模型决策边界的完整了解（在大模型中难以获得）；无害/有害的二分法在实践中可能是连续的",
+    relevance: "本文为因果充分性问题提供了一个精确的技术维度：即使交换干预在行为层面'有效'（即IIA高），其底层表征可能已经偏离了自然状态，意味着我们可能不是在测量网络的固有因果结构，而是在测量我们对网络的干预效果。这直接对应了Woodward干预主义因果理论与MI实践之间的张力：MI的干预是否满足Woodward的INV（不变性）条件？",
+    relations: [
+      {target: "002", type: "extends", label: "在Geiger的因果抽象框架内揭示交换干预的发散问题"},
+      {target: "020", type: "shares", label: "CDAS通过分布匹配解决类似的干预分布外问题"},
+      {target: "001", type: "shares", label: "与非线性困境形成互补：非线性对齐+发散表征=双重威胁"}
+    ]
+  },
+  {
+    id: "004", title: "立场声明：机械可解释性必须披露因果声明的识别假设",
+    authors: "Zezheng Lin, Fengming Liu",
+    year: 2026, venue: "NeurIPS 2026 (Position Track)",
+    doi: "10.48550/arXiv.2605.08012",
+    pdf: "papers/004_Lin_2026_IdentificationAssumptions.pdf",
+    priority: "must",
+    tags: ["identification assumptions", "causal claims", "methodological audit", "mechanistic interpretability", "epistemology"],
+    summary_cn: "审计10篇MI论文后发现：没有任何一篇设有专门的'识别假设'部分，忠实性/完备性度量被当作因果证据使用而无需声明使其成立的前提条件。",
+    abstract_cn: "本文对机械可解释性领域的因果声明实践进行了系统性审计。作者审查了跨越四条技术路线（电路发现、稀疏自编码器、因果抽象、探针）的10篇代表性论文，发现无一设有专门的'识别假设'（identification assumptions）部分。识别假设是因果推断核心概念——指使统计度量能够识别因果参数的前提条件。MI领域普遍将忠实性、完备性等验证度量作为因果支持的证据，但从未明确声明这些度量在什么条件下才能成为因果证据。文章提出三个关键问题：（1）当前的验证度量在什么假设下才能识别因果结构？（2）这些假设在神经网络的语境下是否合理？（3）如果不合理，我们需要什么新的验证策略？作者呼吁建立领域范围的披露规范。",
+    methodology: "系统性文献审计（10篇代表性论文的识别假设覆盖率分析）+ 因果推断方法论分析",
+    findings: "1) 0/10的MI论文有专门的识别假设部分；2) 忠实性/完备性度量在没有识别假设立场下被默认当作因果度量使用；3) 当前MI领域的因果声明在认识论上是不完整的——即使IIA高，我们无法知道我们在测量什么以及测量的认识论地位；4) MI领域需要从经济学/流行病学等成熟因果学科借鉴识别假设惯例。",
+    limitations: "审计范围限于10篇论文，可能无法代表整个领域；未提出具体的识别假设框架，仅指出缺失；Position Track论文，偏向倡导性而非建设性",
+    relevance: "本文从不完整性的角度支持了因果充分性问题的核心直觉：当前MI的因果方法在认识论上是自我满足的——它们在自己的度量标准内'有效'，但这些标准的因果地位从未被严格建立。这与Woodward/Peal的因果理论形成鲜明对比——后者强调因果关系的成立需要满足严格的结构条件（如后门准则、无混淆假设）。本文直接追问：MI的哪些验证度量是对应于因果发现的哪些识别条件的？",
+    relations: [
+      {target: "002", type: "cites", label: "对Geiger因果抽象框架中IIA作为忠实性度量的因果识别地位提出质疑"},
+      {target: "005", type: "shares", label: "与忠实性失败论文共同构成认识论层面的双重批判"},
+      {target: "019", type: "philosophical", label: "与Mlodozeniec立场对立：他们主张概率建模足够，而Lin主张必须补充识别假设"}
+    ]
+  },
+  {
+    id: "005", title: "当忠实性失败：神经因果发现的表现极限",
+    authors: "Mateusz Olko, Mateusz Gajewski, Joanna Wojciechowska, Mikołaj Morzy, Piotr Sankowski, Piotr Miłoś",
+    year: 2025, venue: "ICML 2025",
+    doi: "10.48550/arXiv.2502.16056",
+    pdf: "papers/005_Olko_2025_SinceFaithfulnessFails.pdf",
+    priority: "must",
+    tags: ["faithfulness assumption", "causal discovery", "fundamental limits", "neural networks", "spurious correlation"],
+    summary_cn: "根本限制：神经网络在有限样本下无法可靠区分真实因果边与虚假因果边——忠实性假设在任何合理数据集规模上几乎必然被违反。",
+    abstract_cn: "本文分析神经因果发现方法的根本性表现限制。作者聚焦于因果发现中的'忠实性假设'（faithfulness assumption）——即观察到的统计独立性必须反映因果图结构中的d-分离关系。通过理论和实验分析，他们证明：（1）忠实性假设在任何合理的数据集规模范围内都很可能被违反；（2）忠实性的违反直接削弱了基于惩罚似然的神经因果发现方法的性能；（3）即使对于小图和相对较大的样本量，神经网络也无法可靠区分存在和不存在的因果关系。作者的结论是：当前范式内的进展根本受限，需要范式转变。这一发现对MI有深远影响：如果连专门设计的因果发现方法都面临忠实性困境，那么依赖（隐含的）忠实性假设的MI因果方法（如因果抽象）面临同样甚至更严重的认识论风险。",
+    methodology: "理论分析（忠实性违反的概率下界）+ 大规模模拟实验（不同图规模、样本量的神经因果发现评估）",
+    findings: "1) 忠实性假设在有限样本下几乎确定会被违反；2) 违反忠实性导致神经因果发现方法无法区分真伪因果边；3) 因果发现性能随图规模增加而急剧恶化；4) 当前基于惩罚似然的方法依赖忠实性假设——当假设失败时方法即失败；5) 需要新的不依赖忠实性的因果发现范式。",
+    limitations: "分析限于因果发现而非因果抽象；模拟实验的图规模有限；未提供替代范式",
+    relevance: "虽然直接研究因果发现而非MI，但其'忠实性失败'主题与本研究核心问题深刻对应。MI的交换干预方法隐含了一个'忠实性'假设：即行为层面的干预效果反映了网络的真实因果结构。Olko的结论暗示这一假设可能普遍不成立——就像因果发现中的忠实性假设一样，MI的'干预忠实性'假设也可能在大多数情况下被违反。这为因果充分性问题提供了来自因果发现领域的平行论证。",
+    relations: [
+      {target: "011", type: "contradicts", label: "Butkus展示因果发现可从next-token预训练涌现，但Olko论证基于忠实性的因果发现在根本上面临限制"},
+      {target: "004", type: "shares", label: "与Lin(识别假设缺失)共同构成对当前因果方法的认识论批评"},
+      {target: "001", type: "shares", label: "非线性困境+忠实性失败=对因果充分性的双重否定"}
+    ]
+  },
+  {
+    id: "006", title: "组合因果模型以实现更精确的神经网络抽象",
+    authors: "Theodora-Mara Pîslar, Sara Magliacane, Atticus Geiger",
+    year: 2025, venue: "CLeaR 2025 (PMLR)",
+    doi: "10.48550/arXiv.2503.11429",
+    pdf: "papers/006_Pislar_2025_CombiningCausalModels.pdf",
+    priority: "important",
+    tags: ["causal abstraction", "model combination", "faithfulness", "trade-off", "GPT-2"],
+    summary_cn: "单个高层因果模型很少能完全忠实地抽象神经网络，组合多个简单高层模型可形式化力度与忠实性之间的权衡。",
+    abstract_cn: "本文解决因果抽象实践中的核心问题：单个高层因果模型几乎无法成为整个神经网络的完全忠实抽象。作者提出组合多个简单的高层因果模型以产生更忠实的表示，并在GPT-2 Small上验证。关键形式化贡献是定义了'力度'（strength，即可被解释的输入比例）与'忠实性'（faithfulness，即交换干预准确率）之间的权衡：单个模型试图覆盖更多输入时会降低忠实性，而通过组合多个局部忠实模型可以同时提高覆盖范围和忠实度。这一工作的隐含意义十分深远：它间接承认了因果抽象的'完美忠实'是不可实现的理想——我们需要接受局部、分片的因果解释。",
+    methodology: "形式化定义力度-忠实性权衡 + 多模型组合策略 + GPT-2 Small上的实证验证",
+    findings: "1) 力度与忠实性之间存在根本性权衡；2) 多模型组合可Pareto-改进这一权衡；3) 因果抽象在实践中是渐进的而非二元的（忠实/不忠实）；4) '完美忠实'可能是不可实现的目标",
+    limitations: "组合策略增加了高层模型的复杂性（可能抵消可解释性优势）；未探讨组合模型之间的因果交互；线性对齐假设",
+    relevance: "本文对因果充分性问题的贡献在于：它揭示了因果抽象在实践中的根本不完整性——我们需要'片段化'因果解释，而这意味着任何单一的因果模型都只是网络的部分近似。这与关于因果关系的哲学讨论高度相关：因果解释是否必须是完整的才具有认识论价值？或者局部的、上下文相关的因果解释已足够？",
+    relations: [
+      {target: "002", type: "extends", label: "在同一因果抽象框架中解决力度-忠实性权衡问题"},
+      {target: "008", type: "shares", label: "与Bucketing共享输入空间分区的思想"},
+      {target: "001", type: "cites", label: "受非线性困境启发：因果抽象的忠实性比表面看起来更脆弱"}
+    ]
+  },
+  {
+    id: "007", title: "学习一致的因果抽象网络",
+    authors: "Gabriele D'Acunto, Paolo Di Lorenzo, et al.",
+    year: 2026, venue: "ICASSP 2026",
+    doi: "10.48550/arXiv.2602.02623",
+    pdf: "papers/007_DAcunto_2026_ConsistentCausalAbstraction.pdf",
+    priority: "important",
+    tags: ["causal abstraction networks", "sheaf theory", "consistency", "Gaussian SCM", "spectral method"],
+    summary_cn: "引入层论框架保证因果抽象网络的一致性，提出SPECTRAL迭代方法实现闭式更新，为因果抽象提供形式化一致性约束。",
+    abstract_cn: "本文提出一个基于层论（sheaf theory）框架的学习一致因果抽象网络（CANs）方法。使用高斯结构因果模型（SCMs），作者通过构造性线性因果抽象和新的迭代方法SPECTRAL（带闭式更新）来学习多层因果抽象映射。层论框架的形式优势在于：它天然保证了不同抽象层次之间的一致性——底层变量到中层变量再到高层变量的抽象映射在交换下保持一致性（可交换图表性质）。这是对因果抽象一致性的首次严格形式化。该方法相比暴力搜索有明显的计算效率优势，且在合成数据和真实数据上验证了其有效性。",
+    methodology: "层论形式化 + 高斯SCM + SPECTRAL迭代算法（闭式更新）+ 合成与真实数据验证",
+    findings: "1) 层论提供了因果抽象一致性的自然数学语言；2) SPECTRAL方法计算效率优于暴力搜索；3) 一致性约束可防止因果抽象中的信息损失和扭曲；4) 线性因果抽象的闭式解存在且可高效计算",
+    limitations: "仅适用于高斯SCM（线性因果抽象）；层论框架的复杂度可能限制向大规模网络的推广；尚未处理非线性抽象的困境",
+    relevance: "通过引入层论保证因果抽象的一致性，本文间接回应了因果充分性问题：当前MI因果方法的'因果性'缺乏跨层次的传递一致性——如果我们不能保证底层到高层的映射在下组合时保持一致，那么我们在哪个层次上声称'因果性'？需要在整个抽象层次结构中一致的因果结构才可能是真实的因果结构。",
+    relations: [
+      {target: "002", type: "extends", label: "在Geiger因果抽象框架内增加层论一致性约束"},
+      {target: "009", type: "shares", label: "与PLOT共享因果变量定位的优化目标"},
+      {target: "021", type: "philosophical", label: "层论一致性对应Woodward的因果不变性要求的跨层次版本"}
+    ]
+  },
+  {
+    id: "008", title: "给好苹果分桶：因果抽象解释的诊断与改进方法",
+    authors: "Li Puyin et al.",
+    year: 2026, venue: "arXiv:2605.02234",
+    doi: "10.48550/arXiv.2605.02234",
+    pdf: "papers/008_LiPuyin_2026_BucketingGoodApples.pdf",
+    priority: "important",
+    tags: ["causal abstraction", "interpretability diagnosis", "input space partition", "interchange intervention"],
+    summary_cn: "将输入空间划分为'被充分解释'与'未被充分解释'区域，通过成对交换干预行为揭示因果解释在输入空间中的不均匀性，使其成为可诊断和迭代改进的工具。",
+    abstract_cn: "本文提出一种因果抽象可解释性的诊断方法。核心思想是：因果抽象不应被视为全局的'通过/不通过'测试，而应根据输入空间的不同区域进行差异化评估。作者通过分析成对交换干预行为（pairwise interchange intervention behavior），将输入空间划分为'被充分解释'（well-interpreted）和'未被充分解释'（under-interpreted）区域。这一分区不仅揭示了因果解释在何处有效和失效，还能指导迭代改进高层假设，使因果抽象从纯粹的整体评价工具转变为诊断性工具。该方法的形式化推进了因果抽象的精细化——使我们可以谈论'对哪些输入因果解释有效'而不仅仅是'因果解释有多好'。",
+    methodology: "输入空间分区算法（基于成对交换干预行为）+ 迭代改进策略 + 因果抽象实验验证",
+    findings: "1) 因果抽象的忠实性在输入空间中高度不均匀；2) 部分输入区域可能系统性地不可解释（即使整体IIA高）；3) 识别低解释性区域可指导模型改进；4) 诊断方法可将因果抽象从验证工具提升为分析工具",
+    limitations: "分区方法依赖于已有的因果抽象框架；成对交换干预的计算开销大；尚未处理非线性困境对诊断方法的影响",
+    relevance: "通过揭示因果解释的区域依赖性，本文进一步削弱了因果抽象的全局充分性主张。如果解释仅在部分输入上成立，那么因果抽象的'因果性'就是局部而非全局的——这直接引出了因果关系哲学中的关键问题：因果规律是否必须在一定范围内具有不变性才能算作因果？",
+    relations: [
+      {target: "002", type: "extends", label: "在因果抽象框架内增加输入空间分区诊断维度"},
+      {target: "006", type: "shares", label: "与Pîslar共享处理因果抽象'不完整性'的思路"},
+      {target: "003", type: "empirical", label: "输入区域不解释性可能与发散表征相关"}
+    ]
+  },
+  {
+    id: "009", title: "PLOT：神经因果抽象中基于最优传输的渐进定位",
+    authors: "Jonathan Chang et al.",
+    year: 2026, venue: "arXiv:2605.06979",
+    doi: "10.48550/arXiv.2605.06979",
+    pdf: "papers/009_Chang_2026_PLOT_OptimalTransport.pdf",
+    priority: "important",
+    tags: ["causal abstraction", "optimal transport", "variable localization", "distributed alignment search", "efficiency"],
+    summary_cn: "用最优传输框架替代暴力搜索进行因果变量定位——拟合抽象变量与候选神经站点之间的耦合，大幅降低DAS计算开销。",
+    abstract_cn: "本文提出PLOT（Progressive Localization via Optimal Transport），一个基于最优传输理论的框架，用于在神经因果抽象中定位因果变量。传统方法（如DAS）需要对候选神经站点的所有可能分配进行搜索（计算代价高昂）。PLOT通过拟合抽象变量与候选神经站点之间的耦合（coupling），避免了暴力搜索，从而大幅提升定位效率。该方法可选择性地引导DAS以获取更精确的干预句柄，计算成本仅为全DAS运行时间的一小部分。这使因果抽象方法能够扩大到大模型和更复杂的因果图。理论贡献在于将因果变量定位问题转化为最优传输问题——这一形式化提供了自然的不确定性量化和收敛性保证。",
+    methodology: "最优传输理论框架（耦合拟合）+ 渐进定位策略 + DAS引导 + 效率与精度实验验证",
+    findings: "1) 最优传输可高效拟合因果变量到神经站点的分配；2) PLOT定位速度远快于暴力搜索DAS；3) 耦合框架提供不确定性估计；4) 可选择性引导DAS在最优传输结果附近精搜索",
+    limitations: "依赖抽象变量与神经站点之间的良好初始化；最优传输距离度量的选择影响结果；在大规模网络中理论保证变为启发式",
+    relevance: "从因果充分性角度看，PLOT的贡献在于：如果因果变量定位本身是不可靠的（或计算上不可行的），那么基于这些定位的因果声明就缺乏基础。最优传输框架为因果定位提供了一个更原则性的计算方法，但同时也暴露了因果变量定位的内在不确定性——一个抽象变量可能对应多种神经实现，而选择哪一个会影响我们对因果结构的主张。",
+    relations: [
+      {target: "002", type: "extends", label: "在DAS框架内用最优传输改进因果变量定位"},
+      {target: "001", type: "shares", label: "试图通过高效搜索缓解非线性困境的计算负担"},
+      {target: "007", type: "shares", label: "与D'Acunto共享因果变量定位的形式化优化目标"}
+    ]
+  },
+  {
+    id: "010", title: "TRAM-DAG：可解释的神经因果模型跨Pearl三层次",
+    authors: "Beate Sick, Oliver Dürr",
+    year: 2025, venue: "CLeaR 2025 (PMLR)",
+    doi: "10.48550/arXiv.2503.16206",
+    pdf: "papers/010_Sick_2025_TRAM-DAG.pdf",
+    priority: "important",
+    tags: ["Pearl causal hierarchy", "structural causal model", "counterfactual", "interpretability", "TRAM"],
+    summary_cn: "首个覆盖Pearl因果层次全部三层（观察→干预→反事实）的可解释神经因果模型，即使在未观测混淆存在下也能回答反事实查询。",
+    abstract_cn: "本文提出TRAM-DAG，一个新颖的神经因果框架，弥合了因果模型的可解释性与灵活性之间的鸿沟。使用变换模型（TRAMs）来建模结构因果模型（SCMs）中的函数关系，涵盖了从简单统计回归到复杂神经网络的整个范围。TRAM-DAG的关键突破在于：（1）能处理连续、有序和二元类型的混合数据，克服了先前神经因果模型仅限连续变量的限制；（2）可回答Pearl因果层次全部三个级别（L1观察、L2干预、L3反事实）的查询；（3）即使在未观测混淆存在下也能处理反事实查询；（4）在保持可解释性的同时，达到或超越最先进的统计和神经网络因果模型的性能。这为审视MI的因果声明提供了一个重要的参照点：专业因果模型系统已经能够在三层次上进行严格推理——MI的方法相比之下能在什么层次上运作？",
+    methodology: "TRAM变换模型+ DAG结构学习+ 反事实推断算法 + 多类型数据支持 + 与其他SCM方法的基准比较",
+    findings: "1) 神经网络可用于构建跨Pearl三层次的可解释因果模型；2) TRAM-DAG在连续/有序/二元混合数据上表现优异；3) 可解释性不必然与灵活性冲突；4) 即使在混淆存在下反事实推断也是可能的",
+    limitations: "针对传统因果建模场景而非神经网络MI；DAG假设限制了可用场景；TRAM的灵活性与可解释性之间仍有张力",
+    relevance: "为MI因果充分性辩论提供了来自因果建模领域的参照标准：在因果建模领域，覆盖Pearl三层次的严格推理需要清晰的结构假设（如DAG、无后门路径等）。相比之下，MI的交换干预方法在Pearl层次上处于什么位置？如果MI仅停留在L2（干预）层面且其'干预'未必满足Woodward的INV条件，那么它是否根本未能进入因果推理的核心领域（L3反事实）？",
+    relations: [
+      {target: "022", type: "extends", label: "将Pearl因果层次的S念完全实现于神经网络框架"},
+      {target: "011", type: "shares", label: "与Butkus共享'神经网络可进行因果推理'的正面立场"},
+      {target: "019", type: "contradicts", label: "Mlodozeniec认为概率建模足够，但TRAM-DAG表明专用因果框架有独特价值"}
+    ]
+  },
+  {
+    id: "011", title: "通过Next-Token预测进行因果发现与推理",
+    authors: "Eivinas Butkus, Nikolaus Kriegeskorte",
+    year: 2025, venue: "NeurIPS 2025",
+    doi: "",
+    pdf: "papers/011_Butkus_2025_CausalDiscoveryNextToken.pdf",
+    priority: "important",
+    tags: ["causal discovery", "next-token prediction", "counterfactual", "transformer", "Pearl hierarchy"],
+    summary_cn: "GPT风格transformer通过next-token预训练可内化因果模型并回答反事实查询——挑战Pearl关于DNN仅限于L1（关联）的主张。",
+    abstract_cn: "本文直接挑战Pearl关于深度神经网络受限于L1关联推理的著名论点。作者证明：一个在next-token预测上训练的GPT风格transformer可以（1）从数据中发现线性高斯SCM的实例；（2）对这些SCM回答反事实查询——即使对于训练中仅见过干预数据的SCM（没有反事实训练样本）也能泛化；（3）通过线性探针和激活操作可以解码和编辑网络内部的'心理SCM'。这提供了一个关键的存在性证明：纯统计预测目标可以驱动内部因果模型和因果推理能力的涌现。这似乎削弱了MI因果充分性的哲学基础：如果预测训练的transformer可以自然获得L2/L3推理能力，那么当前MI干预方法是否只是在测量网络已有的因果能力而非建立因果映射？",
+    methodology: "受控环境实验（线性高斯SCM数据生成）+ transformer训练 + 线性探针 + 激活操作 + 反事实泛化测试",
+    findings: "1) next-token预测可驱动内部因果模型的涌现；2) transformer可泛化到未见的SCM的反事实查询；3) 内部'心理SCM'可通过探针解码和通过梯度操作编辑；4) 预测目标与因果推理之间不必然是矛盾的",
+    limitations: "仅限于线性高斯SCM（最简单的因果模型类）；实验环境高度受控；未涉及语言模型在大规模自然文本上的因果推理",
+    relevance: "如果transformer可以通过统计预测内化因果模型，那么MI因果干预发现的因果结构可能本来就是网络'已知'的，而非'揭示'的。这反过来又引出了更深的因果充分性问题：当我们通过交换干预改变模型行为时，我们是在操作网络的因果结构，还是在激活其因果推理能力？这两者的认识论地位截然不同。",
+    relations: [
+      {target: "022", type: "contradicts", label: "直接挑战Pearl关于DNN仅能学习关联的主张"},
+      {target: "005", type: "contradicts", label: "与Olko关于忠实性失败的根本限制形成对比"},
+      {target: "010", type: "shares", label: "与TRAM-DAG共享'神经网络可进行跨层次因果推理'的主题"}
+    ]
+  },
+  {
+    id: "012", title: "因果区分概念：通过因果表示学习解释语言模型行为",
+    authors: "Navita Goyal, Hal Daumé III, Alexandre Drouin, Dhanya Sridhar",
+    year: 2025, venue: "NeurIPS 2025",
+    doi: "",
+    pdf: "papers/012_Goyal_2025_CausalDifferentiatingConcepts.pdf",
+    priority: "important",
+    tags: ["causal representation learning", "causal concepts", "language model", "sparsity", "disentanglement"],
+    summary_cn: "提出无监督算法发现'因果区分概念'——为改变模型行为必须改变的稀疏可解释潜在方向。稀疏性假设使因果概念的识别成为可能。",
+    abstract_cn: "本文提出一个无监督算法，用于发现语言模型激活中的'因果区分概念'——即必须被改变才能引发模型行为变化的可解释潜在方向。核心见解是稀疏性假设：要改变模型行为（例如从拒绝回答到回答问题，或从'高收入'到'低收入'），通常只需要改变少数（甚至一个）底层概念。方法结合了两个约束：（1）预测约束——学习的概念必须能通过log-linear预测器预测行为类别；（2）对比约束——不同类别的样本对在潜在空间中应通过1稀疏偏移连接。作者证明了可识别性：在稀疏性假设下，该方法可恢复真实因果概念（无非线性的排列和缩放歧义）。在BiasBios半合成数据和LLaMA-3.1-8B的拒绝行为案例研究中，该方法展示了优于稀疏自编码器的概念发现能力。",
+    methodology: "无监督对比学习+ 稀疏性约束+ 可识别性理论证明+ 合成/半合成/真实LLM实验",
+    findings: "1) 因果区分概念可在无监督条件下被发现；2) 稀疏性假设使因果概念的识别成为可能；3) 在LLaMA-3.1-8B上成功发现有害性/主题的双维因果空间；4) 优于SAE的因果概念发现效果",
+    limitations: "稀疏性假设的适用范围有待验证；概念的可解释性依赖人工标注；目前限于二分类行为变化",
+    relevance: "本文通过发现'因果区分概念'提供了一种不同风格的因果充分性检验：如果改变某个潜在维度必然导致行为变化，那么该维度是否是真正的'因'？作者将因果性定义为'改变它必然改变输出'——这更接近Woodward的差异制造（difference-making）因果观而非Pearl的结构因果观。两种因果概念之间的张力正是本研究关注的核心问题之一。",
+    relations: [
+      {target: "003", type: "shares", label: "与Grant共享因果特征发现不必依赖交换干预的思路"},
+      {target: "018", type: "cites", label: "因果区分概念与Huang的因果性/可解码性区分共享相同的因果定义敏感性"},
+      {target: "021", type: "philosophical", label: "潜在方向'必须被改变'的操作定义对应Woodward的差异制造因果观"}
+    ]
+  },
+  {
+    id: "013", title: "外生同构与反事实可识别性",
+    authors: "Yikang Chen et al.",
+    year: 2025, venue: "ICML 2025 (Spotlight)",
+    doi: "10.48550/arXiv.2505.02212",
+    pdf: "papers/013_Chen_2025_ExogenousIsomorphism.pdf",
+    priority: "important",
+    tags: ["counterfactual identifiability", "exogenous isomorphism", "Pearl hierarchy", "SCM", "bijective SCM"],
+    summary_cn: "引入外生同构（exogenous isomorphism）概念解决反事实完全可识别性问题——为Bijective SCM和Triangular Monotonic SCM提供充分条件。",
+    abstract_cn: "本文研究Pearl因果层次L3级别（反事实）的完全可识别性问题。核心贡献是引入'外生同构'（exogenous isomorphism）概念和~EI可识别性框架。为两类重要的SCM家族——Bijective SCMs和Triangular Monotonic SCMs——提供了反事实可识别性的充分条件。作者利用神经TM-SCMs解决反事实推理中的一致性问题。这一工作从理论上阐明了从L2（干预）到L3（反事实）的跨越需要什么样的额外假设——这对理解MI方法在Pearl层次上的定位至关重要：MI的交换干预本质上是L2层面的操作，而真正的因果理解可能需要L3层面的反事实推理。",
+    methodology: "数学理论推导（充分条件）+ SCM类分析（Bijective/Triangular Monotonic）+ 神经TM-SCM实现",
+    findings: "1) 外生同构是反事实可识别性的关键结构条件；2) Bijective SCM和Triangular Monotonic SCM满足充分条件；3) 神经TM-SCM可解决反事实一致性；4) L2到L3的跨越需要比L1到L2更强的结构假设",
+    limitations: "限于特定SCM类；对大规模神经网络MI的直接适用性有限；理论结果尚未在真实数据上大规模验证",
+    relevance: "为MI因果充分性提供了来自反事实理论的限制性条件：如果从L2干预到L3反事实的跨越需要像外生同构这样的强结构条件，而MI方法目前未提供此类条件，那么MI方法距离真正的因果（反事实层面）理解还有实质距离。这从理论上确认了本研究的一个核心关切。",
+    relations: [
+      {target: "022", type: "extends", label: "扩展Pearl反事实可识别性理论到外生同构框架"},
+      {target: "010", type: "shares", label: "与TRAM-DAG共享对Pearl L3反事实推理的关注"},
+      {target: "002", type: "cites", label: "为因果抽象框架提供了其可能缺乏的反事实可识别性理论基础"}
+    ]
+  },
+  {
+    id: "014", title: "迈向忠实的自然语言解释：基于LLM激活修补的研究",
+    authors: "Wei Jie Yeo, Ranjan Satapathy, Erik Cambria",
+    year: 2025, venue: "EMNLP 2025",
+    doi: "",
+    pdf: "papers/014_Yeo_2025_FaithfulNLExplanations.pdf",
+    priority: "ref",
+    tags: ["activation patching", "causal faithfulness", "natural language explanation", "LLM", "CaF metric"],
+    summary_cn: "提出CaF（Causal Faithfulness）度量——利用激活修补衡量LLM自然语言解释的因果忠实性，发现对齐微调提升忠实性，但模型置信度与忠实性无关。",
+    abstract_cn: "本文提出CaF（Causal Faithfulness），一种利用激活修补来衡量LLM自然语言解释是否忠实地支持其答案的度量方法。CaF量化了模型解释与其输出之间因果归因的一致性，避免了先前忠实性测试中普遍存在的分布外问题。在2B至27B参数模型上的实验发现：对齐微调后的模型产生更忠实且更合理的解释；但模型置信度与解释忠实性之间没有相关性——模型可能对不忠实的解释表现出高置信度。这一发现对MI有直接警示：激活修补可以揭示因果结构，但模型本身可能并不'意识'到这些因果结构，甚至可能对虚假的解释表现出高度自信。",
+    methodology: "CaF度量设计+ 激活修补实验+ 多模型规模比较（2B-27B）+ 对齐vs非对齐模型分析",
+    findings: "1) 激活修补可操作化因果忠实性的度量；2) 对齐微调提升解释忠实性；3) 模型置信度与解释忠实性不相关——置信度不是忠实性的可靠指标；4) CaF避免了分布外问题",
+    limitations: "CaF度量的因果基础本身可被质疑（激活修补测量因果还是关联？）；实验限于有限的NLP任务；仅涉及自然语言解释的忠实性",
+    relevance: "CaF度量直接触发了因果充分性问题的实践版本：即使我们通过激活修补建立了解释与行为之间的'因果'联系，模型本身可能并不'相信'自己的解释——因果归因在现象层面可能成立，但在表征层面可能不存在。这与哲学中的因果实在论/反实在论争论相关：我们发现的因果关系是真实存在的还是仅是我们干预框架的产物？",
+    relations: [
+      {target: "003", type: "empirical", label: "CaF和Grant的发散表征分析共同关注激活修补的忠实性问题"},
+      {target: "015", type: "shares", label: "与RelP共享激活修补忠实性评估的主题"},
+      {target: "016", type: "shares", label: "与Mahale共同发现模型解释不够忠实的问题"}
+    ]
+  },
+  {
+    id: "015", title: "RelP：基于相关性的忠实高效电路发现",
+    authors: "Ali Jafari et al.",
+    year: 2025, venue: "OpenReview (NeurIPS 2025 submission)",
+    doi: "",
+    pdf: "papers/015_RelP_2025_RelevancePatching.pdf",
+    priority: "ref",
+    tags: ["circuit discovery", "attribution patching", "layer-wise relevance propagation", "faithfulness", "GPT-2"],
+    summary_cn: "用Layer-wise Relevance Propagation替代梯度进行归因修补——在GPT-2 Large上将与激活修补ground truth的相关性从0.006提升至0.956。",
+    abstract_cn: "本文提出RelP（Relevance Patching），对标准归因修补方法的重大改进。标准归因修补使用局部梯度近似激活修补效果，但作者发现这种近似在深层网络中严重失真：对GPT-2 Large的MLP输出，归因修补与真实激活修补ground truth的Pearson相关性仅为0.006。RelP用Layer-wise Relevance Propagation (LRP)系数替代梯度，使相关性提升至0.956——两个数量级的改进。这一发现对依赖归因修补的MI实践有深远影响：如果最广泛使用的梯度近似方法与其声称近似的因果度量几乎没有相关性，那么基于此的因果声明面临根本性的测量有效性问题。",
+    methodology: "梯度归因修补与LRP归因修补的系统比较 + 多网络深度的相关性分析 + GPT-2系列实验",
+    findings: "1) 标准归因修补在深层网络中严重失真：相关性仅0.006；2) LRP系数可提供两个数量级的改进：相关性达0.956；3) 梯度近似失效随着网络深度增加而恶化；4) 电路发现中广泛使用的归因修补可能不是可靠的因果近似",
+    limitations: "仅验证了GPT-2架构；LRP本身的理论基础在有些架构中仍有争议；相关性改进不一定意味着因果推断改进",
+    relevance: "直接揭示了MI因果方法的测量有效性问题：即使在使用激活修补时，由于计算成本我们通常使用近似（归因修补），而这些近似可能与真实的因果度量几乎无关。这提出了一个深层的因果充分性问题：MI的因果声称在多大程度上是测量方法本身的产物，而非网络固有因果结构的反映？",
+    relations: [
+      {target: "014", type: "empirical", label: "与Yeo共享激活修补忠实性评估"},
+      {target: "003", type: "shares", label: "与Grant共享因果干预方法可能产生失真的担忧"},
+      {target: "002", type: "cites", label: "为Geiger因果抽象框架的方法论基础提供技术支持"}
+    ]
+  },
+  {
+    id: "016", title: "通过忠实自然语言解释进行因果基础的机械可解释性",
+    authors: "Ajay Pravin Mahale",
+    year: 2026, venue: "arXiv:2603.09988",
+    doi: "10.48550/arXiv.2603.09988",
+    pdf: "papers/016_Mahale_2026_CausallyGroundedMI.pdf",
+    priority: "ref",
+    tags: ["mechanistic interpretability", "natural language explanation", "faithfulness", "indirect object identification", "GPT-2"],
+    summary_cn: "在GPT-2 Small的IOI任务上桥接电路级分析与自然语言解释，发现模型置信度与解释忠实性之间不存在相关性——揭示忠实性评估的深层困难。",
+    abstract_cn: "本文桥接了两个通常分离的MI方法：电路级因果分析和自然语言解释。作者在GPT-2 Small的间接对象识别（IOI）任务上进行了因果电路发现（包括激活修补和logit归因），并将发现的电路与自然语言解释对齐，使用ERASER风格的忠实性度量评估自然语言解释在多大程度上忠实地反映了底层因果电路。关键发现：模型置信度与解释忠实性之间不存在相关性，这意味着即使模型对输出有高置信度，其自然语言解释也可能与其因果计算过程不一致。这一发现对MI的忠实性评估有深远影响：如果解释忠实性难以验证，那么因果抽象本身的忠实性评估也可能面临类似的困难。",
+    methodology: "电路发现（激活修补+ logit归因）+ 自然语言解释生成与对齐+ ERASER风格忠实性度量+ GPT-2 Small IOI任务",
+    findings: "1) 电路级分析与自然语言解释可以链接但存在忠实性鸿沟；2) 模型置信度与解释忠实性不相关；3) 当前忠实性评估方法可能不可靠；4) 电路发现与解释生成需要联合优化而非串联",
+    limitations: "仅在一个任务（IOI）和一种模型（GPT-2 Small）上验证；自然语言解释的忠实性度量本身面临因果充分性问题",
+    relevance: "强化了因果充分性的一个特定维度：认知忠实性（epistemic faithfulness）。不仅需要模型行为在干预下与因果模型一致，还需要模型的自然语言解释——即其元认知——与其实际计算过程一致。这两种忠实性的分离表明因果充分性可能需要在多个层面上同时验证。",
+    relations: [
+      {target: "002", type: "extends", label: "在因果抽象框架下增加自然语言解释维度"},
+      {target: "014", type: "shares", label: "与Yeo共同发现置信度与忠实性不相关"},
+      {target: "004", type: "empirical", label: "为Lin关于识别假设缺失的主张提供经验证据"}
+    ]
+  },
+  {
+    id: "017", title: "Jacobian Scopes：大语言模型中的令牌级因果归因",
+    authors: "Zehua Liu et al.",
+    year: 2026, venue: "arXiv:2601.16407",
+    doi: "10.48550/arXiv.2601.16407",
+    pdf: "papers/017_Liu_2026_JacobianScopes.pdf",
+    priority: "ref",
+    tags: ["token-level attribution", "causal attribution", "Jacobian", "information geometry", "LLM"],
+    summary_cn: "提出基于微扰理论和信息几何的三类令牌级因果归因方法——语义影响、分布影响和置信度影响——使因果归因的粒度细化到具体令牌。",
+    abstract_cn: "本文提出Jacobian Scopes，一套基于微扰理论和信息几何的梯度基令牌级因果归因方法。作者引入三种互补的归因视角：（1）Semantic Scope：哪些输入令牌最大程度影响特定输出logit；（2）Fisher Scope：哪些令牌影响完整预测分布；（3）Temperature Scope：哪些令牌控制模型置信度/不确定性。这三种视角捕捉了令牌因果影响的不同维度，共同构成了比传统注意力归因更丰富的因果归因图像。这对接了类型-令牌因果区分的核心问题：神经网络的因果结构可能在令牌级别具有根本的异质性——不同令牌可能通过不同的因果通路参与计算。",
+    methodology: "微扰理论+ 信息几何+ 梯度归因+ 三种互补度量+ 多模型实验验证",
+    findings: "1) 令牌级因果归因可分解为语义/分布/置信度三个维度；2) Fisher Scope提供比Semantic Scope更全局的因果视图；3) Temperature Scope揭示模型不确定性来源；4) 不同令牌在不同维度上的因果重要性可以显著不同",
+    limitations: "梯度基归因方法的固有限制（局部线性近似）；三种Scope之间的关系未充分理论化；令牌独立性假设",
+    relevance: "令牌级因果归因直接触及了类型因果与令牌因果的区分——这是本研究框架的关键维度。网络处理的具体令牌是否具有独立的因果地位？还是只有跨令牌的类型模式具有因果意义？Jacobian Scopes的三种视角表明因果充分性问题可能在令牌级别上更加复杂：令牌的因果影响是多维的（语义、分布、置信度），任何单一维度的因果度量都不充分。",
+    relations: [
+      {target: "018", type: "shares", label: "与Huang的因果性/可解码性区分在令牌-特征粒度上形成平行论证"},
+      {target: "003", type: "cites", label: "令牌级因果归因的忠实性同样面临发散表征问题"},
+      {target: "021", type: "philosophical", label: "令牌级因果性与Woodward的差异制造因果概念有天然联系"}
+    ]
+  },
+  {
+    id: "018", title: "因果性不等于可解码性，反之亦然：来自计数ViT可解释性的教训",
+    authors: "Lianghuan Huang, Yingshan Chang",
+    year: 2025, venue: "NeurIPS 2025",
+    doi: "10.48550/arXiv.2510.09794",
+    pdf: "papers/018_Huang_2025_CausalityNotDecodability.pdf",
+    priority: "ref",
+    tags: ["causality", "decodability", "Vision Transformer", "activation patching", "linear probe"],
+    summary_cn: "系统揭示因果性（信息被使用）与可解码性（信息被存储）之间的系统性偏差——中间层对象令牌有强因果影响但弱可解码，最后层可解码但功能惰性。",
+    abstract_cn: "本文系统研究了机械可解释性中两个经常被混为一谈的概念——因果性（信息是否被功能性地使用）与可解码性（信息是否可以从隐藏状态中恢复）——之间的系统性分歧。在物体计数的Vision Transformer上，作者通过激活修补（跨干净/破坏图像对移植激活）测量因果角色，通过线性探针测量不同网络深度的解码能力。关键发现：（1）中间层的对象令牌具有强因果影响但弱可解码性；（2）最后层的对象令牌可准确解码但功能惰性；（3）CLS令牌仅在最后层获得因果能力。这表明因果性和可解码性是互补的、不可互相还原的属性——信息的存在不等于信息的使用。这一区分对MI因果方法有深远影响：IIA测量的是行为因果性，但线性探针等解码方法测量的是信息存在性——两者不能相互替代。",
+    methodology: "激活修补（因果性测量）+ 线性探针（可解码性测量）+ Vision Transformer + 物体计数任务 + 系统跨层分析",
+    findings: "1) 因果性与可解码性在神经网络中系统性地分离；2) 中间层：强因果/弱可解码；最后层：强可解码/弱因果；3) CLS令牌因果能力的获得发生在最后层；4) '信息存在'与'信息被使用'是根本不同的属性",
+    limitations: "仅在ViT和计数任务上验证；线性探针的可解码性度量基于线性假设；未提供因果性与可解码性分离的理论解释",
+    relevance: "为因果充分性问题提供了一个关键的实证区分：如果我们不能区分信息的存在与信息的使用，我们就无法判断MI因果方法测量的是哪一种。IIA可能反映的是'是否使用了信息'（因果性），而解码性反映的是'是否存在信息'——但当前MI框架往往不区分两者，导致因果归因的模糊性。这直接对应于哲学中的因果关系与构成关系的区分——Woodward的干预主义因果理论特别强调因果性与非因果性依赖（如构成关系）的严格区分。",
+    relations: [
+      {target: "017", type: "shares", label: "与Jacobian Scopes在粒度上互补：Huang在特征维度，Liu在令牌维度"},
+      {target: "012", type: "cites", label: "Goyal的因果区分概念直接受益于因果性/可解码性区分"},
+      {target: "021", type: "philosophical", label: "因果性/可解码性区分对应Woodward的因果性/构成性区分"}
+    ]
+  },
+  {
+    id: "019", title: "立场声明：概率建模足以完成因果推断",
+    authors: "Bruno Kacper Mlodozeniec, David Krueger, Richard E. Turner",
+    year: 2025, venue: "ICML 2025 (Oral)",
+    doi: "10.48550/arXiv.2512.23408",
+    pdf: "papers/019_Mlodozeniec_2025_ProbabilisticModelling.pdf",
+    priority: "ref",
+    tags: ["probabilistic modeling", "causal inference", "Pearl hierarchy", "methodological debate", "reductionism"],
+    summary_cn: "论证任何因果推断问题都可以在概率建模框架内解决，不需要专门的因果框架——从根本上质疑因果与统计的区分。",
+    abstract_cn: "本文提出一个争议性的立场：任何因果推断问题都可以完全在概率建模和概率推断的领域内回答，而不需要专门的因果框架或符号系统。作者反驳了因果推断领域广泛持有的观点——即需要专门的因果工具（如do-算子、反事实符号等）。通过具体示例，他们展示了因果问题如何可以通过'写下所有东西的概率'来解决，并重新解释了标准因果工具（如do-算子、后门调整）如何从标准概率建模和推断中自然涌现。这一立场对MI因果充分性辩论有深刻影响：如果概率建模已经足够，那么因果抽象的'因果性'是否仅仅是对标准概率操作的重命名？因果充分性问题从根本上被消解——因为这些方法本来就不是在测量因果。",
+    methodology: "哲学论证+ 数学推导（因果推断问题的概率化重述）+ 示例演示",
+    findings: "1) 因果推断问题可在标准概率框架内完全表示和解决；2) 专门因果工具的用途被重新解释为概率推断的特例；3) 因果/统计二分可能是一种方法论惯例而非认识论需要；4) 概率建模的统一视角可简化工具链",
+    limitations: "立场声明（position paper），论证高度依赖对因果工具的概率化重述能力；可能忽略了因果建模的结构化先验（如DAG知识）的价值；在复杂因果场景下的实用性有待验证",
+    relevance: "从哲学基础层面挑战了整个因果充分性辩论的前提——如果因果关系本质上可以还原为概率关系，那么MI的因果方法'是否是真正因果的'这个问题本身就失去了意义（因为'真正因果'本身没有超越概率建模的独特内容）。但这也暴露了因果还原论的经典困难：概率框架能否捕捉因果不对称性（因在时间上先于果）和干预的反事实内容？",
+    relations: [
+      {target: "022", type: "contradicts", label: "直接挑战Pearl关于因果需要专门工具（do算子）的核心论点"},
+      {target: "010", type: "contradicts", label: "与TRAM-DAG的专用因果框架立场对立"},
+      {target: "004", type: "philosophical", label: "与Lin关于需要额外因果识别假设的立场形成对称的对立"}
+    ]
+  },
+  {
+    id: "020", title: "CDAS：通过分布匹配与分布式交换干预进行忠实双向模型引导",
+    authors: "Yuntai Bao et al.",
+    year: 2026, venue: "ICLR 2026",
+    doi: "10.48550/arXiv.2602.05234",
+    pdf: "papers/020_Bao_2026_CDAS_DistributionMatching.pdf",
+    priority: "ref",
+    tags: ["distributed interchange intervention", "distribution matching", "model steering", "DAS", "faithfulness"],
+    summary_cn: "提出Concept DAS（CDAS）——用Jensen-Shannon分布匹配替代概率最大化作为目标，在保持模型通用能力的同时实现双向忠实引导。",
+    abstract_cn: "本文提出CDAS（Concept Distributed Alignment Search），在DAS框架基础上引入两个关键创新：（1）分布式交换干预（DII）——允许从数据中导出引导因子，减少超参数调优负担；（2）基于Jensen-Shannon散度（JSD）的分布匹配目标——替代传统概率最大化目标，在整个词汇表上对齐干预输出分布与反事实分布，提供更弱但更忠实的监督信号。在AxBench基准和安全案例研究（拒绝行为覆盖、思维链后门中和）上的实验表明，CDAS并不总是优于偏好优化方法，但在模型规模增大时可能获益更多，且其分布匹配目标有效减少了过度拟合和不自然输出。",
+    methodology: "DAS框架扩展+ JSD分布匹配目标设计+ 双向引导策略+ AxBench基准测试+ 安全案例研究",
+    findings: "1) 分布匹配目标比概率最大化提供更忠实的监督；2) CDAS保持模型通用能力的同时实现行为引导；3) CDAS效果随模型规模增加而改善；4) 双向引导能力可处理安全关键用例",
+    limitations: "在某些场景下不如偏好优化方法；引导效果受对齐搜索空间限制；分布匹配目标的理论最优性未证明",
+    relevance: "通过关注分布级别的忠实性（而非点级别的准确率），CDAS间接支持了因果充分性问题的核心关切：行为层面的'准确'干预可能隐藏了分布层面的系统性失真。这对应于Woodward因果理论中的不变性（invariance）条件——因果关系的成立要求关系在干预下保持稳定，而不仅仅是局部准确。",
+    relations: [
+      {target: "002", type: "extends", label: "在DAS框架内用分布匹配提升忠实性"},
+      {target: "003", type: "shares", label: "与Grant共享通过分布约束提升干预忠实性的目标"},
+      {target: "006", type: "extends", label: "与Pîslar共享提升因果抽象忠实性的方法学努力"}
+    ]
+  },
+  {
+    id: "021", title: "让事情发生：因果解释的理论（Making Things Happen）",
+    authors: "James Woodward",
+    year: 2003, venue: "Oxford University Press",
+    doi: "",
+    pdf: "",
+    priority: "ref",
+    tags: ["interventionist causation", "invariance", "manipulability", "difference-making", "philosophy of causation"],
+    summary_cn: "经典哲学基础：提出干预主义因果理论——X是因Y的果当且仅当存在对X的可能干预会改变Y，且该关系在干预下保持不变（INV条件）。",
+    abstract_cn: "Woodward的《让事情发生》是当代因果哲学最重要的著作之一，系统阐述了干预主义因果理论。其核心思想是：因果关系本质上与干预（intervention）和操纵（manipulation）概念相关联——X是Y的因当且仅当存在对X的可能干预（该干预独立于Y的其他原因）会改变Y的值。关键概念包括：不变性（invariance）——因果关系必须在一定的背景干预范围内保持稳定；以及模块性（modularity）——每个因果关系应该可以独立地被干预而不破坏其他因果关系。这些概念为评估MI因果方法提供了关键的哲学标准：交换干预是否满足Woodward的不变性和模块性条件？还是仅仅测量了在特定、狭窄条件下的干预效果？",
+    methodology: "分析哲学方法（概念分析+假设案例+对科学中因果解释的反思）",
+    findings: "1) 因果关系与分析性操纵性定义（以干预来定义因果）；2) 不变性作为因果关系的核心特征；3) 模块性的概念——因果结构应该可以分解为可独立干预的子结构；4) 区分因果解释与构成性解释（constitutive explanation）的重要性",
+    limitations: "哲学理论（非经验研究）；对神经网络的直接适用性需要进一步桥接；干预概念在计算系统中可能存在歧义（代码干预 vs. 因果干预）",
+    relevance: "Woodward的INV（不变性）条件为本研究的核心问题提供了精确的哲学标准：MI的交换干预方法是否满足INV条件？具体而言：（1）交换干预是否独立于输出的其他原因？（2）在干预下，因果结构是否保持稳定？（3）MI发现的'因果'关系是否在足够广泛的背景条件下成立？如果MI方法不能满足这些条件，那么它们发现的不是因果结构，而是特定干预设置下的统计关联。",
+    relations: [
+      {target: "022", type: "philosophical", label: "与Pearl共同构成当代因果理论的哲学和数学基础"},
+      {target: "002", type: "philosophical", label: "Geiger因果抽象框架本质上采用了Woodward的干预主义因果观"},
+      {target: "003", type: "philosophical", label: "Grant的发散表征问题直接对应Woodward的干预独立性和不变性条件"}
+    ]
+  },
+  {
+    id: "022", title: "因果性：模型、推理与推断（Causality, 2nd Edition）",
+    authors: "Judea Pearl",
+    year: 2009, venue: "Cambridge University Press",
+    doi: "",
+    pdf: "",
+    priority: "ref",
+    tags: ["Pearl causal hierarchy", "structural causal model", "do-calculus", "counterfactual", "foundational"],
+    summary_cn: "因果科学的数学基础：建立Pearl因果三层次（关联→干预→反事实）和结构因果模型（SCM）框架——为评估MI因果方法的层次定位提供坐标。",
+    abstract_cn: "Pearl的《因果性》是因果科学的奠基性著作，建立了因果推断的完整数学框架——结构因果模型（SCMs）。其核心贡献包括：（1）因果三层次（Pearl's Causal Hierarchy）：L1关联（seeing）、L2干预（doing）、L3反事实（imagining），高层级包含低层级但不能反推——拥有L2和L3推理能力需要比L1更强的因果知识；（2）do-算子形式化干预和do-演算用于从观察和实验数据中进行因果推断；（3）反事实推理的形式化——个体层面的'如果...会怎样'推理。此框架对于评估MI因果方法至关重要：当前MI方法（交换干预、激活修补）在Pearl层次上处于L2（干预）还是L2.5？是否能跨越到L3（反事实）？如果不能，它们的因果声称在Pearl的意义上就是不完全的。",
+    methodology: "数学形式化（图模型、结构方程、反事实逻辑）",
+    findings: "1) L1-L2-L3层次的根本区分——高层推理不能从低层数据还原；2) do-演算使干预推断系统化；3) 反事实需要超出数据和干预模型的结构假设（功能因果模型）；4) 因果与统计的根本区别——'相关不等于因果'的精确数学表述",
+    limitations: "核心框架基于确定性的函数因果模型假设（在神经网络语境下可能不成立）；对计算系统中'干预'的语义（是数学do操作还是计算扰动）需要进一步澄清",
+    relevance: "Pearl的因果层次为评估MI因果方法的认识论位置提供了精确的坐标系。核心问题：（1）MI的交换干预对应于Pearl的L2（干预）还是仅在L1.5（结构化的关联）？（2）如果MI方法不能进行真正的反事实推理（L3），它们的'因果'声称是否在Pearl的意义上是虚假的？（3）神经网络是否具有函数因果模型的结构（Pearl反事实推理的前提）？这些问题是本研究理论核心的基石。",
+    relations: [
+      {target: "021", type: "philosophical", label: "与Woodward共享干预主义因果观的基础哲学"},
+      {target: "010", type: "extends", label: "TRAM-DAG在神经网络框架中实现Pearl三层次"},
+      {target: "011", type: "contradicts", label: "Butkus挑战Pearl关于DNN限于L1的代表性主张"}
+    ]
+  }
+];
+
+const NOTES = [
+  {
+    paper_id: "001",
+    title: "非线性困境：因果抽象的空洞性及其对MI因果充分性的毁灭性影响",
+    date: "2026-05-13",
+    content: "Sutter等人的非线性表示困境可能是2025年MI领域最重要的一篇论文。其核心论证极其简洁有力：若对齐映射可任意非线性，任何模型可完美对齐任何算法——因果抽象因此空洞化。这意味着IIA作为'忠实性'度量在方法论上是不足的：高IIA可以通过非线性映射的过拟合获得，而非反映网络的真实计算结构。然而，Sutter论文的结论并非彻底否定因果抽象——他们发现训练后的模型确实趋向更线性的表示，这表明'约束对齐映射复杂度'可能是恢复因果抽象有效性的路径。关键待解决问题：什么约束原则是既足够严格（排除平凡解）又足够灵活（允许有效的非线性表示）的？这需要哲学层面的论证——为什么某种约束（如线性、单调性、Lipschitz连续性）在认识论上优于其他约束？这直接对接了认知科学中的理性分析（rational analysis）传统——假设认知系统的最优性，从而约束可能的内部表示空间。"
+  },
+  {
+    paper_id: "002",
+    title: "Geiger因果抽象框架：一个辉煌但可能需要哲学补充的理论大厦",
+    date: "2026-05-13",
+    content: "Geiger等的JMLR论文是MI领域迄今为止最系统的理论贡献。它将十几种不同的MI方法统一在因果抽象这一共同框架下，提供了可比较忠实性度量（IIA），建立了分级忠实性概念——这些都是真正的理论进步。然而，从因果充分性的角度审视，Geiger框架有三个未经充分审视的前提：（1）交换干预等同于因果干预（不经论证地采纳了Woodward干预主义因果观）；（2）IIA度量的是因果忠实性而非统计忠实性（这是一个需要外部论证而非内部定义的认识论主张）；（3）因果抽象的'因果性'由框架本身定义，而非由网络的固有属性决定——这可能导致'框架决定因果'而非'因果决定框架'的倒置。这些问题在Sutter(2025)的非线性困境和林与刘(2026)的识别假设审计中被技术性地暴露出来。但Geiger框架不应该被抛弃——它提供了一个必要的起点，需要的是哲学和方法论上的补充，而非根本性的替代。"
+  },
+  {
+    paper_id: "003",
+    title: "发散表征：从Woodward不变性条件看因果干预的忠实性",
+    date: "2026-05-13",
+    content: "Grant等人的发散表征论文触及了因果充分性问题的实践核心：因果干预可能扭曲其试图测量的因果结构。通过区分'无害'与'有害'发散，该文提供了一个富有哲学意义的框架：无害发散对应行为等价类内的变化——这些变化在Woodward的意义上不是因果相关的（因为它们不改变输出）；有害发散对应跨越行为等价类的变化——这些变化在Woodward的意义上是因果相关的，但它们揭示的可能是人工干预结构而非网络的固有因果结构。这里有一个深层悖论：为了发现因果结构，我们需要干预；但干预本身可能改变我们试图发现的因果结构。这与量子力学中的测量问题有形式上的相似性——观测行为改变了被观测系统。CL损失试图最小化干预的扰动，但这是否在认识论上可行——我们如何知道干预后的分布与自然分布之间的'差距'？这需要比目前更深的因果理论支持。"
+  },
+  {
+    paper_id: "004",
+    title: "识别假设的缺失：MI因果声称的认识论不完整性",
+    date: "2026-05-13",
+    content: "林与刘的立场声明论文虽然简短，但击中了一个关键的认识论盲点：MI领域的因果声明在没有明确识别假设的情况下被提出。这与成熟因果推断学科（如计量经济学中的工具变量方法、流行病学中的因果中介分析）形成鲜明对比——后者都有严格的识别假设惯例。核心问题：MI的哪些度量统计量（IIA、忠实性、完备性）对应于因果推断中的哪些识别条件？没有明确的回答。更根本的担忧是：MI社区可能隐含地采用了'操作定义因果'的立场——因果就是在干预下稳定变化的东西——但这是一种哲学立场而非方法论中立的公理。如果这一立场在哲学上是可争议的（如Nancy Cartwright的因果多元论所论证的），那么MI的因果声称就面临哲学基础的不稳定性。这篇论文的价值在于打开而非解决问题——它迫使MI社区面对其因果声称的认识论基础问题。"
+  },
+  {
+    paper_id: "005",
+    title: "忠实性失败：因果发现领域的平行论证及其对MI的寓意",
+    date: "2026-05-13",
+    content: "Olko等人的论文虽然直接研究神经因果发现（而不是MI的因果抽象），但其论证结构对MI有深刻的平行寓意。核心论证：因果发现中的忠实性假设在有限样本下几乎确定被违反，违反忠实性直接导致方法无法区分真伪因果边。将这一逻辑平行到MI：MI的因果抽象隐含了哪些'忠实性假设'？一个自然的候选是'干预忠实性假设'——即行为层面的干预效果忠实反映了网络的因果结构。如果这一假设在实践中的违反率类似于因果发现中的忠实性违反率（即在大多数实际场景中被违反），那么目前MI的因果声称就面临类似的方法论危机。但有一个关键区别：因果发现试图从观察数据中推断因果图（更困难），而MI的干预方法可以主动操纵网络（更容易建立因果联系）——这一区别是否足以保护MI免于忠实性失败还需要严格的分析。"
+  }
+];
+
+const DOMAIN_ID = '10_causal_sufficiency';
+
+// ========================================= INIT =========================================
+let activeFilter = 'all';
+let graphNetwork = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderCards(PAPERS);
+  renderNotes();
+  updateStats();
+  initTabs();
+  initFilters();
+});
+
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'graph') initGraph();
+    });
+  });
+}
+
+function initFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.filter === activeFilter) {
+        activeFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+      } else {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      filterCards();
+    });
+  });
+}
+
+function filterCards() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const filtered = PAPERS.filter(p => {
+    const matchesFilter = activeFilter === 'all' || p.priority === activeFilter ||
+      (activeFilter === '2026' && p.year === 2026) ||
+      (activeFilter === '2025' && p.year === 2025) ||
+      (activeFilter === 'foundational' && p.year <= 2009);
+    const matchesSearch = !query ||
+      p.title.toLowerCase().includes(query) ||
+      p.authors.toLowerCase().includes(query) ||
+      p.tags.some(t => t.toLowerCase().includes(query)) ||
+      (p.summary_cn || '').toLowerCase().includes(query);
+    return matchesFilter && matchesSearch;
+  });
+  renderCards(filtered);
+}
+
+function renderCards(papers) {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = papers.map(p =>
+    `<div class="card priority-${p.priority}" onclick="openPaper('${p.id}')">
+      <div class="card-priority-badge ${p.priority}"></div>
+      <div class="card-id">${p.id} · ${p.year}</div>
+      <div class="card-title">${p.title}</div>
+      <div class="card-authors">${p.authors}</div>
+      <div class="card-summary">${p.summary_cn}</div>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </div>`
+  ).join('');
+  if (papers.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">没有匹配的文献</div>`;
+  }
+}
+
+function openPaper(id) {
+  const p = PAPERS.find(x => x.id === id);
+  if (!p) return;
+
+  let relHtml = '';
+  if (p.relations && p.relations.length > 0) {
+    relHtml = p.relations.map(r =>
+      `<span class="rel-badge ${r.type}">${r.label} (${r.target})</span>`
+    ).join('');
+  }
+
+  const html = `
+    <button class="modal-close" onclick="closeModal()">X</button>
+    <div class="card-priority-badge ${p.priority}" style="position:static;display:inline-block;margin-bottom:0.5rem"></div>
+    <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem">${p.id} · ${p.year} · ${p.priority === 'must' ? '必读' : p.priority === 'important' ? '重要' : '参考'}</span>
+    <h2>${p.title}</h2>
+    <div class="meta">${p.authors}${p.venue ? ' · ' + p.venue : ''}${p.doi ? ' · DOI: ' + p.doi : ''}</div>
+    ${p.pdf ? `<div class="meta"><a href="${p.pdf}" target="_blank">打开PDF</a></div>` : ''}
+
+    <section>
+      <h3>一句话核心论点</h3>
+      <p>${p.summary_cn}</p>
+    </section>
+
+    <section>
+      <h3>完整摘要</h3>
+      <p>${p.abstract_cn || p.summary_cn}</p>
+    </section>
+
+    ${p.methodology ? `<section><h3>研究方法</h3><p>${p.methodology}</p></section>` : ''}
+    ${p.findings ? `<section><h3>核心发现与论证</h3><p>${p.findings}</p></section>` : ''}
+    ${p.limitations ? `<section><h3>局限性与反驳</h3><p>${p.limitations}</p></section>` : ''}
+    ${p.relevance ? `<section><h3>与本研究（因果充分性）的相关性</h3><p>${p.relevance}</p></section>` : ''}
+
+    ${relHtml ? `<section><h3>文献关联</h3><div class="relations">${relHtml}</div></section>` : ''}
+
+    <section>
+      <h3>关键词</h3>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </section>
+  `;
+
+  document.getElementById('modal').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+function initGraph() {
+  if (graphNetwork) return;
+
+  const nodes = PAPERS.map(p => ({
+    id: p.id,
+    label: p.id + '\n' + p.title.substring(0, 28) + '...',
+    color: {
+      background: p.priority === 'must' ? '#4ade80' : p.priority === 'important' ? '#fbbf24' : '#64748b',
+      border: p.priority === 'must' ? '#22c55e' : p.priority === 'important' ? '#f59e0b' : '#475569'
+    },
+    font: { color: '#dce3f0', size: 10 },
+    size: p.priority === 'must' ? 28 : p.priority === 'important' ? 22 : 16,
+  }));
+
+  const edgeMap = {};
+  const edges = [];
+  const edgeColors = {
+    cites: { color: '#818cf8', dashes: false },
+    extends: { color: '#2dd4bf', dashes: false },
+    contradicts: { color: '#f87171', dashes: true },
+    shares: { color: '#f5a623', dashes: false },
+    empirical: { color: '#a78bfa', dashes: true },
+    philosophical: { color: '#fb923c', dashes: true }
+  };
+
+  PAPERS.forEach(p => {
+    if (!p.relations) return;
+    p.relations.forEach(r => {
+      const key = p.id + '->' + r.target;
+      if (!edgeMap[key]) {
+        edgeMap[key] = true;
+        edges.push({
+          from: p.id,
+          to: r.target,
+          label: r.label.length > 18 ? r.label.substring(0,18)+'...' : r.label,
+          ...(edgeColors[r.type] || edgeColors.cites)
+        });
+      }
+    });
+  });
+
+  const container = document.getElementById('graph-container');
+  graphData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+  graphNetwork = new vis.Network(container, graphData, {
+    physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -30, centralGravity: 0.005, springLength: 180 } },
+    edges: { smooth: { type: 'continuous' }, font: { size: 7, color: '#8899bb' } },
+    interaction: { hover: true, tooltipDelay: 200 },
+  });
+
+  graphNetwork.on('click', function(evt) {
+    if (evt.nodes.length > 0) openPaper(evt.nodes[0]);
+  });
+}
+
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!NOTES || NOTES.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted)">暂无阅读笔记。</div>`;
+    return;
+  }
+  list.innerHTML = NOTES.map(n => `
+    <div class="note-card">
+      <h4>${n.title}</h4>
+      <div class="note-meta">${n.paper_id} · ${n.date || ''}</div>
+      <p>${n.content}</p>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('paper-count').textContent = PAPERS.length;
+  document.getElementById('must-count').textContent = PAPERS.filter(p => p.priority === 'must').length;
+  document.getElementById('note-count').textContent = NOTES ? NOTES.length : 0;
+}
+</script>
+
+<div class="wiki-footer">
+  <div class="footer-title">浏览其他领域</div>
+  <div class="footer-domains">
+    <a href="../01_sae_features/wiki.html">01 SAE与特征分解</a>
+    <a href="../02_activation_engineering/wiki.html">02 激活与表征工程</a>
+    <a href="../03_causal_intervention/wiki.html">03 因果干预与心灵哲学</a>
+    <a href="../04_alignment_safety/wiki.html">04 AI对齐理论与安全</a>
+    <a href="../05_ethics_governance/wiki.html">05 AI伦理与治理</a>
+    <a href="../06_philosophy_of_science/wiki.html">06 科学哲学</a>
+    <a href="../07_philosophy_of_mind/wiki.html">07 心灵哲学与AI</a>
+    <a href="../08_representational_ontology/wiki.html">08 表征本体论 (Gap 1)</a>
+    <a href="../09_epistemology_understanding/wiki.html">09 理解认识论 (Gap 2)</a>
+    <a href="../10_causal_sufficiency/wiki.html">10 因果充分性 (Gap 3)</a>
+    <a href="../11_vector_grounding/wiki.html">11 向量奠基 (Gap 4)</a>
+  </div>
+  <div class="footer-back">
+    <a href="../index.html">← 返回文献知识库总览</a>
+  </div>
+</div>
+
+</body>
+</html>

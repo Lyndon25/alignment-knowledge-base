@@ -1,0 +1,17 @@
+# ScholarAIO 主配置文件
+# 敏感信息（API keys）请写入 config.local.yaml（不进 git）
+
+llm:
+  backend: openai-compat
+  model: deepseek-chat
+  base_url: https://api.deepseek.com
+
+ingest:
+  pdf_preferred_parser: mineru
+  mineru_model_version_cloud: pipeline
+
+search:
+  top_k: 20
+
+translate:
+  target_lang: zh

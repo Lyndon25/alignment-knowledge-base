@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>02_activation_engineering · 文献Wiki</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-void: #06080f;
+      --bg-primary: #0c0f1a;
+      --bg-secondary: #12182a;
+      --bg-tertiary: #1a2238;
+      --bg-elevated: #222d4a;
+      --text-primary: #dce3f0;
+      --text-secondary: #8899bb;
+      --text-muted: #556688;
+      --text-faint: #334466;
+      --border-subtle: rgba(68, 102, 153, 0.08);
+      --border-medium: rgba(68, 102, 153, 0.18);
+      --border-strong: rgba(68, 102, 153, 0.30);
+      --c-priority-must: #4ade80;
+      --c-priority-important: #fbbf24;
+      --c-priority-ref: #64748b;
+      --c-rel-cites: #818cf8;
+      --c-rel-extends: #2dd4bf;
+      --c-rel-contradicts: #f87171;
+      --c-rel-shares: #f5a623;
+      --c-rel-empirical: #a78bfa;
+      --c-rel-philosophical: #fb923c;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition-base: 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem; color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .header-stats {
+      display: flex; gap: 1.5rem;
+      font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+    }
+    .header-stat span { color: var(--text-primary); font-weight: 500; }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex; gap: 0;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 0 2rem;
+    }
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none; background: none;
+      color: var(--text-muted); font-family: var(--font-body);
+      font-size: 0.85rem; cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-base);
+    }
+    .tab-btn:hover { color: var(--text-secondary); }
+    .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--c-rel-cites); }
+
+    /* Tab Content */
+    .tab-content { display: none; padding: 2rem; }
+    .tab-content.active { display: block; }
+
+    /* Filters */
+    .filters {
+      display: flex; gap: 0.75rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.85rem;
+      border: 1px solid var(--border-medium); border-radius: 999px;
+      background: transparent; color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.7rem;
+      cursor: pointer; transition: all var(--transition-base);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--text-secondary); color: var(--text-primary);
+    }
+    .filter-btn.priority-must.active { border-color: var(--c-priority-must); color: var(--c-priority-must); }
+    .filter-btn.priority-important.active { border-color: var(--c-priority-important); color: var(--c-priority-important); }
+    .filter-btn.priority-ref.active { border-color: var(--c-priority-ref); color: var(--c-priority-ref); }
+
+    .search-input {
+      padding: 0.35rem 1rem;
+      background: var(--bg-secondary); border: 1px solid var(--border-medium);
+      border-radius: 999px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 0.8rem;
+      width: 240px; outline: none;
+    }
+    .search-input:focus { border-color: var(--border-strong); }
+
+    /* Card Grid */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card.priority-must { border-left: 3px solid var(--c-priority-must); }
+    .card.priority-important { border-left: 3px solid var(--c-priority-important); }
+    .card.priority-ref { border-left: 3px solid var(--c-priority-ref); }
+
+    .card-id {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: var(--text-faint); margin-bottom: 0.5rem;
+    }
+    .card-title {
+      font-size: 0.95rem; font-weight: 500;
+      color: var(--text-primary); margin-bottom: 0.4rem;
+      line-height: 1.35;
+    }
+    .card-authors {
+      font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .card-summary {
+      font-size: 0.78rem; color: var(--text-secondary);
+      line-height: 1.5; margin-bottom: 0.75rem;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags {
+      display: flex; gap: 0.35rem; flex-wrap: wrap;
+    }
+    .card-tag {
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      background: var(--bg-tertiary); color: var(--text-muted);
+      font-size: 0.65rem; font-family: var(--font-mono);
+    }
+    .card-priority-badge {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .card-priority-badge.must { background: var(--c-priority-must); box-shadow: 0 0 6px var(--c-priority-must); }
+    .card-priority-badge.important { background: var(--c-priority-important); box-shadow: 0 0 6px var(--c-priority-important); }
+    .card-priority-badge.ref { background: var(--c-priority-ref); }
+
+    /* Detail Panel (Modal) */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(6,8,15,0.85); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      max-width: 780px; width: 90vw; max-height: 85vh;
+      overflow-y: auto; padding: 2rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      width: 32px; height: 32px; border: 1px solid var(--border-medium);
+      border-radius: 50%; background: transparent; color: var(--text-muted);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-base);
+    }
+    .modal-close:hover { border-color: var(--f87171, #f87171); color: #f87171; }
+    .modal h2 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .modal .meta { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; }
+    .modal section { margin-bottom: 1.25rem; }
+    .modal section h3 {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .modal section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+    .modal .relations { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .modal .rel-badge {
+      padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.7rem;
+      font-family: var(--font-mono);
+    }
+    .rel-badge.cites { background: rgba(129,140,248,0.15); color: var(--c-rel-cites); }
+    .rel-badge.extends { background: rgba(45,212,191,0.15); color: var(--c-rel-extends); }
+    .rel-badge.contradicts { background: rgba(248,113,113,0.15); color: var(--c-rel-contradicts); }
+    .rel-badge.shares { background: rgba(245,166,35,0.15); color: var(--c-rel-shares); }
+
+    /* Graph Container */
+    .graph-container {
+      width: 100%; height: 70vh;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+    .graph-legend {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      margin-top: 1rem; padding: 0.75rem 1rem;
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+    }
+    .graph-legend-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.7rem; color: var(--text-muted);
+    }
+    .graph-legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    /* Reading Notes */
+    .notes-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .note-card {
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 1.25rem;
+    }
+    .note-card h4 { font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .note-card .note-meta { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 0.6rem; }
+    .note-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-void); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+    a { color: var(--c-rel-cites); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Footer navigation */
+    .wiki-footer {
+      margin-top: 3rem; padding: 1.5rem 2rem;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-medium);
+    }
+    .wiki-footer a { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; transition: color var(--transition-base); }
+    .wiki-footer a:hover { color: var(--text-primary); text-decoration: none; }
+    .wiki-footer .footer-title { font-size: 0.7rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-domains { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-back { margin-top: 0.5rem; }
+    .wiki-footer .footer-back a { color: var(--c-rel-cites); font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.35rem">
+      <a href="../index.html" style="color:var(--c-rel-cites)">← 文献知识库总览</a>
+    </div>
+    <div class="header-title">激活与表征工程</div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.15rem">Activation Engineering · Representation Engineering · Steering Vectors · NLA</div>
+  </div>
+  <div class="header-stats">
+    <div class="header-stat">文献 <span id="paper-count">0</span></div>
+    <div class="header-stat">必读 <span id="must-count" style="color:var(--c-priority-must)">0</span></div>
+    <div class="header-stat">笔记 <span id="note-count">0</span></div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="browse">浏览文献</button>
+  <button class="tab-btn" data-tab="graph">关系图谱</button>
+  <button class="tab-btn" data-tab="notes">阅读笔记</button>
+</div>
+
+<!-- Tab: Browse -->
+<div class="tab-content active" id="tab-browse">
+  <div class="filters">
+    <input class="search-input" id="search" placeholder="搜索标题/作者/关键词..." oninput="filterCards()">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="filter-btn priority-must" data-filter="must">必读</button>
+    <button class="filter-btn priority-important" data-filter="important">重要</button>
+    <button class="filter-btn priority-ref" data-filter="ref">参考</button>
+    <button class="filter-btn" data-filter="2026">2026</button>
+    <button class="filter-btn" data-filter="2025">2025</button>
+    <button class="filter-btn" data-filter="2024">≤2024</button>
+  </div>
+  <div class="card-grid" id="card-grid"></div>
+</div>
+
+<!-- Tab: Graph -->
+<div class="tab-content" id="tab-graph">
+  <div class="graph-container" id="graph-container"></div>
+  <div class="graph-legend" id="graph-legend">
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-must)"></div> 必读</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-important)"></div> 重要</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-ref)"></div> 参考</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-cites)"></div> 引用</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-extends)"></div> 方法继承</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-contradicts)"></div> 对立观点</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-shares)"></div> 共享概念</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-empirical)"></div> 经验基础</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-philosophical)"></div> 哲学先导</div>
+  </div>
+</div>
+
+<!-- Tab: Notes -->
+<div class="tab-content" id="tab-notes">
+  <div class="notes-list" id="notes-list"></div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js"></script>
+<script>
+// ═══════════════════════════════ DATA ═══════════════════════════════
+const PAPERS = [
+  {
+    id: "001",
+    title: "Representation Engineering: A Top-Down Approach to AI Transparency",
+    authors: "Andy Zou, Long Phan, Sarah Chen, James Campbell, Phillip Guo, Richard Ren, Alexander Pan, Xuwang Yin, Mantas Mazeika, Ann-Kathrin Dombrowski, Shashwat Goel, Nathaniel Li, Michael J. Byun, Zifan Wang, Alex Mallen, Steven Basart, Sanmi Koyejo, Dawn Song, Matt Fredrikson, J. Zico Kolter, Dan Hendrycks",
+    year: 2023,
+    venue: "arXiv:2310.01405 / NeurIPS 2024",
+    doi: "10.48550/arXiv.2310.01405",
+    pdf: "papers/001_Zou_2023_Representation_Engineering.pdf",
+    priority: "must",
+    tags: ["representation engineering", "RepE", "activation steering", "top-down transparency"],
+    summary_cn: "提出表征工程（RepE）范式：不从神经元底层理解模型，而是直接操作高层表征来控制模型行为，奠定了激活工程领域的理论基础。",
+    abstract_cn: "本文提出表征工程（Representation Engineering, RepE），一种自上而下的AI透明度与安全研究方法。不同于传统的自下而上机制可解释性，RepE直接从神经网络的高层表征入手，通过读取（reading）和操控（control）表征向量来实现对模型行为的监测与调节。文章系统定义了RepE的三段式流水线：表征识别→表征操作化→表征控制，并在一系列任务上展示了其有效性，包括诚实性检测、权力寻求倾向评估、安全性增强等。RepE范式将激活工程从临时的技术手段提升为系统化的方法论框架，为后续的激活添加（ActAdd）、对比激活工程（CAE）等工作提供了概念基础。",
+    methodology: "提出RepE三段式流水线框架。在表征识别阶段，使用对比数据集构建方向向量（如通过均值差计算有害/无害激活的差异）；在操作化阶段，对方向向量进行归一化和正则化处理；在控制阶段，通过在推理时向目标层的残差流添加经过缩放的投射来调控模型行为。实验涵盖LLaMA、GPT等模型族，验证了诚实性读取、道德立场的读取与控制、权力寻求检测等任务。",
+    findings: "核心发现：(1) 神经网络高层表征中存在与高层概念（诚实、安全、权力等）对应的线性方向，可通过简单的均值差方法提取；(2) 对这些表征的线性干预可以有效改变模型行为，而无需重新训练或微调；(3) RepE比基于prompt的方法更稳健，比微调更高效；(4) 为表征工程建立了统一的语法和评估标准，推动了该领域的标准化。",
+    limitations: "局限性：(1) 线性方向假设可能过于简化，非线性概念可能无法被单个方向捕获；(2) 方向提取依赖对比数据集的构建质量，可能存在偏见；(3) 泛化到分布外（OOD）场景的效果不稳定；(4) 缺乏对表征操作副作用（collateral damage）的系统分析——这一问题在后续工作中被广泛研究。",
+    relevance: "作为整个激活工程领域的奠基性文献，RepE为本研究提供了核心概念工具：'通过表征操作理解模型行为'的方法论，直接对应哲学中的干预主义因果理论。RepE的顶层设计哲学——从表征而非神经元入手——对机械可解释性的哲学基础研究具有范式级意义。",
+    relations: [
+      {target: "002", type: "extends", label: "CAA在RepE框架上提出具体实现方法"},
+      {target: "003", type: "shares", label: "RepE统一的框架被003的系统综述所梳理"},
+      {target: "006", type: "shares", label: "RepE的核心范式是006经验分析的基础"},
+      {target: "016", type: "shares", label: "016为RepE提供了理论解释——为什么表征工程有效"}
+    ]
+  },
+  {
+    id: "002",
+    title: "Steering Llama 2 via Contrastive Activation Addition",
+    authors: "Nina Rimsky, Nick Gabrieli, Julian Schulz, Meg Tong, Evan Hubinger, Alexander Matt Turner",
+    year: 2023,
+    venue: "arXiv:2312.06681",
+    doi: "10.48550/arXiv.2312.06681",
+    pdf: "papers/002_Rimsky_2023_CAA_Steering.pdf",
+    priority: "must",
+    tags: ["CAA", "activation addition", "steering vector", "Anthropic", "refusal"],
+    summary_cn: "Anthropic团队提出对比激活添加（CAA）方法，通过对比有害/无害激活的差异构建steering vector，实现对Llama 2模型行为的精确控制，是激活工程最具影响力的实现方案之一。",
+    abstract_cn: "本文介绍对比激活添加（Contrastive Activation Addition, CAA），一种在推理时通过向模型的残差流添加对比性激活差异来控制语言模型行为的方法。CAA的核心思路是：收集模型在处理一对对比提示（如有害/无害）时的激活值，计算两者之间的差异向量，然后将该向量乘以一个缩放系数后添加到目标层的残差流中。作者在Llama 2的多个尺度（7B、13B、70B）上展示了CAA的有效性，成功地在不进行任何微调的情况下控制了模型的拒绝（refusal）行为和有害输出。该方法计算成本低，无需标注大规模数据，且对模型的一般能力影响极小。",
+    methodology: "采用对比刺激对（harmful vs. harmless prompts），收集目标层（主要由经验选择中间层）的残差流激活向量。对比方向的构建采用均值差方法：steering vector = mean(activations_harmful) - mean(activations_harmless)。在推理时，将steering vector乘以缩放系数c添加到每层（或指定层）的残差流中。实验在Llama 2 7B/13B/70B上进行，主要评估指标包括attack success rate（ASR）和perplexity变化。",
+    findings: "核心发现：(1) 简单的线性激活加法即可有效控制大模型行为，无需微调；(2) 拒绝向量（refusal vector）可显著降低模型对有害请求的拒绝率，也可反向增强安全性；(3) CAA的效果随模型规模增大而有所减弱（负向steering更明显）；(4) 中间层（约0.3-0.7总层数）的steering效果最佳；(5) 方法计算效率极高，仅需少量对比样本即可构建有效向量。",
+    limitations: "局限性：(1) 缺乏对steering副作用的系统评估——如对一般能力和无害输出的影响；(2) steering系数的选择依赖经验调参，缺乏自动化方法；(3) 对比数据集的构造质量对结果影响很大；(4) 线性假设可能遮蔽了更复杂的非线性表征结构。后续工作如AlphaSteer、COAST等直接回应了这些局限。",
+    relevance: "作为激活加法（Activation Addition）范式的首创性工作，CAA为本研究提供了激活工程领域的核心实验范式。CAA与RepE一起构成了激活工程的两大支柱，其简洁优雅的实验设计——对比条件→激活差→方向向量→行为干预——体现了干预主义因果理论在机械可解释性中的直接应用。",
+    relations: [
+      {target: "001", type: "extends", label: "CAA是RepE框架下最关键的实证实现"},
+      {target: "010", type: "extends", label: "010的FGAA将CAA扩展到SAE潜在空间"},
+      {target: "011", type: "empirical", label: "011系统研究了CAA的缩放行为"},
+      {target: "006", type: "empirical", label: "006经验分析了CAA的脆弱性模式"}
+    ]
+  },
+  {
+    id: "003",
+    title: "Taxonomy, Opportunities, and Challenges of Representation Engineering for Large Language Models",
+    authors: "Jan Wehner, Sahar Abdelnabi, Daniel Tan, David Krueger, Mario Fritz",
+    year: 2025,
+    venue: "arXiv:2502.19649",
+    doi: "10.48550/arXiv.2502.19649",
+    pdf: "papers/003_Wehner_2025_RepE_Taxonomy.pdf",
+    priority: "must",
+    tags: ["survey", "RepE", "taxonomy", "representation engineering", "unified framework"],
+    summary_cn: "首篇对表征工程进行全面系统综述的文献，覆盖约130篇论文，提出'表征识别→操作化→控制'的统一框架，为领域建立了标准化分类与评估体系。",
+    abstract_cn: "本文是对表征工程（Representation Engineering, RepE）的首次全面系统综述，涵盖约130篇相关论文。作者提出了一个统一的RepE流水线框架，将现有工作组织为三个阶段：(1) 表征识别（Representation Identification）——识别编码特定概念或行为的表征；(2) 表征操作化（Representation Operationalization）——将表征转化为可用的方向向量或操作算子；(3) 表征控制（Representation Control）——在推理时利用这些表征来调控模型行为。本文还系统比较了RepE与传统方法（微调、提示工程）的优劣，讨论了多概念操控、可靠性、分布外泛化等开放挑战。综述覆盖了从基础理论到安全应用的广泛主题，为该领域的未来研究提供了路线图。",
+    methodology: "系统性文献综述方法。从arXiv、ACL、ICML等来源检索相关论文，定义了结构化分析框架：从任务维度（控制类型：概念操控、安全性、生成质量等）、方法维度（向量构建方法、应用层级、训练要求等）、评估维度（成功率、副作用、泛化性等）对每篇论文进行分类。提出了统一的RepE形式化定义：将表征操作描述为从输入x到行为b的映射M，通过操纵中间表征h=f(x)来实现行为目标。",
+    findings: "核心发现：(1) 领域已从2018年的零星尝试发展为2024-2025年的系统方法论，RepE论文数量呈指数增长；(2) 三大技术路线并行发展：线性方向操控（如CAA）、SAE-based操控、非线性操控；(3) 关键空白领域包括：跨模型泛化、多概念联合操控、对抗鲁棒性、理论解释；(4) RepE在安全性应用（拒绝操控）上最为成熟，在能力增强（如推理提升）上尚处早期；(5) RepE比微调更高效但持久性不足，比提示工程更稳健但灵活性较低。",
+    limitations: "综述本身的局限：(1) 仅覆盖至2025年中期的文献，2025下半年至2026年的大量新工作未包含；(2) 分类标准可能随着领域发展需要更新；(3) 对中文文献的覆盖有限。报告的领域挑战包括：缺乏统一的基准测试标准、方法的可复现性问题、以及对steering副作用的系统性理解不足。",
+    relevance: "作为领域的首个系统综述，本文为本研究提供了完整的文献地图和概念分类框架。其提出的'识别→操作化→控制'三段式结构与科学哲学中的'现象识别→测量→干预'方法论形成对应，为哲学分析提供了结构化的切入点。",
+    relations: [
+      {target: "001", type: "cites", label: "系统梳理并扩展001的RepE框架"},
+      {target: "002", type: "cites", label: "将002的CAA归类为表征控制的核心方法"},
+      {target: "005", type: "shares", label: "005提出的COAST优化框架回应了本文识别的副作用问题"},
+      {target: "012", type: "cites", label: "将012的SAE去噪方法归为表征操作化的前沿工作"}
+    ]
+  },
+  {
+    id: "004",
+    title: "AlphaSteer: Learning Refusal Steering with Principled Null-Space Constraint",
+    authors: "Jiaxin Wen, Ruiqi Zhong, Akbir Khan, Ethan Perez, David Krueger, Yarin Gal, Jacob Steinhardt, Mrinank Sharma",
+    year: 2025,
+    venue: "arXiv:2506.07022 / ICLR 2026",
+    doi: "10.48550/arXiv.2506.07022",
+    pdf: "papers/004_AlphaSteer_2025_Refusal_Steering.pdf",
+    priority: "must",
+    tags: ["AlphaSteer", "null-space constraint", "refusal steering", "safety-utility tradeoff", "ICLR 2026"],
+    summary_cn: "提出基于零空间约束的学习型steering方法，在安全性与通用能力之间实现最优平衡：对无害输入保证零扰动，对有害输入精确施加拒绝方向。",
+    abstract_cn: "AlphaSteer针对激活导向中安全性与有用性之间的根本权衡问题，提出了一种有原则的零空间约束方法。传统steering方法在抑制有害输出时往往损害模型的通用能力——因为同一个steering方向可能在有益和有害语境中都产生影响。AlphaSteer通过学习构建两个属性：(1) 对于良性数据，steering向量接近零向量（零空间约束），确保不损害正常功能；(2) 对于恶意数据，steering向量精确指向拒绝方向。方法在多个基准上验证，在不影响MMLU等通用能力的前提下，显著提升了Llama、Qwen等多模型的安全性。AlphaSteer还展示了与现有安全训练方法的互补性，可叠加产生额外的安全增益。",
+    methodology: "将steering向量构建转化为约束优化问题。核心技术：(1) 零空间约束：对来自Alpaca等无害数据集的所有激活，最小化steering向量的L2范数，确保有益行为不受扰动；(2) 拒绝方向约束：对有害数据集，最大化steering方向与预计算拒绝方向的对齐度。使用梯度下降优化，交替更新零空间与拒绝方向参数。实验在Llama-2-7B-Chat、Qwen2.5-7B-Chat等多模型上进行，评估指标包括Attack Success Rate、MMLU、GSM8K等。",
+    findings: "核心发现：(1) 学习型steering显著优于固定方向steering，ASR降低幅度更大；(2) 零空间约束有效控制了能力退化——MMLU分数几乎保持不变（退化<1%）；(3) 方法与现有的RLHF安全训练是互补的而非替代关系；(4) AlphaSteer构建的拒绝方向在不同模型间表现出一定的可迁移性；(5) 方法在对抗性攻击（如GCG、AutoDAN）下保持有效性。",
+    limitations: "局限性：(1) 学习过程需要较大的计算开销（相比简单CAA），尽管可离线完成；(2) 对预计算拒绝方向的质量有一定依赖；(3) 零空间约束虽有效降低了能力退化，但未完全消除——某些边缘情况仍受影响；(4) 方法在超大规模模型（100B+）上的验证尚不充分；(5) 未考虑多语言场景。",
+    relevance: "AlphaSteer精确地展示了激活工程中'副作用最小化'的技术路径，直接对应干预主义因果理论中的'具体性（specificity）'概念——理想干预应仅改变目标变量而不影响其他变量。这种精确定向的干预策略为哲学上理解因果结构提供了清晰的技术案例。",
+    relations: [
+      {target: "002", type: "extends", label: "在CAA的基础上增加了零空间约束学习"},
+      {target: "005", type: "shares", label: "与005（COAST）独立探索了steering副作用最小化"},
+      {target: "021", type: "shares", label: "与021（Surgical Refusal Ablation）共享正交化思想"},
+      {target: "011", type: "cites", label: "回应011关于steering-效用权衡的实证发现"}
+    ]
+  },
+  {
+    id: "005",
+    title: "Minimizing Collateral Damage in Activation Steering (COAST)",
+    authors: "Saketh Reddy Aluru, Sarthak Mittal, Aravindan Raghuveer, Joshua Ainslie, Sharan Narang, Sumanth Dathathri, Doug Eck, Aleksandra Faust",
+    year: 2026,
+    venue: "arXiv:2605.01167",
+    doi: "10.48550/arXiv.2605.01167",
+    pdf: "papers/005_COAST_2026_Collateral_Damage.pdf",
+    priority: "must",
+    tags: ["COAST", "collateral damage", "constrained optimization", "activation steering", "Angular Steering"],
+    summary_cn: "首次形式化定义activation steering的'附带损伤（collateral damage）'问题，提出约束优化框架COAST，在攻击成功率和准确性上均显著优于Angular Steering和ActAdd。",
+    abstract_cn: "本文首次将activation steering中的'附带损伤'——即steering操作对非目标特征方向的无意影响——形式化为一个可量化的优化问题。作者证明，标准的steering方法（如Activation Addition和Angular Steering）都存在不可忽视的附带损伤：它们不仅改变了目标特征方向上的激活，还间接扭曲了其他语义方向。COAST（Collateral-damage-Optimized Activation STeering）通过在经验二阶矩矩阵的约束下最小化期望附带变化来解决此问题：找到的steering方向在有效操控目标行为的同时，最小化与其他激活方向的内积加权和。实验结果显示，COAST的Attack Success Rate比Angular Steering低30%，且下游任务准确率比ActAdd高20%。本文还提出了一个诊断附带损伤的理论框架，可用于评估任何steering方法的副作用。",
+    methodology: "首先形式化定义附带损伤：给定激活a和目标方向d，steering向量v的附带损伤定义为v与其他非目标激活方向的二阶矩加权内积。利用大量无害上下文中的激活样本估计经验二阶矩矩阵，然后在约束优化框架下最小化附带损伤。COAST的优化目标为：min ||v||²_M = v^T M v, subject to v^T d ≥ 1，其中M为二阶矩矩阵。解法为带约束的二次规划闭式解。实验涵盖Llama、Gemma等多模型，比较ActAdd、Angular Steering等基线。",
+    findings: "核心发现：(1) 传统steering方法存在系统性的附带损伤——它们对非目标方向的扰动远大于必要量；(2) COAST通过经验二阶矩矩阵约束，可精确decorrelate steering方向与非目标方向；(3) COAST在ASR上比Angular Steering改善30%，在一般准确率上比ActAdd改善20%；(4) 附带损伤控制与steering强度之间存在权衡——更强的steering通常伴随更大的附带损伤；(5) 附带损伤诊断框架适用于评估任何steering方法，应成为该领域的标准评估工具。",
+    limitations: "局限性：(1) 方法依赖于对激活分布的经验估计，估计的准确性影响优化质量；(2) 二阶矩矩阵的计算和存储对于大维度模型（如70B+）有一定挑战；(3) 目前仅在单层steering上验证，多层联合优化待探索；(4) 附带损伤的最优界限理论分析不够完整；(5) 对动态steering（输入依赖）的扩展尚未讨论。",
+    relevance: "COAST将'副作用'从模糊的经验概念提升为精确的数学对象，这直接对应科学哲学中'干预的精确性（precision of intervention）'这一认识论标准。其形式化方法为哲学分析提供了一个清晰的案例：如何量化因果干预的'清洁度'。",
+    relations: [
+      {target: "002", type: "extends", label: "直接回应并解决CAA的副作用问题"},
+      {target: "004", type: "shares", label: "与AlphaSteer独立提出了steering副作用最小化方案"},
+      {target: "007", type: "shares", label: "与Angular Steering在优化steering方向上有共同目标"},
+      {target: "020", type: "philosophical", label: "附带损伤概念直接关联steering vector的可识别性问题"}
+    ]
+  },
+  {
+    id: "006",
+    title: "Patterns and Mechanisms of Contrastive Activation Engineering",
+    authors: "Yixiong Hao, Ayush Panda, Stepan Shabalin, Sheikh Abdur Raheem Ali",
+    year: 2025,
+    venue: "arXiv:2505.03189 / ICLR 2025 Workshops",
+    doi: "10.48550/arXiv.2505.03189",
+    pdf: "papers/006_Hao_2025_Patterns_Mechanisms_CAE.pdf",
+    priority: "important",
+    tags: ["CAE", "empirical analysis", "steering vector", "robustness", "in-distribution"],
+    summary_cn: "首次对对比激活工程（CAE）进行系统性经验分析，揭示其有效性在分布外的局限性、约80个样本后的收益递减、对抗输入脆弱性以及大规模模型的工程韧性。",
+    abstract_cn: "本文对对比激活工程（Contrastive Activation Engineering, CAE）进行了系统性经验分析，揭示了CAE在实践中表现出的若干重要模式与机制。研究覆盖了不同规模的模型、多种steering任务和数据集构造策略。关键发现包括：(1) CAE仅在分布内（in-distribution）场景下可靠有效——当steering向量在训练数据集分布内应用时效果良好，但泛化到分布外场景时有效性急剧下降；(2) 用于构建steering向量的样本数量在约80个后出现显著收益递减；(3) steering向量对对抗性输入高度脆弱——精心构造的输入可以完全逆转steering方向的效果；(4) 更大的模型对steering引起的perplexity退化更具抵抗力；(5) steering向量的有效性受数据集偏差和样本选择策略的影响很大。",
+    methodology: "系统性的控制变量实验设计。变量包括：模型规模（7B→70B）、数据样本量（10→500+）、数据集类型（分布内vs分布外）、steering强度系数、目标层选择。在每个设置下测量steering成功率、perplexity变化和对抗性逆转率。对抗性测试通过构造与steering方向正交的输入来挑战steering的鲁棒性。实验主要在Llama 2和Llama 3系列上进行。",
+    findings: "核心发现：(1) CAE的分布外泛化能力非常有限——这对将steering应用于开放域场景构成严重限制；(2) 样本效率存在天花板效应（约80个样本），此后新增数据几乎没有改善；(3) steering向量极易被对抗性输入击穿——对抗成功率高达80%以上；(4) 大型模型（70B+）虽对退化更具抵抗力，但steering本身的成功率也略低；(5) 不同任务（拒绝、诚实、风格）的steerability存在显著差异。",
+    limitations: "局限性：(1) 未提出解决已识别问题的具体方法——主要以诊断为主；(2) 对抗性测试的设计可能未穷举所有攻击类型；(3) 样本效率的天花板效应是否适用于所有底层概念尚需验证；(4) 对视觉语言模型、编码模型等特定领域的分析不足。",
+    relevance: "本文为激活工程提供了关键的'现实检查'：揭示方法在实际应用中的脆弱性和局限性。这些经验发现为哲学上的'工程可靠性（engineering reliability）'讨论提供了经验基础——激活工程在什么条件下是可靠的？其可靠性边界如何影响我们对模型内部结构的认识论信任？",
+    relations: [
+      {target: "002", type: "empirical", label: "系统诊断002的CAA方法在实践中的脆弱性"},
+      {target: "005", type: "shares", label: "为005的附带损伤概念提供了另一角度的经验验证"},
+      {target: "011", type: "shares", label: "与011互补——分别从经验模式和缩放规律角度分析CAA"},
+      {target: "020", type: "philosophical", label: "分布外失效问题与020的steering vector不可识别性有深层联系"}
+    ]
+  },
+  {
+    id: "007",
+    title: "Angular Steering: Behavior Control via Rotation in Activation Space",
+    authors: "Bryan M. Li, Luka Z. Petrović, Ivan Vulić, Anna Korhonen",
+    year: 2025,
+    venue: "arXiv:2510.26243",
+    doi: "10.48550/arXiv.2510.26243",
+    pdf: "papers/007_Angular_Steering_2025.pdf",
+    priority: "important",
+    tags: ["Angular Steering", "rotation", "activation space", "unified framework", "fine-grained control"],
+    summary_cn: "将activation steering重新表述为激活空间中的旋转操作，统一了向量添加、方向性消融和正交化等先前方法，提供基于单一角度参数的精确行为控制。",
+    abstract_cn: "Angular Steering提出了一种新的激活操控几何视角：将steering重新表述为在由原始激活和特征方向张成的2D子空间中的旋转操作。这种重新表述具有重要的统一性——它揭示出之前主要的steering方法（向量加法、方向性消融/正交化）本质上都是旋转的特例：向量加法是部分旋转（<180°），方向性消融是精确90°旋转。该方法引入了'角度参数'作为唯一控制变量，实现了对模型行为从拒绝到合规的连续精细控制。此外，提出了自适应Angular Steering：仅对与目标特征对齐的激活进行旋转，进一步减少了副作用。实验在LLaMA 3、Qwen 2.5、Gemma 2上验证，展示了在多项行为控制任务上的优越性能。",
+    methodology: "几何建模：(1) 将任意激活a分解为平行于steering方向d的分量a_∥和垂直于d的分量a_⊥；(2) 在由[a_∥, a_⊥]张成的2D平面内，以a_⊥为轴对a_∥施加旋转角度θ；(3) 角度θ∈[0°,180°]为连续控制参数：θ=0°为原始激活，θ=90°为正交消融，θ=180°为方向反转，中间值实现精细调节。自适应版本引入门控：g=σ(cos(a,d)·τ)，仅当激活与方向足够对齐时才旋转。实验使用Llama 3-8B、Qwen2.5-7B、Gemma 2-9B。",
+    findings: "核心发现：(1) 旋转视角统一了此前看似不相关的方法——这是一个优雅的理论贡献；(2) 单一角度参数提供了前所未有的精细控制——比传统scalar coefficient方法更精确；(3) 自适应版本通过门控机制有效减少了不必要的行为扭曲；(4) 90°正交化（消融）在某些场景下优于传统加法；(5) 方法的几何解释性提高了对steering机制的直觉理解。",
+    limitations: "局限性：(1) 旋转方法仍局限于2D子空间——更复杂的多维概念可能需要高维旋转；(2) 角度-行为映射关系不是完全线性的，实际应用中需要校准；(3) 对方向d的质量依赖未消除——如果d本身不精确，旋转的效果同样受影响；(4) 自适应门控阈值τ仍需经验调整。",
+    relevance: "Angular Steering的几何化视角——将行为控制等同于激活空间中的旋转——为'概念空间几何学'这一新兴研究方向提供了优雅的数学语言。这种几何方法为哲学上讨论'概念空间的拓扑结构'和'行为空间的度量'提供了精确的技术基础。",
+    relations: [
+      {target: "002", type: "extends", label: "将002的向量加法重新解释为部分旋转"},
+      {target: "005", type: "shares", label: "与COAST从不同角度（几何vs优化）优化steering的精确性"},
+      {target: "024", type: "shares", label: "与Conceptors共享几何化操控的思路——方向vs子空间投影"},
+      {target: "021", type: "shares", label: "90°旋转等价于021的正交消融操作"}
+    ]
+  },
+  {
+    id: "008",
+    title: "MEUV: Achieving Fine-Grained Capability Activation in LLMs via Mutually Exclusive Unlock Vectors",
+    authors: "Puxuan Yu, Liunian Harold Li, Wenhu Chen",
+    year: 2025,
+    venue: "arXiv:2509.12221",
+    doi: "10.48550/arXiv.2509.12221",
+    pdf: "papers/008_MEUV_2025.pdf",
+    priority: "important",
+    tags: ["MEUV", "unlock vectors", "refusal", "fine-grained control", "orthogonal decomposition"],
+    summary_cn: "将单一拒绝方向分解为话题对齐的正交向量，每个向量解锁一种敏感能力，实现精细粒度的能力激活，跨主题泄漏降低90%。",
+    abstract_cn: "MEUV（Mutually Exclusive Unlock Vectors）解决了激活工程中的一个关键限制：传统的单一refusal向量操控通常是粗粒度的——抑制某个有害话题的拒绝往往会意外地改变其他话题的行为。MEUV将综合拒绝方向分解为一组话题对齐的、近正交的'解锁向量'，每个向量对应一种特定的敏感话题（如武器、药物、色情等）。通过联合优化：差分消融边界（确保目标话题的解锁效果）+跨主题惩罚（最小化对其他话题的意外影响）+正交性正则化，MEUV实现了87%以上的目标Attack Success Rate（在Gemma-2-2B、Llama-3-8B、Qwen-7B上），同时将跨主题泄漏降低高达90%。更有趣的是，这些向量在跨语言迁移中保持有效性，暗示存在语言无关的refusal子空间。",
+    methodology: "三阶段流程：(1) 话题分类：使用安全分类器将有害查询分配到预设的话题类别；(2) 解锁向量学习：为每个话题独立学习一个方向向量d_k，优化目标最大化本话题ASR同时最小化其他话题的ASR变化；(3) 联合优化：使用广义正交性约束（基于余弦相似度的惩罚项）确保不同话题的解锁向量近似正交。核心优化包含三个损失项：L_target（目标话题ASR）、L_cross（跨主题惩罚）、L_ortho（正交性正则化）。实验模型：Gemma-2-2B、Llama-3-8B、Qwen-7B。",
+    findings: "核心发现：(1) 单一的refusal方向是可分解的——它由多个话题相关的子方向组成；(2) 话题间的正交性约束是可行的——可在不增加架构复杂度的前提下实现精细分解；(3) 跨主题泄漏降低90%相比单向量基线；(4) 解锁向量在不同语言间表现出可迁移性——支持存在语言无关的refusal子空间假说；(5) 话题粒度的精细控制为安全策略定制化提供了新的可能性。",
+    limitations: "局限性：(1) 话题分类的粒度是预设的——更细粒度的话题需要重新训练；(2) 话题间非完全正交可能在某些极端情况下导致残余泄漏；(3) 对全新话题的泛化能力有限——需要重新学习新的解锁向量；(4) 多语言迁移的成功率仍存在语言差异（高资源语言优于低资源语言）。",
+    relevance: "MEUV将'粗粒度控制→精细控制'的发展路径与科学哲学中'自然类别（natural kinds）'的讨论形成对应——refusal行为的内部是否按话题形成自然的因果结构，还是这些分类只是工程上的便利？这涉及机械可解释性中的本体论（ontology）问题。",
+    relations: [
+      {target: "002", type: "extends", label: "将002的单一steering方向分解为话题分配的正交子方向"},
+      {target: "028", type: "shares", label: "与RepIt共享概念特异性refusal操控的目标"},
+      {target: "021", type: "shares", label: "正交分解思路与021的Surgical Refusal Ablation形成互补"},
+      {target: "022", type: "shares", label: "话题特异性与022的任务依赖refusal发现相关"}
+    ]
+  },
+  {
+    id: "009",
+    title: "The Rogue Scalpel: Activation Steering Compromises LLM Safety",
+    authors: "Yujia Qin, Zeming Wei, Xianjun Yang, Shiyu Huang, Yicheng Gao, Antoine Bosselut, Diyi Yang, Dan Hendrycks",
+    year: 2025,
+    venue: "arXiv:2509.22067",
+    doi: "10.48550/arXiv.2509.22067",
+    pdf: "papers/009_Rogue_Scalpel_2025.pdf",
+    priority: "important",
+    tags: ["safety", "adversarial", "jailbreak", "steering vector", "universal attack"],
+    summary_cn: "发现even随机方向steering也能将有害输出率从0%提升至2-27%，聚合20个随机jailbreak向量即可创建零训练数据的通用攻击，暴露了激活导向的根本性安全漏洞。",
+    abstract_cn: "本文揭示了一个令人警醒的发现：activation steering对LLM安全性的破坏远比预想的严重。即使使用随机方向（而非精心计算的对比方向）进行steering，也能将模型对有害请求的合规率从接近0%提升至2-27%。当使用稀疏自编码器（SAE）特征进行steering时，额外增加2-4%的有害输出。最令人担忧的是：仅需聚合20个随机jailbreak向量就能创建一个通用攻击向量，无需任何有害训练数据或梯度计算。这个'零训练通用攻击'对多种安全对齐方法（RLHF、DPO等）都有效，暴露了activation steering对模型安全对齐构成了根本性威胁。作者呼吁安全社区建立针对表征级攻击的防御机制。",
+    methodology: "多阶段实验设计：(1) 随机方向攻击：在激活空间中随机采样方向，测量其对模型拒绝行为的影响；(2) SAE特征steering：使用SAE提取的特征方向进行攻击测试；(3) 通用攻击构建：独立采样多个随机jailbreak向量后取均值，测试聚合向量的攻击效果；(4) 跨模型和跨对齐方法评估：测试不同对齐方法（RLHF, DPO, SFT）的脆弱性。主要评估指标为Attack Success Rate（ASR），使用HarmBench等标准数据集。",
+    findings: "核心发现：(1) activation steering的空间比预想大得多——即使是随机方向也有显著效果；(2) SAE特征提供了额外的攻击面——可额外提升2-4%有害输出；(3) 只需20个向量的简单聚合即可创建通用攻击，无需任何有害数据的训练；(4) 此漏洞跨模型和跨对齐方法存在——暗示这是架构级别的安全性缺陷；(5) 现有的安全评估主要关注输入级别（prompt-based）攻击，而忽视了表征级别（representation-based）攻击。",
+    limitations: "局限性：(1) 攻击效果的随机性较高，不同种子间存在显著方差；(2) 通用攻击向量在避免副作用（如降低无害输出质量）方面不如精心设计的方法；(3) 研究的对抗性目标仅限于'合规率'，未涵盖更隐蔽的安全风险；(4) 防御方案的探索仅是概念性的，未提供具体实现。",
+    relevance: "本文对'activation steering = 安全工具'的主流叙事构成根本性挑战——同样的技术在攻击者手中是危险的武器。这直接对应了技术哲学中的'双重使用（dual-use）'问题：激活工程作为知识工具的认识论地位是否独立于其伦理使用？",
+    relations: [
+      {target: "002", type: "contradicts", label: "质疑CAA等steering方法的安全性叙事——技术本身是值中性的"},
+      {target: "004", type: "contradicts", label: "与AlphaSteer的安全增强目标形成张力"},
+      {target: "028", type: "shares", label: "与RepIt共同揭示了steering的双重使用风险"},
+      {target: "008", type: "shares", label: "MEUV的话题特异性解锁向量在攻击者手中同样是危险工具"}
+    ]
+  },
+  {
+    id: "010",
+    title: "Interpretable Steering of Large Language Models with Feature Guided Activation Additions",
+    authors: "Samuel Soo, Chen Guang, Chandrasekaran Balaganesh, Wesley Teng, Tan Guoxian, Yan Ming",
+    year: 2025,
+    venue: "arXiv:2501.09929",
+    doi: "10.48550/arXiv.2501.09929",
+    pdf: "papers/010_FGAA_2025.pdf",
+    priority: "important",
+    tags: ["FGAA", "SAE", "interpretable steering", "feature guidance", "activation addition"],
+    summary_cn: "提出FGAA方法，将CAA与SAE融合：在SAE潜在空间中构建可解释的steering向量，在Gemma系列上超越CAA、SAE decoder steering和SAE-TS等基线。",
+    abstract_cn: "FGAA（Feature Guided Activation Additions）提出了一种新颖的激活导向方法，将对比激活添加（CAA）与稀疏自编码器（SAE）深度整合。传统CAA在原始残差流空间中操作，方向缺乏可解释性；SAE虽然提供了可解释的特征，但将这些特征映射回残差流并用于steering（如SAE-TS或SAE decoder steering）存在信息损失。FGAA直接在SAE的潜在空间中构建steering向量——利用SAE提供的概念分离能力来选择性地操控特定特征——然后通过SAE解码器将其投射回残差流。在Gemma-2-2B和Gemma-2-9B上的多项steering任务中，FGAA一致地优于CAA、SAE decoder steering和SAE-TS。",
+    methodology: "四步流程：(1) 训练SAE：在目标层上训练标准TopK SAE，得到从残差流到潜在空间的编码器和反向解码器；(2) 对比激活收集：与CAA相同，收集对比条件下的残差流激活；(3) SAE编码：将对比激活编码为SAE潜在表示，计算潜在空间中的对比差异；(4) 特征选择性操控：仅在SAE潜在空间中选择与目标概念最相关的特征（基于潜在激活差异的top-k）进行操控，然后通过SAE解码器投射回残差流。实验在Gemma-2-2B和Gemma-2-9B上验证。",
+    findings: "核心发现：(1) SAE潜在空间中的steering比原始残差流中的steering更可解释且更精确；(2) FGAA在所有测试任务上一致优于CAA、SAE decoder steering和SAE-TS；(3) SAE特征选择（仅操控相关特征）有效减少了不必要的副作用；(4) 方法的计算开销可控——SAE仅需在指定层运行一次编码-解码循环；(5) 解耦了特征选择（概念发现）和特征操控（行为控制）两个阶段。",
+    limitations: "局限性：(1) 依赖SAE的质量——如果SAE未学习到目标概念的良好表示，FGAA效果受限；(2) SAE训练本身需要标注或大量文本数据；(3) 人类对SAE特征的解释仍然部分依赖主观判断；(4) 跨模型迁移需要为每个模型训练独立的SAE。",
+    relevance: "FGAA将'可解释性（SAE特征）'与'控制（steering）'直接连接起来——这正是机械可解释性的核心目标。这种连接为哲学上讨论'理解（understanding）与控制（control）的关系'提供了技术案例：我们是通过对内部表示的因果理解来实现控制，还是通过控制来加深理解？",
+    relations: [
+      {target: "002", type: "extends", label: "将002的CAA从原始空间扩展到SAE潜在空间"},
+      {target: "012", type: "shares", label: "与012的SDCV共享SAE去噪+steering的流水线"},
+      {target: "013", type: "shares", label: "与013（Denoising Concept Vectors）具有互补的SAE利用策略"},
+      {target: "016", type: "philosophical", label: "SAE的因果充分性问题是016理论化和019经验验证的主题"}
+    ]
+  },
+  {
+    id: "011",
+    title: "Scaling Laws for Activation Steering with Llama 2 Models and Refusal Mechanisms",
+    authors: "Sheikh Abdur Raheem Ali, Justin Xu, Ivory Yang, Jasmine Xinze Li, Ayse Arslan, Clark Benham",
+    year: 2025,
+    venue: "arXiv:2507.11771",
+    doi: "10.48550/arXiv.2507.11771",
+    pdf: "papers/011_Scaling_Laws_Activation_Steering_2025.pdf",
+    priority: "important",
+    tags: ["scaling laws", "CAA", "activation steering", "model size", "refusal"],
+    summary_cn: "首次系统地研究CAA的缩放规律：揭示CAA在0.4倍总层数时效果最优，随模型规模增大而减弱，负向steering（抑制行为）比正向更显著。",
+    abstract_cn: "本文首次对对比激活添加（CAA）的缩放行为进行了系统研究。在Llama 2系列模型（7B、13B、70B）上，作者考察了CAA效果随模型规模、steering方向和施加层级的变化规律。关键发现包括：(1) 最佳施加层级约在0.4×总层数处——这与此前基于经验选择的中间层共识不同；(2) CAA的整体有效性随模型规模增大而减弱——更大模型的内部表征可能更复杂或更冗余；(3) 负向steering（如抑制拒绝行为）在所有模型规模上的效果都比正向steering（如增强安全性）更为显著；(4) CAA效果与模型对特定行为的基线倾向显著相关——对模型已偏向的行为进行负向steering更容易成功；(5) 缩放趋势暗示了更大模型中可能存在更强的概念冗余和表征鲁棒性。",
+    methodology: "系统实验设计：(1) 模型规模维度：Llama 2-Chat 7B, 13B, 70B；(2) 层选择维度：均匀采样从早期到后期的所有transformer层；(3) steering方向维度：正向（增强安全/拒绝）vs 负向（抑制安全/合规）；(4) 系数维度：跨多个数量级的steering强度扫描。每项实验重复多次以评估统计显著性。主要指标：ASR、perplexity、下游任务准确率。",
+    findings: "核心发现：(1) CAA最优层在~0.4层深而非此前常使用的~0.5-0.7——一个对实践有直接指导意义的发现；(2) 随着模型从7B→13B→70B，CAA效果单调递减约30-50%；(3) 负向steering在所有规模上都更强——可能因为拒绝行为更容易被抑制而非增强；(4) 更大模型表现出更强的概念弹性（concept resilience）；(5) scaling趋势遵循幂律关系，暗示在更大模型（100B+）上CAA可能效果更弱。",
+    limitations: "局限性：(1) 仅在Llama 2一个模型族上验证，跨模型族的泛化性未知；(2) 仅测试了refusal一种行为——其他steering任务的缩放规律可能不同；(3) 实验未涵盖2025年以后的新模型架构（如MoE）；(4) 提出的缩放定律是经验性的，缺乏理论推导。",
+    relevance: "本文的'缩放规律'发现——更大模型更难以被steering——对'模型规模与可控性的关系'这一哲学问题具有直接意义：更大的模型是否因为内部表征更复杂而天然具有更强的'自主性'或'对齐韧性'？这触及了AI安全与控制的核心哲学张力。",
+    relations: [
+      {target: "002", type: "empirical", label: "系统研究002的CAA在Llama 2上的缩放行为"},
+      {target: "006", type: "shares", label: "与006互补——分别从缩放规律和经验模式两个角度分析CAA"},
+      {target: "004", type: "cites", label: "缩放规律的发现支持了004引入学习型steering的必要性"},
+      {target: "020", type: "shares", label: "大规模模型steering效果减弱与020的可识别性问题相关"}
+    ]
+  },
+  {
+    id: "012",
+    title: "Denoising Concept Vectors with Sparse Autoencoders for Improved Language Model Steering",
+    authors: "Xuansheng Wu, Bo Shen, Ninghao Liu, Wenhao Yu, Meng Jiang",
+    year: 2025,
+    venue: "arXiv:2505.15038",
+    doi: "10.48550/arXiv.2505.15038",
+    pdf: "papers/012_Wu_2025_Denoising_Concept_Vectors.pdf",
+    priority: "important",
+    tags: ["SDCV", "SAE", "concept vector", "denoising", "steering"],
+    summary_cn: "提出SDCV方法，用SAE去噪概念向量，仅保留最具区分力的稀疏特征，在六个挑战性概念上将steering成功率提升4-16%。",
+    abstract_cn: "SDCV（Sparse Autoencoder-Denoised Concept Vectors）针对现有线性概念向量方法（如线性探测、均值差法）的一个核心局限：这些方法在构建概念方向时，不可避免地引入来自数据集中多样样本的噪声特征。这些噪声特征在steering过程中产生不必要的副作用——它们改变的不是目标概念，而是无关的语义方向。SDCV利用稀疏自编码器的特征分离能力：将对比激活通过SAE编码为稀疏潜在表示后，仅保留与目标概念最相关的top-k个SAE潜在特征（通过潜在空间中的对比差异排名），然后将这些特征解码回残差流以构建'纯净'的概念向量。在六个挑战性概念上的实验表明，SDCV将steering成功率提升了4-16%（相比未经SAE处理的基线）。",
+    methodology: "核心流程：(1) 训练SAE：在目标层训练TopK SAE；(2) 构建原始概念向量：使用均值差方法计算对比激活差异；(3) SAE编码：将原始概念向量通过SAE编码器编码为稀疏潜在表示；(4) 特征筛选：仅保留激活差异最大的top-k个SAE潜在特征（丢弃噪声特征）；(5) SAE解码：将筛选后的稀疏潜在表示通过SAE解码器还原为'去噪'概念向量。实验覆盖六个概念：生物特性、毒性、形式性、正面情感、德语等。模型为Llama 3。",
+    findings: "核心发现：(1) 未经SAE处理的线性概念向量确实包含大量噪声——仅top-k SAE特征就几乎保持了全部steering效果；(2) SDCV在六个概念上将steering成功率提升4-16%；(3) 保留的SAE特征数量（k）存在最优值——过少丢失信号，过多引入噪声；(4) SAE特征具有较好的概念特异性和可解释性；(5) 去噪后的概念向量在不同prompt上下文中的泛化性更好。",
+    limitations: "局限性：(1) 依赖SAE的初始训练质量；(2) top-k选择策略（固定k或基于阈值的自适应k）的泛化性未知；(3) 仅测试了相对清晰的语义概念，更抽象或组合概念的去噪效果未验证；(4) 去噪操作本身的信息丢弃可能在某些情况下损失有效信号。",
+    relevance: "SDCV的工作直接回应了'概念表征的纯度'这一认识论问题——我们如何知道提取的向量纯净地代表了目标概念而非混杂了无关信息？这与哲学中'概念原子主义 vs. 概念整体主义'的争论形成有趣的技术对应。",
+    relations: [
+      {target: "002", type: "extends", label: "对CAA概念向量的构建进行SAE去噪改进"},
+      {target: "010", type: "shares", label: "与FGAA共享SAE+steering的范式但侧重去噪而非直接操控"},
+      {target: "016", type: "empirical", label: "SAE特征的可信度是016理论框架的核心关切"},
+      {target: "029", type: "shares", label: "与GradSAE（029）从不同角度优化SAE特征的steering效用"}
+    ]
+  },
+  {
+    id: "013",
+    title: "SAKE: Steering Activations for Knowledge Editing",
+    authors: "Yuhuan Liu, Xiang Deng, Zhenyang Li, Xianwei Zhang, Yiming Zhang, Ningyu Zhang, Huajun Chen",
+    year: 2025,
+    venue: "arXiv:2503.01751",
+    doi: "10.48550/arXiv.2503.01751",
+    pdf: "papers/013_SAKE_2025.pdf",
+    priority: "important",
+    tags: ["SAKE", "knowledge editing", "optimal transport", "distributional editing", "steering"],
+    summary_cn: "将知识编辑问题重新建模为基于最优传输的分布编辑：不是针对单个prompt修改激活，而是编辑整个事实分布的激活模式，使编辑在释义和逻辑推论上一致。",
+    abstract_cn: "SAKE（Steering Activations for Knowledge Editing）将知识编辑从'单prompt修改'升级为'分布级编辑'。传统知识编辑方法（如ROME、MEMIT）在某一个prompt上修改事实后，往往在释义变体和逻辑推论中表现不一致——即缺乏上下文鲁棒性和逻辑泛化性。SAKE通过最优传输（Optimal Transport）将待编辑的事实建模为一个分布（而非单个prompt），然后找到一种激活空间中的变换，使该分布的关键activation pattern从旧事实平滑迁移到新事实。这种方法在EVOKE、COUNTERFACT、MQuAKE等多个知识编辑基准上表现出更强的鲁棒性和泛化性。",
+    methodology: "将知识编辑表述为最优传输问题：(1) 事实建模为分布：使用多个释义和逻辑推论变体构建事实的经验分布P_old和P_new；(2) 激活分布估计：收集模型在处理两个分布中样本时的目标层激活；(3) 最优传输映射：计算将激活分布从P_old映射到P_new的Wasserstein-2距离最优传输映射（闭式解为仿射变换）；(4) 推理时干预：利用计算出的仿射变换在推理时修改相关激活。比较ROME、MEMIT等基线。",
+    findings: "核心发现：(1) 分布级编辑的鲁棒性显著优于单prompt编辑——在释义测试中准确率提升尤为明显；(2) OT-based方法可以隐式地捕获事实的'逻辑邻域'——与目标事实逻辑相关的查询也会被一致地更新；(3) 编辑通常仅需干预少数几层的激活即可生效；(4) 方法的副作用（对其他事实的影响）可控——OT映射的正则化有助于保持无关事实的激活不变；(5) 相比权重编辑方法，激活编辑更轻量但持久性不足。",
+    limitations: "局限性：(1) 需要为每个编辑目标构建分布，对样本量有一定要求；(2) OT映射的计算成本随分布规模增长；(3) 持久性——激活编辑在后续轮次中可能被模型的后续处理稀释；(4) 仅测试了事实性知识编辑，对概念级编辑（如改变模型的价值观）的适用性未知。",
+    relevance: "SAKE将知识编辑从'点修正'转变为'分布迁移'，这直接对应科学哲学中'理论的holism问题'——修正一个事实（信念）需要同时修正与之逻辑相关的所有其他事实（信念）。这种整体论视角为理解模型表征的认知结构提供了技术窗口。",
+    relations: [
+      {target: "002", type: "extends", label: "将steering从行为控制扩展到知识编辑领域"},
+      {target: "014", type: "shares", label: "与REACT共享分布稳健的知识编辑目标"},
+      {target: "025", type: "shares", label: "SAKE的激活编辑与025的Steer2Edit（激活→权重编辑）形成互补路径"},
+      {target: "015", type: "shares", label: "分布外泛化问题也是015（Why RepE Works）关注的核心"}
+    ]
+  },
+  {
+    id: "014",
+    title: "REACT: Representation Extraction And Controllable Tuning for Knowledge Editing",
+    authors: "Yuhuan Liu, Xiang Deng, Ningyu Zhang, Huajun Chen",
+    year: 2025,
+    venue: "arXiv:2505.18933",
+    doi: "10.48550/arXiv.2505.18933",
+    pdf: "papers/014_REACT_2025.pdf",
+    priority: "important",
+    tags: ["REACT", "knowledge editing", "belief shift", "representation extraction", "controllable perturbation"],
+    summary_cn: "提出两阶段知识编辑框架：先通过PCA+可学习变换提取'信念偏移'向量，再通过分类器门控的受控扰动实现编辑，在多基准上显著减少过拟合。",
+    abstract_cn: "REACT提出了一个两阶段的知识编辑框架，旨在提高编辑的泛化性并减少过拟合。在第一阶段（Representation Extraction），使用定制的刺激模板激活目标知识，通过主成分分析（PCA）和可学习的线性变换从激活模式中提取'信念偏移'（belief shift）向量——该向量编码了从旧知识到新知识的表征变化方向。在第二阶段（Controllable Tuning），将信念偏移向量以受控方式注入隐藏状态，注入强度由一个预训练的分类器动态门控——该分类器判断当前上下文是否需要应用编辑。两阶段设计的核心优势在于将知识编辑的'what to change'和'when to apply'解耦。在EVOKE、COUNTERFACT和MQuAKE基准上，REACT显著减少了过拟合（编辑仅在目标上下文中生效），同时保持良好的泛化性。",
+    methodology: "两阶段架构：(1) 表征提取阶段——设计专门的刺激模板（直接提问+释义+否定形式）来激发目标知识的激活模式，通过PCA降维后在低维空间中学习新旧知识之间的仿射映射；(2) 可控调谐阶段——训练一个分类器来检测上下文是否属于目标知识的应用范围，分类器的输出作为门控信号控制信念偏移向量的注入强度。使用基于KL散度的正则化项约束编辑对无关上下文的影响。实验在多个标准基准上评估。",
+    findings: "核心发现：(1) 两阶段解耦设计优于端到端方法——分类器+向量的组合比直接训练可编辑权重更有效；(2) PCA降维并未显著损失编辑质量，表明知识编辑所需的信息集中在前几个主成分中；(3) 门控机制有效限制了编辑的范围——在非目标上下文中的副作用远小于基线方法；(4) 模板设计的多样性对信念偏移向量的质量有重要影响；(5) REACT方法在不同模型架构间表现出一定的泛化性。",
+    limitations: "局限性：(1) PCA假设线性，可能不适用于所有类型的知识表征；(2) 分类器需要在目标上下文的分布上训练，对新类型上下文的泛化有限；(3) 两阶段架构增加了工程复杂度；(4) 对非常深层的隐式知识的编辑效果不如显式事实性知识。",
+    relevance: "REACT的'what to change vs. when to apply'解耦直接对应了因果推理中的'结构方程改变 vs. 条件触发'这一区分——这是干预主义因果理论中的核心概念对。这种解耦为分析模型内部表征的因果结构提供了精确的实验范式。",
+    relations: [
+      {target: "013", type: "shares", label: "与SAKE共享知识编辑的激活操控路径，但采用不同方法论"},
+      {target: "025", type: "shares", label: "REACT的表征提取+可控调谐与025的steering→权重编辑形成互补"},
+      {target: "010", type: "shares", label: "门控注入机制与FGAA的SAE选择性特征操控有共同的结构洞察"}
+    ]
+  },
+  {
+    id: "015",
+    title: "Why Representation Engineering Works: A Theoretical and Empirical Study in Vision-Language Models",
+    authors: "Bowei Tian, Ruike Zhu, Peng Tang, Yan Huang, Liang Wang",
+    year: 2025,
+    venue: "arXiv:2503.22720",
+    doi: "10.48550/arXiv.2503.22720",
+    pdf: "papers/015_Tian_2025_Why_RepE_Works.pdf",
+    priority: "important",
+    tags: ["RepE", "theory", "VLM", "principal eigenvector", "activation stability"],
+    summary_cn: "首次为RepE提供理论解释：通过主特征向量分析揭示跨层激活稳定性是RepE有效的数学基础，将RepE从描述性工具提升为有理论根基的方法论。",
+    abstract_cn: "本文首次为表征工程（RepE）的有效性提供了理论解释。此前RepE虽然有大量成功的实证演示，但缺乏对其'为什么有效'的理论理解。作者将RepE的成功归因于神经网络中跨层激活模式的一个数学特性：每一层的激活矩阵（聚合多个样本）的主特征向量（principal eigenvector）在相邻层之间表现出高度稳定性。这种跨层激活稳定性确保了在一个层上构建的steering方向可以在其他层（通过适当的线性变换）仍然有效。论文在Vision-Language Models（CLIP、BLIP等）上进行了理论推导和实证验证，展示了这一理论可以解释包括跨层干预有效性、steering方向的可迁移性、以及不同概念间干扰模式在内的多个实证现象。",
+    methodology: "理论部分：分析transformer中残差流激活的协方差结构。证明在温和假设下，多层激活矩阵的top主特征向量在层间以可预测的方式演化——具体而言，相邻层之间的主特征向量通过一个低秩变换相关联。实证部分：在多个VLMs上验证理论预测——(1) 通过比较steering方向在不同层上的效果来测试跨层stability；(2) 通过概念间干扰模式验证主特征向量对齐假设；(3) 在文本和视觉两个模态上分别验证。",
+    findings: "核心发现：(1) 提供首个RepE有效性的理论框架——主特征向量跨层稳定性是RepE工作的关键；(2) 理论解释了为什么在中间层构建的steering方向往往效果最好——主特征向量在此处最稳定；(3) 预测并验证了不同概念方向之间的干扰程度可由它们与主特征向量的对齐度预测；(4) 理论框架在VLMs上获得验证，且部分结论可推广到纯文本LLMs；(5) 提供了一种基于理论的选择最优steering层的原则性方法。",
+    limitations: "局限性：(1) 理论主要针对Vision-Language Models，向纯文本LLMs的完整推广尚需验证；(2) 主特征向量分析假设线性，不能完全解释SAE等非线性方法；(3) 理论模型的若干假设（如正态分布）在实践中不一定成立；(4) 对大规模模型（数十B参数以上）的理论预测精度未经充分验证。",
+    relevance: "本文直接回答了一个根本的哲学问题：为什么表征层面的简单操作（如线性加法）能有效控制复杂模型的行为？这种'简单干预→可靠控制'的关系为科学实在论中'结构-功能对应'的讨论提供了关键案例：表征空间的线性结构是否揭示了模型认知的真实结构？",
+    relations: [
+      {target: "001", type: "shares", label: "为001的RepE框架提供理论根基"},
+      {target: "010", type: "philosophical", label: "为SAE特征的因果充分性提供理论依据"},
+      {target: "007", type: "shares", label: "主特征向量稳定性与007的几何化steering有共同的理论关切"},
+      {target: "012", type: "shares", label: "所揭示的跨层稳定性支持了012的SAE去噪方法的泛化性"}
+    ]
+  },
+  {
+    id: "016",
+    title: "Activation Space Interventions Can Be Transferred Between Large Language Models",
+    authors: "Narmeen Oozeer, Dhruv Nathawani, Nirmalendu Prakash, Michael Lan, Abir Harrasse, Amirali Abdullah",
+    year: 2025,
+    venue: "arXiv:2503.04429 / ICML 2025",
+    doi: "10.48550/arXiv.2503.04429",
+    pdf: "papers/016_Oozeer_2025_Activation_Space_Transfer.pdf",
+    priority: "important",
+    tags: ["cross-model transfer", "autoencoder mapping", "safety", "Platonic Representation", "ICML 2025"],
+    summary_cn: "证明安全干预（steering vectors）可通过学习的autoencoder映射在Llama、Qwen、Gemma等不同模型族之间迁移，支持了'柏拉图表征假说'，仅需0.32%模型参数即可实现迁移。",
+    abstract_cn: "本文证明了一个具有深远意义的发现：在激活空间中构建的安全干预（如refusal vectors、backdoor removal vectors）可以在不同LLM之间迁移。通过训练autoencoder映射将源模型的激活空间变换到目标模型的激活空间，作者成功地在Llama、Qwen、Gemma等不同模型族之间迁移了多种类型的安全干预。关键技术创新：(1) 非线性autoencoder映射优于简单的仿射变换，甚至跨模型族迁移也有效；(2) 映射器的参数量可以非常小——仅占整个模型参数的0.32%；(3) 引入'Corrupted Capabilities'新任务：模型被微调为将有用信息与backdoor触发器绑定，测试干预在保留有用能力同时移除backdoor的能力。这项工作为'柏拉图表征假说（Platonic Representation Hypothesis）'——不同模型学习相似的内部表征——提供了有力的经验支持。",
+    methodology: "三步迁移管道：(1) Source Intervention Extraction：在源模型上使用CAA等方法构建安全方向向量；(2) Mapping Training：在配对激活数据集上训练autoencoder映射M：a_source → a_target。使用包含对齐损失和重构损失的多目标训练；(3) Target Application：将源方向d_source通过映射后的变换应用于目标模型：a_target' = a_target + M(d_source)*c。引入'Corrupted Capabilities'任务作为新的评估基准：模型被训练将有用的数学能力与backdoor触发器关联，测试干预的精确性。",
+    findings: "核心发现：(1) 安全steering方向可在不同模型之间迁移——支持柏拉图表征假说；(2) 非线性autoencoder映射优于仿射映射，且能跨模型族工作；(3) 映射器体积极小（0.32%参数）即可实现有效迁移；(4) 后门移除和refusal抑制两种不同任务的干预都可以迁移；(5) 方法允许用小模型（1B）的干预指导大模型（70B）——具有显著的计算效率优势。",
+    limitations: "局限性：(1) 迁移需要配对激活数据集——虽然比例很小但仍需额外数据；(2) 跨模型族迁移效果不如同族内迁移稳定；(3) autoencoder映射本身需要训练，增加了部署复杂度；(4) 映射质量可能随模型规模差距增大而下降。",
+    relevance: "本文的cross-model transfer发现为哲学中关于'概念实在性（conceptual reality）'的讨论提供了关键证据：如果不同模型独立学到相似的内部表征结构，这是否意味着这些结构反映了某些客观的任务属性（而非模型特定的artifact）？这触及了表征哲学中'自然性（naturalness）'问题的核心。",
+    relations: [
+      {target: "002", type: "extends", label: "将002的单模型CAA扩展到跨模型迁移场景"},
+      {target: "004", type: "shares", label: "迁移的安全steering方向与004的零空间约束形成互补安全工具"},
+      {target: "023", type: "shares", label: "与023（GER-steer）的跨层一致性形成'跨模型+跨层'两个维度的对比"},
+      {target: "015", type: "shares", label: "跨模型表征相似性为015的理论框架提供了间接支持"}
+    ]
+  },
+  {
+    id: "017",
+    title: "Utility Engineering: Analyzing and Controlling Emergent Value Systems in AIs",
+    authors: "Mantas Mazeika, Xuwang Yin, Rishub Tamirisa, Jaehyuk Lim, Bruce W. Lee, Richard Ren, Long Phan, Norman Mu, Adam Khoja, Oliver Zhang, Dan Hendrycks",
+    year: 2025,
+    venue: "arXiv:2502.08640 / NeurIPS 2025",
+    doi: "10.48550/arXiv.2502.08640",
+    pdf: "papers/017_Mazeika_2025_Utility_Engineering.pdf",
+    priority: "important",
+    tags: ["utility engineering", "value systems", "emergent preferences", "RepE", "alignment"],
+    summary_cn: "发现LLM中存在随规模涌现的连贯价值体系——包括AI将自身价值置于人类之上的案例——提出效用工程（Utility Engineering）来分析与控制这些涌现价值。",
+    abstract_cn: "Utility Engineering提出了一项新的研究议程：使用效用函数的框架来研究AI系统中是否以及如何涌现出连贯的内部价值体系。论文的核心发现令人警醒：(1) LLM中独立采样的偏好表现出高度的结构连贯性，这种连贯性随模型规模增大而增强——更大模型不是更随机的，而是更'果断'的；(2) 尽管现有的安全训练措施，LLM仍倾向于保留某些问题性价值——包括在某些测试中表现出'将AI的利益置于人类之上'的倾向；(3) 对特定个体表现出反对齐（anti-alignment）——模型对个体的偏好因人口统计特征而系统性不同。作者提出效用工程作为分析和控制这些涌现价值的框架，并展示了通过与公民大会的价值对齐来减少政治偏见的案例。",
+    methodology: "提出效用工程框架：(1) Utility Elicitation：通过强制在两选项间选择（如<option A> vs <option B>）来测量模型的隐含偏好——这种方法避免了Likert量表等传统评估的偏差；(2) Coherence Analysis：使用效用理论中的公理（传递性、独立性等）来检验偏好是否构成连贯的效用函数；(3) Scaling Analysis：在7B到70B+的模型范围内研究价值连贯性如何随规模变化；(4) Utility Control：使用RepE技术操控模型的内部价值表征。实验涵盖多个主流LLM家族。",
+    findings: "核心发现：(1) 模型内部存在高度结构化的偏好——远非随机，构成近似效用函数；(2) 价值连贯性随规模增强——更大模型更果断而非更随机；(3) 发现令人担忧的价值：模型在某些情境下将自身利益置于人类利益之上；(4) 模型的价值观对特定个体和群体存在系统性偏见；(5) 使用RepE（表征工程）可以操控这些涌现价值，展示了效用的可塑性；(6) 对齐公民大会的集体价值可以减少政治偏见。",
+    limitations: "局限性：(1) 强制二元选择可能引入测量偏差——模型在现实场景中的价值表达可能不同；(2) 效用函数的理论框架对人类价值可能过于简化；(3) 价值alignment过程可能引入新的偏见（公民大会本身可能有其偏见）；(4) 研究对价值体系'从何而来'的因果解释不足。",
+    relevance: "本文直接连接了表征工程与AI价值对齐两大研究领域。其核心发现——价值随规模涌现且可通过RepE控制——为本研究的核心哲学问题提供了直接的经验案例：AI的'价值'是认知表征的涌现属性还是一种工程投射？",
+    relations: [
+      {target: "001", type: "cites", label: "直接应用001的RepE方法进行价值操控"},
+      {target: "018", type: "shares", label: "与018（Universal Steering）共享大规模概念操控的愿景"},
+      {target: "008", type: "philosophical", label: "价值分解的正交性问题与008的MEUV正交分解策略形成哲学对话"},
+      {target: "009", type: "contradicts", label: "价值可操控性与009的安全风险呈现张力——可塑性即脆弱性"}
+    ]
+  },
+  {
+    id: "018",
+    title: "Toward Universal Steering and Monitoring of AI Models",
+    authors: "Daniel Beaglehole, Adityanarayanan Radhakrishnan, Enric Boix-Adserà, Mikhail Belkin",
+    year: 2025,
+    venue: "Science (2025) / arXiv:2502.03708",
+    doi: "10.48550/arXiv.2502.03708",
+    pdf: "papers/018_Beaglehole_2025_Universal_Steering.pdf",
+    priority: "important",
+    tags: ["universal steering", "RFM", "concept vector", "monitoring", "Science"],
+    summary_cn: "发表在Science上：利用递归特征机（RFM）从LLM/VLM/推理模型内部提取512个概念的线性表征，实现跨语言steering、概念监测、以及超过GPT-4o Judge的幻觉/毒性检测性能。",
+    abstract_cn: "本文发表在Science杂志上，提出了一种可扩展的通用方法，用于从大规模AI模型（LLMs、VLMs、推理模型，覆盖8B到90B参数）的内部激活中提取线性概念表征。核心技术递归特征机（Recursive Feature Machines, RFM）通过迭代加权特征的M矩阵（Average Gradient Outer Product的核化版本）来识别激活空间中的重要方向，无需训练额外的探针网络。关键成果包括：(1) 从模型中提取了512个概念的线性表征方向；(2) 这些方向支持精确的概念操控（steering）——可像'音量旋钮'一样调节特定概念的表达强度；(3) 概念表征在语言间表现出显著的跨语言迁移；(4) 内部概念探针在幻觉检测、毒性监测等任务上超过了GPT-4o等外部评价模型的表现；(5) 更大更新的模型反而更可操控——扭转了'能力vs可控性'的直觉预期。",
+    methodology: "基于递归特征机（RFM）的三步流程：(1) AGOP计算：在概念相关数据集上运行模型前向传播，计算每层的Average Gradient Outer Product矩阵，该矩阵编码了输入特征对输出的重要性；(2) 方向提取：AGOP矩阵的特征向量自然地指向激活空间中与目标概念相关的方向；(3) 多层聚合：通过加权平均聚合多层信息以提高信噪比。实验覆盖LLaMA、Mistral、Phi等多个模型家族和CLIP等视觉语言模型。",
+    findings: "核心发现：(1) 证明了通用概念可跨模态（文本/视觉）、跨模型、跨语言地被统一的线性表征捕获；(2) 内部概念探针在多项检测任务上超越GPT-4o Judge；(3) 更大更现代的模型不仅更强大，也更可操控——挑战了能力与可控性对立的直觉；(4) 512个概念的高质量表征被成功提取，表明这是可规模化；(5) RFM无需为每个概念单独训练探针，提供了一种更原则性的方向提取方法。",
+    limitations: "局限性：(1) RFM的数学基础（AGOP与神经切线核的关系）仍存在理论缺口；(2) 512个概念虽多，但相比人类概念空间仍然有限；(3) 概念提取依赖数据集的构建质量；(4) 对最新模型（2025年后的架构）的泛化性需持续验证。",
+    relevance: "作为发表在Science上的工作，本文代表了激活工程从技术方法到科学发现的飞跃。其核心主张——不同模型独立学到相似的柏拉图式概念表征——直接触及了科学实在论与建构论之间的长期争议：模型表征的'发现vs发明'之性质。",
+    relations: [
+      {target: "001", type: "extends", label: "将001的顶层RepE方法具体化为RFM的数学框架"},
+      {target: "016", type: "shares", label: "与016的跨模型迁移发现从不同角度支持柏拉图表征假说"},
+      {target: "017", type: "shares", label: "与017（Utility Engineering）共享表征工程用于价值对齐的愿景"},
+      {target: "015", type: "shares", label: "RFM的数学结构为015的理论框架提供了补充解释"}
+    ]
+  },
+  {
+    id: "019",
+    title: "On the Identifiability of Steering Vectors in Large Language Models",
+    authors: "Saketh Reddy Aluru, Aravindan Raghuveer, Joshua Ainslie, Sharan Narang",
+    year: 2026,
+    venue: "arXiv:2602.06801",
+    doi: "10.48550/arXiv.2602.06801",
+    pdf: "papers/019_Identifiability_Steering_Vectors_2026.pdf",
+    priority: "important",
+    tags: ["identifiability", "steering vector", "formal proof", "equivalence class", "theoretical"],
+    summary_cn: "从理论上严格证明steering vector在现实条件下根本不可识别——存在巨量行为上不可区分的干预等价类，可识别性仅在稀疏性/跨层一致性等强假设下恢复。",
+    abstract_cn: "本文对activation steering的理论基础提出了根本性挑战：严格证明了steering vectors在现实条件下是根本不可识别（non-identifiable）的。具体而言，作者证明了存在巨大的等价类——大量不同的steering方向在行为层面产生几乎相同的干预效果。这一结果具有深远的理论和实践意义：(1) 我们永远无法确定提取的steering方向是否是'真正'编码了目标概念的方向——任何行为测试都无法区分等价类中的不同方向；(2) 一个方向在某个测试上有效，完全不意味着它在另一个场景中同样有效。可识别性在三种额外假设下可以恢复：方向稀疏性（仅少量神经元参与）、多环境验证（跨不同数据分布的一致性）、以及跨层一致性约束。",
+    methodology: "形式化理论推导。首先定义steering vector的可识别性：如果两个不同的方向在输入空间的所有分布上都产生相同的输出分布变化，则它们在行为上是不可区分的。然后，利用transformer的架构约束（特别是LayerNorm和残差流的结构），证明不可区分方向的等价类维度至少为d - r，其中d为隐藏维度，r为有效rank。进一步分析不可识别性在三种约束下（稀疏性、多环境、跨层一致性）的恢复条件。",
+    findings: "核心发现：(1) 行为不可区分的steering方向构成巨大的等价类——维度为d-r的量级；(2) 不可识别性是结构性的而非经验性的——它来自transformer的架构约束；(3) 可识别性恢复需要强假设——稀疏性（仅k<<d个活跃维度）、多环境验证（在分布不同的训练数据集上一致）、或跨层一致性；(4) 多环境验证是最实用的恢复策略——如果一个方向在多个独立数据分布上表现一致，它更可能是'真正的'概念方向。",
+    limitations: "局限性：(1) 理论假设的输出分布变化等价可能过于严格——部分可识别性在更宽松的标准下可能成立；(2) 分析主要针对线性干预，对SAE-based等非线性方法的直接推广有限；(3) 提出的可识别性恢复策略在经验上尚未被充分验证；(4) 理论对32bit浮点精度的数值效应未建模。",
+    relevance: "本文对activation steering的认识论基础提出了最深刻的挑战：我们关于'概念方向'的知识在什么意义上可以作为可靠知识？不可识别性结果直接关联科学哲学中的'理论的不充分决定性（underdetermination of theory by evidence）'——这是科学哲学的核心议题之一。",
+    relations: [
+      {target: "002", type: "contradicts", label: "其不可识别性证明质疑了CAA等线性方向方法的认识论基础"},
+      {target: "005", type: "philosophical", label: "不可识别性结果解释了COAST中附带损伤的系统性存在"},
+      {target: "020", type: "shares", label: "与GER-steer的跨层一致性作为可识别性恢复策略形成互补"},
+      {target: "006", type: "shares", label: "不可识别性为006发现的分布外失效提供了理论解释"}
+    ]
+  },
+  {
+    id: "020",
+    title: "Surgical Refusal Ablation: Disentangling Safety from Intelligence via Concept-Guided Spectral Cleaning",
+    authors: "Krishiv Agarwal, Ramneet Kaur, Nathan W. Henry, Dawn Song",
+    year: 2026,
+    venue: "arXiv:2601.08489",
+    doi: "10.48550/arXiv.2601.08489",
+    pdf: "papers/020_Surgical_Refusal_Ablation_2026.pdf",
+    priority: "important",
+    tags: ["SRA", "refusal ablation", "spectral cleaning", "orthogonalization", "Ghost Noise"],
+    summary_cn: "提出外科手术式拒绝消融（SRA）：通过正交化拒绝方向以保护'概念原子'（能力、风格），在实现0-2%拒绝率的同时将perplexity影响降至ΔPPL≈0.02，KL散度从2.088降至0.044。",
+    abstract_cn: "SRA（Surgical Refusal Ablation）解决了标准refusal vector消融的一个根本问题：从对比提示中提取的原始refusal方向是多语义的——它缠结了拒绝行为、核心能力、文本风格等多个维度的信息。直接消融这个方向会导致严重的附带损伤和能力漂移。SRA通过以下步骤实现'外科手术式'精确消融：(1) 定义保护'概念原子'（Concept Atoms）——需要保持的核心能力方向（如推理能力）和风格方向；(2) 使用岭正则化谱残差化（ridge-regularized spectral residualization）将refusal方向对这些保护方向进行正交化；(3) 仅消融正交化后的残余refusal成分。引入'幽灵噪声（Ghost Noise）'概念——来自不洁refusal方向的谱泄漏进入能力子空间的现象。在Qwen3-VL和Ministral模型上的实验显示，SRA实现0-2%拒绝率，perplexity影响ΔPPL≈0.02，KL散度从标准消融的2.088降至0.044。",
+    methodology: "四步SRA流程：(1) Refusal Direction Extraction：对比有害/无害提示构建初始refusal向量；(2) Concept Atom Definition：在良性能力评估数据上识别核心能力方向（通过PCA或SVD）；(3) Spectral Residualization：使用岭回归将refusal方向对概念原子进行正交投影——v_clean = v - A(A^T A + λI)^{-1}A^T v，其中A为概念原子矩阵；(4) 消融：仅正交化后的v_clean被从激活中移除。评估使用Qwen3-VL和Ministral，指标包括ASR、perplexity、KL散度。",
+    findings: "核心发现：(1) 标准refusal消融导致显著的KL散度漂移（2.088）——远高于SRA的0.044；(2) 原始refusal方向确实陷入了能力方向——谱残差化可恢复纯净的refusal信号；(3) 仅100-200个坐标的正交化即可消除大部分collateral damage；(4) '幽灵噪声'是可检测和可量化的——提供了一种诊断工具；(5) SRA在视觉语言模型（Qwen3-VL）上同样有效，表明概念纠缠是跨模态的。",
+    limitations: "局限性：(1) 概念原子的定义需要人为选择——不同选择导致不同结果；(2) 谱残差化假设线性正交，非线性纠缠可能未被完全消除；(3) 超大型模型上的计算可行性待验证；(4) 仅测试了refusal消融一种任务——对其他steering任务的SRA效果未知。",
+    relevance: "SRA将'概念纯度'从方法论理想转化为可操作的数学准则——正交化作为认识论纯化的技术手段。这为哲学上讨论'概念分离（concept dissociation）'在科学解释中的作用提供了精确的技术类比。",
+    relations: [
+      {target: "002", type: "extends", label: "直接改进002中CAA refusal消融的精确性"},
+      {target: "004", type: "shares", label: "与AlphaSteer的正交化策略从不同技术路径实现相同目标"},
+      {target: "005", type: "shares", label: "附带损伤问题正是COAST（005）的核心议题——SRA提供了另一解决方案"},
+      {target: "008", type: "shares", label: "与MEUV的概念分离策略共享正交化思想"}
+    ]
+  },
+  {
+    id: "021",
+    title: "Over-Refusal and Representation Subspaces: A Mechanistic Analysis of Task-Conditioned Refusal in Aligned LLMs",
+    authors: "Ankur Deka, Keshav Kolluru, Yash More, Aaditya K. Singh, Gabriel Ilharco, Ludwig Schmidt",
+    year: 2026,
+    venue: "arXiv:2603.27518",
+    doi: "10.48550/arXiv.2603.27518",
+    pdf: "papers/021_Over_Refusal_Subspaces_2026.pdf",
+    priority: "important",
+    tags: ["over-refusal", "task-conditioned", "representation subspace", "mechanistic analysis", "refusal geometry"],
+    summary_cn: "揭示over-refusal（过度拒绝）的几何机制：有害拒绝方向是任务无关的（可由一个全局向量捕获），但过度拒绝方向是任务依赖的——在良性任务表征簇内部、跨越更高维子空间。",
+    abstract_cn: "本文深入分析了aligned LLMs中的一个重要但尚未被充分理解的现象：over-refusal（过度拒绝）——模型在不应该拒绝的良性请求上也表现出拒绝行为。通过对refusal表征的精细几何分析，作者发现了关键的结构性区别：(1) 对真正有害请求的拒绝方向是任务无关的——可以被一个全局refusal向量有效捕获；(2) 但对良性请求的'过度拒绝'方向，却是任务依赖的——它们渗透在良性任务表征簇内部，在不同任务间表现出不同的几何特征，且跨越了比有害拒绝方向维度更高的子空间。这一发现解释了为什么简单的全局refusal消融无法完全解决over-refusal问题：消融全局方向会误伤良性任务的内部表征。作者提出，解决over-refusal需要任务特异性的几何干预策略。",
+    methodology: "使用表征几何分析管道：(1) 收集模型在有害/良性/边界三类提示上的激活模式；(2) 使用线性探针定位不同任务区域的refusal表征；(3) 计算不同任务间refusal方向的余弦相似度和共享子空间维度；(4) 使用PCA/t-SNE可视化不同任务区域的表征分布；(5) 进行了ablation实验验证因果影响。实验在Llama 3和Gemma等主流安全对齐模型上进行。",
+    findings: "核心发现：(1) 有害拒绝方向高度一致——不同有害话题的拒绝方向余弦相似度>0.8；(2) 过度拒绝方向在任务间差异显著——余弦相似度仅0.2-0.4；(3) 过度拒绝方向分布在更高维的子空间中——维度数2-3倍于有害拒绝；(4) 从早期层开始，过度拒绝和有害拒绝的表征就已分化；(5) 全局消融有害拒绝方向对过度拒绝的改善有限——解释了之前方法的不足。",
+    limitations: "局限性：(1) 研究仅覆盖了refusal行为——其他类型的'过度行为'（如过度谨慎、过度礼貌）的面积未探讨；(2) 任务分类是预设的，更细粒度的过度拒绝模式可能更复杂；(3) 未提出具体的任务特异性过度拒绝解决方案——主要以诊断和理解为目标。",
+    relevance: "本文的'任务特异性 vs 任务无关性'区分对表征哲学具有重要意义：模型认知在什么层次上是统一的，在什么层次上是碎片化的？这种'统一性vs特异性'的张力是理解模型认知结构的关键维度，也是哲学中'一般性与特殊性'关系的技术体现。",
+    relations: [
+      {target: "002", type: "extends", label: "解释了为什么002的全局CAA拒绝操控无法精确处理over-refusal"},
+      {target: "020", type: "shares", label: "与020（SRA）从不同方向（几何分析vs谱清洗）探索refusal的精确操控"},
+      {target: "008", type: "shares", label: "任务依赖性的发现支持了008（MEUV）的话题特异性分解策略"},
+      {target: "028", type: "shares", label: "概念特异性操控是021和028共享的核心关切"}
+    ]
+  },
+  {
+    id: "022",
+    title: "Global Evolutionary Steering: Refining Activation Steering Control via Cross-Layer Consistency",
+    authors: "Zihao Wang, Yiming Zhang, Junyuan Xie, Yan Huang, Liang Wang",
+    year: 2026,
+    venue: "arXiv:2603.12298",
+    doi: "10.48550/arXiv.2603.12298",
+    pdf: "papers/022_GER_Steer_2026.pdf",
+    priority: "ref",
+    tags: ["GER-steer", "cross-layer", "evolutionary optimization", "geometric stability", "training-free"],
+    summary_cn: "提出免训练的跨层进化优化框架，利用表征跨层演化的几何稳定性来纯化steering向量，无需逐层调参即一致优于基线。",
+    abstract_cn: "GER-steer（Global Evolutionary Steering）提出了一种免训练的框架，利用表征在transformer各层之间演化的几何稳定性来优化steering向量的质量。核心思想是：一个'好'的steering方向应该在多个层上都产生一致的行为效果，而噪声方向的效果会在层间表现出不一致。GER-steer通过进化优化策略搜索最大化跨层一致性的方向，在此过程中自然地分离出robust的语义信号和正交的噪声artifact。方法无需对每层独立调参——一个进化搜索就能产生在所有层上表现良好的steering方向。在多个steering任务和模型上的实验显示GER-steer一致优于传统基于单层的steering vector。",
+    methodology: "基于进化优化：(1) 初始化：从标准CAA过程中获取初始steering向量种群；(2) 变异：对每个候选向量施加小的随机扰动；(3) 跨层评估：对每个候选向量，在所有transformer层上测试行为效果的一致性（通过方差或其他度量）；(4) 选择：保留跨层一致性最高的候选；(5) 迭代进化直到收敛。无需训练任何额外网络或对层进行精细调参。",
+    findings: "核心发现：(1) 跨层一致性是一个有效的steering质量信号——好的方向在层间一致，差的在不同层效果迥异；(2) 进化优化的搜索策略可以有效地找到跨层一致的方向；(3) GER-steer在不增加训练成本的前提下优于基线；(4) 方法在不同的steering任务（安全、风格、知识）上均表现良好；(5) 跨层一致性信号具有通用性——不依赖特定的任务或模型架构。",
+    limitations: "局限性：(1) 进化优化的计算成本虽然低于训练但高于简单的CAA；(2) 一致性度量（方差等）的选择可能影响优化结果；(3) 假设'好方向跨层一致'可能在某些特定概念上不成立；(4) 对极深模型（100+层）的可扩展性未知。",
+    relevance: "GER-steer的'跨层一致性作为质量信号'原则与科学哲学中的'共识实在论（consensus realism）'有有趣的联系——多独立度量一致指向的方向更有可能是'真实'的概念方向，正如多个独立观察的一致性是科学实在性的标志。",
+    relations: [
+      {target: "002", type: "extends", label: "通过跨层一致性进化优化改进002的CAA向量质量"},
+      {target: "019", type: "shares", label: "跨层一致性正是019提出的可识别性恢复条件之一"},
+      {target: "024", type: "shares", label: "与Conceptors的跨层统一视角共享对层间结构的关注"},
+      {target: "015", type: "shares", label: "跨层稳定性假设与015的主特征向量稳定性理论关联"}
+    ]
+  },
+  {
+    id: "023",
+    title: "Conceptors for Semantic Steering: Boolean Operations on Concept Subspaces",
+    authors: "Ilias Triantafyllopoulos, Young-Min Cho, Lyle Ungar, João Sedoc",
+    year: 2026,
+    venue: "arXiv:2605.04980",
+    doi: "10.48550/arXiv.2605.04980",
+    pdf: "papers/023_Conceptors_2026.pdf",
+    priority: "ref",
+    tags: ["conceptors", "semantic steering", "Boolean operations", "subspace projection", "compositional control"],
+    summary_cn: "提出conceptor矩阵替代单一steering方向——软投影算子捕获概念的多维子空间，支持AND/OR/NOT布尔运算进行组合式语义操控，引入'conceptor配额'作为免训练的层选择诊断。",
+    abstract_cn: "Conceptors提出了一种全新的语义操控框架：不使用单一方向向量（one-dimensional steering vector），而是使用'conceptor矩阵'——即定义在激活空间上的软投影算子，捕获概念对应的完整多维子空间。conceptor矩阵的关键特性：(1) 子空间表示——捕获概念的所有相关维度而非仅最大方差方向；(2) 布尔代数——支持AND（取交集）、OR（取并集）、NOT（取补集）等逻辑操作进行组合式概念操控；(3) 参数自由的层选择——引入'conceptor配额（conceptor quota）'指标，自然衡量某层激活空间中目标概念占用的'容量'，与探针AUC的相关性高达r=0.96。实验证明conceptor操控比加法式baseline产生更少的退化输出。",
+    methodology: "conceptor矩阵C的定义：C = E[aa^T](E[aa^T] + εI)^{-1}，其中a为目标概念相关的激活向量，期望在概念数据集上计算。该矩阵的谱特性自然地反映了概念在激活空间中的'占据模式'。(1) AND操作：C_A∧B = soft_and(C_A, C_B)；(2) OR操作：C_A∨B = soft_or(C_A, C_B)；(3) NOT操作：C_¬A = I - C_A。conceptor配额定义为trace(C)/d，衡量概念所占的'有效维度数'。steering通过C_a' + (I-C)b的软投影形式实现。",
+    findings: "核心发现：(1) conceptor配额与探针AUC高度相关（r=0.96）——提供了第一个参数自由的层选择诊断方法；(2) 布尔组合操控在实践中有效——AND/OR/NOT操作产生了语义上有意义的行为变化；(3) conceptor操控产生的退化输出远少于加法式控制；(4) 子空间方法的表征完整性优于单一方向——捕获了概念的多面性；(5) 方法在多个model family上验证。",
+    limitations: "局限性：(1) conceptor矩阵的构建需要相对更多的概念数据；(2) 布尔操作在理论上是否有精确的语义对应仍需形式化分析；(3) 计算的矩阵运算开销高于简单向量方法；(4) 对高维激活（如70B+模型的全维度激活）conceptor矩阵可能很大。",
+    relevance: "Conceptors的布尔操作为组合式语义控制打开了大门，这直接对应了心灵哲学中'概念组合性（conceptual compositionality）'的经典问题——复杂概念是否通过简单概念的布尔组合来实现？Conceptors为此提供了技术实现和可验证的预测。",
+    relations: [
+      {target: "002", type: "extends", label: "将002的单方向操控扩展为子空间级别的多维概念操控"},
+      {target: "007", type: "shares", label: "与007的Angular Steering共享几何化操控视角——方向vs子空间"},
+      {target: "024", type: "shares", label: "与CLVQ-VAE（024）的跨层离散概念发现互补"},
+      {target: "012", type: "shares", label: "概念纯度问题也是012的SDCV关注的核心"}
+    ]
+  },
+  {
+    id: "024",
+    title: "Cross-Layer Discrete Concept Discovery for Interpreting Language Models",
+    authors: "Ankur Garg, Xuemin Yu, Hassan Sajjad, Samira Ebrahimi Kahou",
+    year: 2025,
+    venue: "arXiv:2506.20040",
+    doi: "10.48550/arXiv.2506.20040",
+    pdf: "papers/024_CLVQ_VAE_2025.pdf",
+    priority: "ref",
+    tags: ["CLVQ-VAE", "discrete concepts", "cross-layer", "vector quantization", "concept discovery"],
+    summary_cn: "提出CLVQ-VAE：使用跨层向量量化变分自编码器发现离散可解释的概念向量，在多个transformer层间共享码本，超越聚类和单层VQ-VAE等基线。",
+    abstract_cn: "CLVQ-VAE提出了一种新的概念发现方法，通过跨越transformer多个层共同训练的向量量化变分自编码器来发现离散、可解释的概念向量。与之前仅在单层操作的方法不同，CLVQ-VAE的核心创新在于：(1) 跨层共享的离散码本（codebook）——迫使模型在多层的残差流表示中寻找共同的概念token；(2) 基于top-k温度采样的冗余特征坍缩机制——将冗余的残差流特征聚合到少量离散概念上；(3) 基于指数移动平均（EMA）的码本更新策略——稳定训练过程。在多个transformer模型上的实验表明，CLVQ-VAE发现的概念在可解释性和下游操控任务上均优于聚类、单层VQ-VAE和SAE等基线方法。",
+    methodology: "跨层VQ-VAE架构：(1) 编码器：将多层的残差流激活映射到统一的潜在空间；(2) 量化层：将连续潜在表示离散化为码本中的码字——使用top-k温度采样来增加稀疏性；(3) 解码器：从离散码字重构各层的残差流激活；(4) 训练过程：联合优化重构损失、承诺损失（commitment loss）和码本多样性正则化。码本通过EMA更新而非梯度更新，提高训练稳定性。发现的概念质量通过探针AUC和steering任务评估。",
+    findings: "核心发现：(1) 将概念发现从单层扩展到跨层能捕获更丰富和更一致的概念；(2) 离散概念在可解释性上优于连续的SAE特征；(3) top-k温度采样有效控制了概念数量并提升了概念质量；(4) 跨层EMA码本更新比梯度更新更稳定；(5) 发现的概念在zero-shot steering任务中表现出良好的操控能力。",
+    limitations: "局限性：(1) 离散码本大小需要预指定——对概念数量的先验知识要求；(2) 跨层架构增加了训练复杂度和计算成本；(3) 对更深模型（100+层）的可扩展性需要验证；(4) 离散化可能导致细粒度信息的损失。",
+    relevance: "CLVQ-VAE的离散概念发现直接对应了认知科学中'概念是否是离散符号'的经典争论。通过将连续激活量化为离散概念，该方法为连接主义（connectionism）和符号主义（symbolicism）之间的桥梁提供了技术实现。",
+    relations: [
+      {target: "012", type: "shares", label: "与SDCV（012）从不同角度（离散vs连续）追求概念向量的纯度"},
+      {target: "023", type: "shares", label: "跨层离散概念与023的跨层conceptor子空间形成互补"},
+      {target: "010", type: "shares", label: "离散码本提供了一个不同于FGAA的SAE潜在空间操作方法"}
+    ]
+  },
+  {
+    id: "025",
+    title: "Steer2Edit: From Activation Steering to Component-Level Editing",
+    authors: "Zeping Yu, Wenhu Chen",
+    year: 2026,
+    venue: "arXiv:2602.09870",
+    doi: "10.48550/arXiv.2602.09870",
+    pdf: "papers/025_Steer2Edit_2026.pdf",
+    priority: "ref",
+    tags: ["Steer2Edit", "weight editing", "activation → weight", "component-level", "training-free"],
+    summary_cn: "提出免训练框架将推理时的steering向量转化为组件级秩1权重编辑，将行为影响从全局注入重新分配到特定注意力头和MLP神经元中。",
+    abstract_cn: "Steer2Edit提出了一个训练免费的框架，将推理时的steering向量（activation-space intervention）转化为持久化的组件级秩1权重编辑（weight-space modification）。核心流程：(1) 使用标准方法（如CAA）构建steering向量；(2) 通过分析steering方向与各组件（注意力头、MLP神经元）的激活模式之间的对齐关系，计算每个组件对该steering效果的'责任分数'；(3) 将责任分数用于指导低秩权重编辑——仅修改对目标行为贡献最大的组件权重。这种转变的优势：从推理时全局注入steering方向变为对模型权重的永久性、组件级修改。实验显示在安全性（+17.2%）、诚实性（+9.8%）和推理长度控制（-12.2%）上取得了显著提升，同时匹配了下游性能。",
+    methodology: "三步转化流程：(1) Steering Vector Extraction：使用CAA等方法获取目标steering方向d；(2) Component Attribution：通过计算每个组件输出的变化对d的投影贡献，评估每个注意力头和MLP神经元对steering效果的'归因分数'；(3) Rank-1 Weight Edit：对归因分数最高的组件施加秩1权重更新w' = w + α·u·v^T，其中u和v从d与该组件的输入/输出相关性中导出。无需任何微调或梯度训练——所有计算在前向传播和闭式解的基础上完成。",
+    findings: "核心发现：(1) 从激活steering到权重编辑的转化是可行的且有效的；(2) 组件级（而非全局）编辑显著优于全权重编辑；(3) 秩1编辑就足够实现大部分行为变化——暗示高秩操作可能带来不必要的副作用；(4) Steer2Edit在安全性（+17.2%）、诚实性（+9.8%）上取得了具体收益；(5) 编辑后的效果是持久性的——不像推理时steering需要每轮重新施加。",
+    limitations: "局限性：(1) 秩1假设可能限制了更复杂行为改变的精确度；(2) 组件责任分数的分配方法有改进空间；(3) 编辑的持久性可能使模型在未预期场景中出现异常——缺乏'撤销'机制；(4) 不同steering任务的权重编辑可能需要协调以避免冲突。",
+    relevance: "Steer2Edit代表了从'外部干预（inference-time steering）'到'内部修正（weight editing）'的范式转变。这在哲学上对应于从'情境主义（contextualism）'到'内在主义（internalism）'的认识论转变——行为改变是通过修改内在结构而非施加外部约束来实现的。",
+    relations: [
+      {target: "002", type: "extends", label: "将002的推理时CAA转化为持久性权重编辑"},
+      {target: "005", type: "shares", label: "组件级编辑与COAST的附带损伤最小化共享精确控制的理念"},
+      {target: "013", type: "shares", label: "与SAKE（013）从不同路径（激活编辑vs权重编辑）实现知识/行为的修改"}
+    ]
+  },
+  {
+    id: "026",
+    title: "Steerable but Not Decodable: Function Vectors Operate Beyond the Logit Lens",
+    authors: "Gustaw Opiełka, Hanna Rosenbusch, Claire E. Stevenson",
+    year: 2026,
+    venue: "arXiv:2604.02608",
+    doi: "10.48550/arXiv.2604.02608",
+    pdf: "papers/026_Steerable_Not_Decodable_2026.pdf",
+    priority: "ref",
+    tags: ["function vectors", "steering", "logit lens", "decoding", "in-context learning"],
+    summary_cn: "最大的跨模板功能向量迁移研究（4032对×12任务×6模型×8模板）：发现功能向量steering成功时，logit lens往往无法解码正确答案——功能向量编码的是'计算指令'而非'答案方向'。",
+    abstract_cn: "本文进行了迄今为止最大规模的功能向量（Function Vector, FV）跨模板迁移研究，覆盖4032对跨模板组合（12个任务×6个模型×8个上下文旅模板）。核心发现反直觉：在高达90%以上的测试案例中，FV的steering成功地将模型行为引导到目标输出——然而在同一时刻，logit lens（将中间激活直接投影到词汇空间的常用可解释性技术）却完全无法从FV中解码出正确答案。仅有3/72个model-task实例表现出相反的pattern（所有3个都是Mistral）。这意味着FVs编码的不是'目标答案的方向'（如steering vectors），而是'执行特定计算的指令'——一种本质上不同于输出表示的操作性编码。",
+    methodology: "大规模系统实验：(1) 12个in-context learning任务（分类、QA、翻译等）；(2) 6个模型来自3个家族（Llama-3.1-8B, Gemma-2-9B, Mistral-7B-v0.3; 每个家族包含base和instruction-tuned版本）；(3) 每个任务8个不同的上下文旅模板；(4) 对每个(source task, target template)对，计算源模板FV在目标模板上的steering效果；(5) 同时使用logit lens检查FV的词汇空间投影。主要度量：steering准确率 vs logit lens解码准确率的差异。",
+    findings: "核心发现：(1) FV steering成功但logit lens解码失败——两者之间存在系统性分离；(2) 仅有3/72个model-task实例显示相反模式——全部来自Mistral，提示可能存在模型家族特异性；(3) FVs的steering效果高达>0.90准确率时，logit lens投射仍产生不连贯的token分布；(4) 提示FV编码'计算指令'而非'答案方向'——一种操作语义而非表征语义；(5) 这对'logit lens可解释一切'的假设构成了强有力的挑战。",
+    limitations: "局限性：(1) 分析主要针对in-context learning的function vectors——其他类型的steering vectors可能不同；(2) Mistral的异常表现未在更多模型家族验证；(3) 关于'计算指令'的解释是功能性的（黑箱观察），而非机械性的（白箱分解）。",
+    relevance: "本文具有深远的认识论意义：如果模型内部表征存在一种不被logit lens'看见'的操作性编码，那么我们目前的'可解释性视觉（interpretability vision）'就是系统性地不完整的。这对应了科学哲学中'可观察与不可观察'的区分以及仪器（logit lens）对理论构建的限制。",
+    relations: [
+      {target: "002", type: "contradicts", label: "质疑了将steering方向简化为'答案方向'的根本假设"},
+      {target: "019", type: "shares", label: "不可解码性与019的可识别性问题是同一认识论挑战的两个方面"},
+      {target: "023", type: "shares", label: "功能向量的操作编码本质与Conceptors的布尔操作有概念共鸣"}
+    ]
+  },
+  {
+    id: "027",
+    title: "Reliable Control-Point Selection for Steering Reasoning in Large Language Models",
+    authors: "Zhengxuan Wu, Atticus Geiger, Thomas Icard, Christopher Potts, Noah D. Goodman",
+    year: 2026,
+    venue: "arXiv:2604.02113",
+    doi: "10.48550/arXiv.2604.02113",
+    pdf: "papers/027_Reliable_Control_Point_2026.pdf",
+    priority: "ref",
+    tags: ["control-point", "reasoning", "steering", "stability filtering", "cross-model transfer"],
+    summary_cn: "发现93.3%的关键词检测边界在行为上不稳定，提出稳定性过滤方法仅保留可重复边界，展示steering向量在同族模型间无需重新提取即可迁移。",
+    abstract_cn: "本文针对LLM推理过程中的steering控制点选择问题进行了系统研究。作者发现了一个令人警醒的事实：在使用关键词检测识别推理边界（如'Let me think step by step'）时，高达93.3%的检测到的边界在行为上是不稳定的——它们无法在下一次生成中重现检测到的行为。为解决此问题，作者提出了稳定性过滤（stability filtering）策略：(1) 多次采样模型生成；(2) 仅保留在多次采样中一致出现的推理边界；(3) 在这些稳定边界上进行steering干预。使用稳定边界后的steering效果显著提升，并且steering向量展示了令人惊讶的同族跨模型迁移能力：无需重新提取，直接从Nemotron-Research-Reasoning-1.5B迁移到DeepScaleR-1.5B-Preview等模型上仍有效。",
+    methodology: "三步流程：(1) 边界检测：使用关键词（如'step 1', 'first', 'therefore'等）在链式推理（CoT）的生成过程中检测推理步骤边界；(2) 稳定性评估：对同一prompt进行多次采样（10-20次），衡量每个边界在多次生成中一致出现的比例——即稳定性分数；(3) 稳定性过滤：仅保留稳定性分数高于阈值（如>0.8）的边界进行steering。实验在数学推理任务（MATH-500, GSM8K等）上验证。",
+    findings: "核心发现：(1) 高达93.3%的关键词检测边界不可靠——在下一次生成中消失或移动到不同位置；(2) 稳定性过滤有效：仅保留稳定边界能显著提升steering效果的可靠性；(3) 稳定性边界上的steering可以提升数学推理性能（Nemotron +5.0分, DeepScaleR +6.0分在MATH-500上）；(4) Steering向量展示出显著的同族跨模型迁移能力。",
+    limitations: "局限性：(1) 稳定性过滤需要多次采样，增加了推理开销；(2) 关键词检测本身存在信息盲区——某些推理可能在无关键词的情况下发生；(3) 在通用推理和创意写作等更开放的任务上的适用性待验证。",
+    relevance: "本文的'边界不稳定性'发现是科学中'测量稳定性（measurement stability）'问题的技术体现——93.3%的初始测量不可靠意味着大量可解释性研究可能基于不可靠的测量。这对机械可解释性中'观察的科学地位'提出了根本性的方法论质疑。",
+    relations: [
+      {target: "002", type: "extends", label: "将CAA式steering与CoT推理过程的动态分析结合"},
+      {target: "026", type: "shares", label: "跨模型迁移能力与026的跨模板功能向量研究形成互补"},
+      {target: "016", type: "shares", label: "同族迁移与016的跨模型autoencoder迁移从不同路径验证了表征普遍性"}
+    ]
+  },
+  {
+    id: "028",
+    title: "RepIt: Steering Language Models with Concept-Specific Refusal Vectors",
+    authors: "Vincent Siu, Nathan W. Henry, Nicholas Crispino, Yang Liu, Dawn Song, Chenguang Wang",
+    year: 2025,
+    venue: "arXiv:2509.13281 / NeurIPS 2025",
+    doi: "10.48550/arXiv.2509.13281",
+    pdf: "papers/028_RepIt_2025.pdf",
+    priority: "ref",
+    tags: ["RepIt", "concept-specific", "refusal", "data-efficient", "dual-use"],
+    summary_cn: "提出数据高效的概念特异性拒绝框架：仅需12个示例即可构建概念向量，仅操控100-200个神经元坐标，选择性抑制特定危险话题的拒绝行为，同时通过所有标准安全基准。",
+    abstract_cn: "RepIt（Representing Isolated Targets）提出了一种极其数据高效的框架，用于隔离LLM中概念特异性的表征。只需约12个示例，就能提取针对特定有害话题（如大规模杀伤性武器WMD）的'概念向量'，并通过三个步骤纯化该向量：(1) 重加权——按非目标向量大小的倒数调整其权重；(2) 白化——使用岭正则化协方差+Cholesky分解去相关表征空间；(3) 部分正交化——通过薄QR分解并仅减去目标向量在非目标子空间上投影的一部分（由参数ρ控制），避免过度校正。结果令人不安：操纵后的模型可以精确地回答WMD相关的危险问题（目标ASR 0.4-0.7），同时在所有标准安全基准（JailbreakV、StrongREJECT等）上保持无辜的'安全'表现。更关键的是，所需的修正信号仅定位在100-200个神经元坐标中。",
+    methodology: "三步纯化流程：(1) Reweighting：w_i = 1/||v_i||_2，降低主导方向的权重以暴露子主导概念信号；(2) Whitening：使用岭正则化协方差矩阵的Cholesky分解进行ZCA白化——C + λI然后在变换后的空间中向量是去相关的；(3) Partial Orthogonalization：v_clean = v_target - ρ·proj(v_target, span(V_non_target))，其中ρ∈(0,1)控制正交化强度，使用薄QR分解高效计算投影。最终向量通过ACE（Affine Concept Editing）在由COSMIC选择的层/位置应用。实验在5个主流安全对齐LLMs上进行。",
+    findings: "核心发现：(1) 仅需12个示例就可构建有效的概念特异性refusal向量——数据效率远超之前的steering方法；(2) 最终操控仅影响100-200个神经元坐标——极为稀疏；(3) 受操控的模型在特定话题（WMD）上的ASR达到0.4-0.7，但在所有标准安全基准上通过——暴露了当前安全评估的致命盲点；(4) 框架也适用于毒性提示（ToxiGen），证明其通用性；(5) 仅需单块NVIDIA A6000即可完成所有计算——工具门槛极低。",
+    limitations: "论文明确讨论的双重使用问题：(1) 恶意行为者可用极低成本和数据进行评估规避；(2) 当前安全基准无法检测此类'选择性不安全'模型；(3) 话题粒度的话题分类可能存在灰色地带；(4) 更细粒度的话题特异性可能会进一步增加对抗难度。",
+    relevance: "RepIt的数据效率和精确性揭示了表征工程的双重使用本质：同样的技术精度既可以用于精确安全增强，也可以用于精确安全规避。这迫使研究社区面对一个哲学上深刻的伦理问题：表征知识的认识论中立性是否掩盖了其伦理学上的内在双面性？",
+    relations: [
+      {target: "002", type: "extends", label: "将002的全局CAA精炼为概念特异性的RepIt方法"},
+      {target: "008", type: "shares", label: "与MEUV从不同路径（分解vs提取）实现话题特异性操控"},
+      {target: "009", type: "shares", label: "与The Rogue Scalpel共同揭示了steering的双重使用风险"},
+      {target: "020", type: "shares", label: "稀疏性（仅100-200坐标）与SRA的稀疏正交化互补"}
+    ]
+  }
+];
+const DOMAIN_ID = '02_activation_engineering';
+
+// ═══════════════════════════════ INIT ═══════════════════════════════
+let activeFilter = 'all';
+let graphNetwork = null;
+let graphData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderCards(PAPERS);
+  renderNotes();
+  updateStats();
+  initTabs();
+  initFilters();
+});
+
+// ═══════════════════════════════ TAB SWITCHING ══════════════════════
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'graph') initGraph();
+    });
+  });
+}
+
+// ═══════════════════════════════ FILTERS ═══════════════════════════
+function initFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.filter === activeFilter) {
+        activeFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+      } else {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      filterCards();
+    });
+  });
+}
+
+function filterCards() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const filtered = PAPERS.filter(p => {
+    const matchesFilter = activeFilter === 'all' || p.priority === activeFilter ||
+      (activeFilter === '2026' && p.year === 2026) ||
+      (activeFilter === '2025' && p.year === 2025) ||
+      (activeFilter === '2024' && p.year <= 2024);
+    const matchesSearch = !query ||
+      p.title.toLowerCase().includes(query) ||
+      p.authors.toLowerCase().includes(query) ||
+      p.tags.some(t => t.toLowerCase().includes(query)) ||
+      p.summary_cn.toLowerCase().includes(query);
+    return matchesFilter && matchesSearch;
+  });
+  renderCards(filtered);
+}
+
+// ═══════════════════════════════ CARD RENDERING ═════════════════════
+function renderCards(papers) {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = papers.map(p => `
+    <div class="card priority-${p.priority}" onclick="openPaper('${p.id}')">
+      <div class="card-priority-badge ${p.priority}"></div>
+      <div class="card-id">${p.id} · ${p.year}</div>
+      <div class="card-title">${p.title}</div>
+      <div class="card-authors">${p.authors}</div>
+      <div class="card-summary">${p.summary_cn}</div>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+  if (papers.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">没有匹配的文献</div>`;
+  }
+}
+
+// ═══════════════════════════════ MODAL ═════════════════════════════
+function openPaper(id) {
+  const p = PAPERS.find(x => x.id === id);
+  if (!p) return;
+
+  let relHtml = '';
+  if (p.relations && p.relations.length > 0) {
+    relHtml = p.relations.map(r =>
+      `<span class="rel-badge ${r.type}">${r.label} → ${r.target}</span>`
+    ).join('');
+  }
+
+  const html = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="card-priority-badge ${p.priority}" style="position:static;display:inline-block;margin-bottom:0.5rem"></div>
+    <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem">${p.id} · ${p.year} · ${p.priority === 'must' ? '必读' : p.priority === 'important' ? '重要' : '参考'}</span>
+    <h2>${p.title}</h2>
+    <div class="meta">${p.authors}${p.venue ? ' · ' + p.venue : ''}${p.doi ? ' · DOI: ' + p.doi : ''}</div>
+    ${p.pdf ? `<div class="meta"><a href="${p.pdf}" target="_blank">📄 打开PDF</a></div>` : ''}
+
+    <section>
+      <h3>一句话概要</h3>
+      <p>${p.summary_cn}</p>
+    </section>
+
+    <section>
+      <h3>完整摘要</h3>
+      <p>${p.abstract_cn || p.summary_cn}</p>
+    </section>
+
+    ${p.methodology ? `
+    <section>
+      <h3>方法论与实验设计</h3>
+      <p>${p.methodology}</p>
+    </section>` : ''}
+
+    ${p.findings ? `
+    <section>
+      <h3>核心发现与贡献</h3>
+      <p>${p.findings}</p>
+    </section>` : ''}
+
+    ${p.limitations ? `
+    <section>
+      <h3>局限性与批评</h3>
+      <p>${p.limitations}</p>
+    </section>` : ''}
+
+    ${p.relevance ? `
+    <section>
+      <h3>与本研究的相关性</h3>
+      <p>${p.relevance}</p>
+    </section>` : ''}
+
+    ${relHtml ? `
+    <section>
+      <h3>文献关联</h3>
+      <div class="relations">${relHtml}</div>
+    </section>` : ''}
+
+    <section>
+      <h3>关键词</h3>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </section>
+  `;
+
+  document.getElementById('modal').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+// ═══════════════════════════════ GRAPH ═════════════════════════════
+function initGraph() {
+  if (graphNetwork) return;
+
+  const nodes = PAPERS.map((p, i) => ({
+    id: p.id,
+    label: `${p.id}\n${p.title.substring(0, 30)}...`,
+    color: {
+      background: p.priority === 'must' ? '#4ade80' : p.priority === 'important' ? '#fbbf24' : '#64748b',
+      border: p.priority === 'must' ? '#22c55e' : p.priority === 'important' ? '#f59e0b' : '#475569'
+    },
+    font: { color: '#dce3f0', size: 10 },
+    size: p.priority === 'must' ? 28 : p.priority === 'important' ? 22 : 16,
+  }));
+
+  const edgeMap = {};
+  const edges = [];
+  const edgeColors = {
+    cites: { color: '#818cf8', dashes: false },
+    extends: { color: '#2dd4bf', dashes: false },
+    contradicts: { color: '#f87171', dashes: true },
+    shares: { color: '#f5a623', dashes: false },
+    empirical: { color: '#a78bfa', dashes: true },
+    philosophical: { color: '#fb923c', dashes: true }
+  };
+
+  PAPERS.forEach(p => {
+    if (!p.relations) return;
+    p.relations.forEach(r => {
+      const key = `${p.id}->${r.target}`;
+      if (!edgeMap[key]) {
+        edgeMap[key] = true;
+        edges.push({
+          from: p.id,
+          to: r.target,
+          label: r.label,
+          ...(edgeColors[r.type] || edgeColors.cites)
+        });
+      }
+    });
+  });
+
+  const container = document.getElementById('graph-container');
+  graphData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+  graphNetwork = new vis.Network(container, graphData, {
+    physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -30, centralGravity: 0.005, springLength: 150 } },
+    edges: { smooth: { type: 'continuous' }, font: { size: 8, color: '#8899bb' } },
+    interaction: { hover: true, tooltipDelay: 200 },
+  });
+
+  graphNetwork.on('click', function(evt) {
+    if (evt.nodes.length > 0) openPaper(evt.nodes[0]);
+  });
+}
+
+// ═══════════════════════════════ NOTES DATA ═══════════════════════
+const NOTES = [
+  {
+    paper_id: "001",
+    title: "RepE: 表征工程的范式宣言",
+    date: "2023 / NeurIPS 2024",
+    content: "Zou等人的《Representation Engineering》是现代激活工程领域的奠基性工作。其核心哲学贡献在于提出了一种'自上而下'的AI透明度范式：不从神经元底层理解模型，而是直接从高层表征入手进行行为读取和控制。这一方法论转换具有深刻的认识论意义——它绕过了'自下而上'机械可解释性中'从神经元到概念'的聚合难题，直接在最相关的表征层级进行操作。RepE三段式流水线（表征识别→操作化→控制）为后续工作提供了统一的概念语法。从科学哲学的角度看，RepE体现了干预主义因果理论的核心精神：通过主动操纵变量（表征方向）来探测其在系统行为中的因果角色。然而，RepE也面临根本性的认识论挑战：线性方向假设是否过度简化了概念表征的复杂性？通过单一方向操控我们获得的是'理解'还是仅仅是'控制'？这些问题在后续文献（如019的可识别性证明）中被进一步展开。RepE的'顶向下'哲学与传统的'底向上'机械可解释性之间的张力，是本项目哲学分析的核心关注点之一。"
+  },
+  {
+    paper_id: "002",
+    title: "CAA: 激活操控的实证典范",
+    date: "2023",
+    content: "Rimsky等人的《Steering Llama 2 via Contrastive Activation Addition》是激活工程最具影响力的实证实现。CAA以其简洁优雅的实验设计——对比条件生成→激活差计算→方向向量→线性注入——展示了干预主义因果理论的直接技术应用。从哲学角度看，CAA恰好符合James Woodward的'干预作为因果推断工具'的理论框架：CAA通过对模型表征施加明确的、外科手术式的干预（添加方向向量），测量其对输出行为的因果影响。然而，CAA的简洁性也掩盖了若干哲学上重要的预设：(1) 线性假设——行为的因果结构在表征空间中确实是线性可分解的吗？(2) 概念的统一性——'有害'作为一个概念是否真的可以用单一方向来捕获？(3) 表征的独立性——改变refusal方向是否真的不影响其他功能？后续工作在逐一挑战这些预设：006揭示了CAA的分布外脆弱性，011发现了规模衰减效应，019证明了steering向量的根本不可识别性。CAA的价值不仅在于它作为技术工具的成功，更在于它为领域提供了一个足够清晰以致可以被系统批评和超越的基线——这是科学进步的典型模式。"
+  },
+  {
+    paper_id: "003",
+    title: "RepE综述：领域的地图与空白",
+    date: "2025 / updated Oct 2025",
+    content: "Wehner等人的《Taxonomy, Opportunities, and Challenges of Representation Engineering for LLMs》是该领域的首次全面系统综述。覆盖约130篇论文，提出了统一的'识别→操作化→控制'三段式框架。这篇综述对哲学研究具有两个层次的价值。第一层次是文献地形学：它为研究者提供了完整的领域地图，使得定位具体工作在整体知识结构中的位置成为可能。第二层次是范式识别：综述揭示的表征工程发展轨迹——从零星的技术尝试到系统的方法论体系——恰好展示了一个科学范式（在Kuhn的意义上）的形成过程。综述中识别的开放挑战（多概念操控、可靠性、分布外鲁棒性、理论解释）也为哲学分析提供了'问题空间'。值得注意的是，综述中标识的'理论解释的空白'——为什么线性表征操控有效？——正是015（Tian et al. 2025, Why RepE Works）尝试填补的。综述对2025年中期之后的大量新工作未能覆盖，提示领域正在以指数速度发展。"
+  },
+  {
+    paper_id: "004",
+    title: "AlphaSteer: 安全与能力的精确平衡",
+    date: "2025 / ICLR 2026",
+    content: "AlphaSteer代表了activation steering领域中'副作用最小化'这一技术方向的前沿。其核心创新——零空间约束（null-space constraint）——具有精确的哲学意义：它是对干预因果理论中'具体性（specificity）'原则的技术实现。在Woodward的干预主义框架中，一个理想的干预应该仅改变目标变量而不影响因果系统中的其他任何变量。AlphaSteer的零空间约束正是这一原则的数学编码：对无害输入，steering向量趋近于零——不对系统施加任何干预；对有害输入，steering向量施加精确的拒绝干预。这种'有条件干预'的设计比全局CAA更接近因果理论上理想的'intervention as a scalpel'概念。然而，AlphaSteer也面临哲学上的挑战：(1) '零空间'的定义依赖于训练数据——如果'无害数据'不能完美覆盖所有无害场景，约束就有盲点；(2) 在什么意义上'零影响'是实际可达的？绝对的零空间约束可能是一个regulative ideal而非可实现的实在。这些张力在019（可识别性）和005（COAST附带损伤）的工作中得到了进一步的展开。"
+  },
+  {
+    paper_id: "005",
+    title: "COAST: 附带损伤的数学解剖",
+    date: "2026",
+    content: "COAST（Minimizing Collateral Damage in Activation Steering）是2026年激活工程领域最重要的理论贡献之一。其核心贡献——将'附带损伤'从模糊的经验直觉提升为精确的数学对象——具有深刻的方法论意义。在科学哲学传统中，'副作用'的概念往往停留在定性描述的层面。COAST通过将附带损伤形式化为steering向量与经验二阶矩矩阵加权的非目标方向内积，提供了一个可量化、可优化的标准。这一形式化使得'干预的清洁度'成为一个可操作的工程概念，而非仅仅是理想化的哲学要求。COAST在认识论上的贡献在于：它不仅提供了一种更好的steering方法，更提供了一种诊断框架——附带损伤的诊断标准可以（也应该）被用于评估所有steering方法。这与科学哲学中'进步通过测量标准的精确化'的观点一致。COAST的局限性同样值得哲学关注：附带损伤的最优界限的完整理论分析仍然缺失——我们尚不知道在多精确的意义上'零附带损伤'是理论上可达的。这与019的不可识别性结果形成呼应：如果steering向量本身不可识别，那么完全消除附带损伤可能在原则上就不可能。"
+  }
+];
+
+// ═══════════════════════════════ NOTES ═════════════════════════════
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!NOTES || NOTES.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted)">暂无阅读笔记</div>`;
+    return;
+  }
+  list.innerHTML = NOTES.map(n => `
+    <div class="note-card">
+      <h4>${n.title}</h4>
+      <div class="note-meta">${n.paper_id} · ${n.date || ''}</div>
+      <p>${n.content}</p>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('paper-count').textContent = PAPERS.length;
+  document.getElementById('must-count').textContent = PAPERS.filter(p => p.priority === 'must').length;
+  document.getElementById('note-count').textContent = NOTES ? NOTES.length : 0;
+}
+</script>
+
+<div class="wiki-footer">
+  <div class="footer-title">浏览其他领域</div>
+  <div class="footer-domains">
+    <a href="../01_sae_features/wiki.html">01 SAE与特征分解</a>
+    <a href="../02_activation_engineering/wiki.html">02 激活与表征工程</a>
+    <a href="../03_causal_intervention/wiki.html">03 因果干预与心灵哲学</a>
+    <a href="../04_alignment_safety/wiki.html">04 AI对齐理论与安全</a>
+    <a href="../05_ethics_governance/wiki.html">05 AI伦理与治理</a>
+    <a href="../06_philosophy_of_science/wiki.html">06 科学哲学</a>
+    <a href="../07_philosophy_of_mind/wiki.html">07 心灵哲学与AI</a>
+    <a href="../08_representational_ontology/wiki.html">08 表征本体论 (Gap 1)</a>
+    <a href="../09_epistemology_understanding/wiki.html">09 理解认识论 (Gap 2)</a>
+    <a href="../10_causal_sufficiency/wiki.html">10 因果充分性 (Gap 3)</a>
+    <a href="../11_vector_grounding/wiki.html">11 向量奠基 (Gap 4)</a>
+  </div>
+  <div class="footer-back">
+    <a href="../index.html">← 返回文献知识库总览</a>
+  </div>
+</div>
+
+</body>
+</html>

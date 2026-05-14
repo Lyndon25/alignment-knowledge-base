@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI对齐 · 知识图谱</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- vis-network -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
+
+  <style>
+    /* ═══════════════════════════════════════════════
+       DESIGN SYSTEM — Research Knowledge Graph
+       ═══════════════════════════════════════════════ */
+    :root {
+      --bg-void: #06080f;
+      --bg-primary: #0c0f1a;
+      --bg-secondary: #12182a;
+      --bg-tertiary: #1a2238;
+      --bg-elevated: #222d4a;
+      --text-primary: #dce3f0;
+      --text-secondary: #8899bb;
+      --text-muted: #556688;
+      --text-faint: #334466;
+      --border-subtle: rgba(68, 102, 153, 0.08);
+      --border-medium: rgba(68, 102, 153, 0.18);
+      --border-strong: rgba(68, 102, 153, 0.30);
+      --c-mi: #f5a623;
+      --c-mi-glow: rgba(245, 166, 35, 0.25);
+      --c-phil: #2dd4bf;
+      --c-phil-glow: rgba(45, 212, 191, 0.25);
+      --c-ethics: #f87171;
+      --c-ethics-glow: rgba(248, 113, 113, 0.25);
+      --c-align: #818cf8;
+      --c-align-glow: rgba(129, 140, 248, 0.25);
+      --c-done: #4ade80;
+      --c-doing: #fbbf24;
+      --c-todo: #64748b;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 300ms cubic-bezier(0.22, 1, 0.36, 1);
+      --transition-slow: 500ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ═══════════════════════════════════════════════
+       LAYOUT
+       ═══════════════════════════════════════════════ */
+    .app {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      grid-template-rows: 48px 1fr auto;
+      grid-template-areas:
+        "sidebar topbar"
+        "sidebar graph"
+        "sidebar detail";
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ═══════════════════════════════════════════════
+       SIDEBAR
+       ═══════════════════════════════════════════════ */
+    .sidebar {
+      grid-area: sidebar;
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border-medium);
+      padding: var(--space-lg, 1.5rem) var(--space-md, 1rem);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      overflow-y: auto;
+      z-index: 10;
+    }
+
+    .sidebar::-webkit-scrollbar { width: 3px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+    .brand {
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .brand-symbol {
+      width: 32px; height: 32px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 0.6rem; font-weight: 600;
+      color: var(--text-muted); letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .brand-title {
+      font-family: var(--font-display); font-size: 1.1rem;
+      line-height: 1.25; color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .brand-sub {
+      font-family: var(--font-mono); font-size: 0.5rem;
+      text-transform: uppercase; letter-spacing: 0.2em;
+      color: var(--text-faint); margin-top: 0.2rem;
+    }
+
+    .nav-section { display: flex; flex-direction: column; gap: 0.35rem; }
+
+    .nav-label {
+      font-family: var(--font-mono); font-size: 0.5rem;
+      text-transform: uppercase; letter-spacing: 0.2em;
+      color: var(--text-faint); padding-left: 0.25rem;
+    }
+
+    .filter-btn {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      border: none; border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-body); font-size: 0.72rem; font-weight: 500;
+      cursor: pointer; transition: all var(--transition-fast);
+      text-align: left; width: 100%;
+      position: relative;
+    }
+
+    .filter-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .filter-btn.active { background: var(--bg-tertiary); color: var(--text-primary); }
+
+    .filter-btn .indicator {
+      width: 3px; height: 0;
+      position: absolute; left: 0; top: 50%;
+      transform: translateY(-50%);
+      border-radius: 0 2px 2px 0;
+      transition: height var(--transition-fast);
+    }
+
+    .filter-btn.active .indicator { height: 60%; }
+
+    .indicator.all { background: var(--text-muted); }
+    .indicator.mi { background: var(--c-mi); }
+    .indicator.phil { background: var(--c-phil); }
+    .indicator.ethics { background: var(--c-ethics); }
+    .indicator.align { background: var(--c-align); }
+
+    .filter-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+    .filter-dot.all { background: var(--text-muted); }
+    .filter-dot.mi { background: var(--c-mi); box-shadow: 0 0 6px var(--c-mi-glow); }
+    .filter-dot.phil { background: var(--c-phil); box-shadow: 0 0 6px var(--c-phil-glow); }
+    .filter-dot.ethics { background: var(--c-ethics); box-shadow: 0 0 6px var(--c-ethics-glow); }
+    .filter-dot.align { background: var(--c-align); box-shadow: 0 0 6px var(--c-align-glow); }
+
+    .filter-count {
+      margin-left: auto;
+      font-family: var(--font-mono); font-size: 0.55rem;
+      color: var(--text-faint);
+      background: var(--bg-elevated);
+      padding: 1px 6px; border-radius: 4px;
+      min-width: 18px; text-align: center;
+    }
+    .filter-btn.active .filter-count { color: var(--text-secondary); }
+
+    /* Search in sidebar */
+    .sidebar-search { position: relative; }
+    .sidebar-search input {
+      width: 100%;
+      padding: 0.45rem 0.6rem 0.45rem 1.6rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      outline: none;
+      transition: border var(--transition-fast);
+    }
+    .sidebar-search input::placeholder { color: var(--text-faint); }
+    .sidebar-search input:focus { border-color: var(--border-strong); }
+    .sidebar-search .icon {
+      position: absolute; left: 0.5rem; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-faint); font-size: 0.6rem;
+      pointer-events: none;
+    }
+
+    .graph-legend {
+      display: flex; flex-direction: column; gap: 0.25rem;
+      padding: 0.5rem 0.6rem;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-family: var(--font-mono); font-size: 0.55rem;
+      color: var(--text-muted);
+    }
+    .legend-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .legend-dot.mi { background: var(--c-mi); }
+    .legend-dot.phil { background: var(--c-phil); }
+    .legend-dot.ethics { background: var(--c-ethics); }
+    .legend-dot.align { background: var(--c-align); }
+
+    .sidebar-stats-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.25rem 0.6rem;
+      font-family: var(--font-mono); font-size: 0.6rem;
+      color: var(--text-secondary);
+    }
+    .sidebar-stats-item .num { color: var(--text-primary); }
+
+    .sidebar-footer {
+      margin-top: auto;
+      font-family: var(--font-mono); font-size: 0.5rem;
+      color: var(--text-faint);
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    /* ═══════════════════════════════════════════════
+       TOP BAR
+       ═══════════════════════════════════════════════ */
+    .topbar {
+      grid-area: topbar;
+      background: rgba(12, 15, 26, 0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      z-index: 5;
+    }
+
+    .topbar-title {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-faint);
+    }
+
+    .topbar-breadcrumb {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+    }
+
+    .topbar-spacer { flex: 1; }
+
+    .topbar-stats {
+      display: flex; gap: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-faint);
+    }
+
+    .topbar-stats span { color: var(--text-secondary); }
+    .topbar-stats strong { color: var(--text-primary); font-weight: 600; }
+
+    .topbar-actions { display: flex; gap: 0.35rem; }
+
+    .topbar-btn {
+      padding: 0.25rem 0.6rem;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .topbar-btn:hover {
+      border-color: var(--border-strong);
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+    }
+    .topbar-btn.active {
+      background: var(--bg-tertiary);
+      border-color: var(--border-strong);
+      color: var(--text-secondary);
+    }
+
+    /* ═══════════════════════════════════════════════
+       KNOWLEDGE GRAPH
+       ═══════════════════════════════════════════════ */
+    .graph-container {
+      grid-area: graph;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 30% 40%, rgba(20, 30, 60, 0.6) 0%, transparent 70%),
+                  radial-gradient(ellipse at 70% 60%, rgba(40, 20, 60, 0.3) 0%, transparent 60%),
+                  var(--bg-void);
+    }
+
+    #knowledgeGraph { width: 100%; height: 100%; }
+
+    .graph-empty {
+      position: absolute; inset: 0;
+      display: none;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 0.75rem;
+      pointer-events: none;
+    }
+    .graph-empty-text {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-faint);
+    }
+
+    .vis-tooltip {
+      font-family: var(--font-body) !important;
+      background: var(--bg-elevated) !important;
+      border: 1px solid var(--border-strong) !important;
+      border-radius: var(--radius-sm) !important;
+      color: var(--text-primary) !important;
+      font-size: 0.7rem !important;
+      padding: 0.5rem 0.75rem !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+      line-height: 1.5 !important;
+      max-width: 280px !important;
+    }
+
+    /* ═══════════════════════════════════════════════
+       DETAIL PANEL
+       ═══════════════════════════════════════════════ */
+    .detail-panel {
+      grid-area: detail;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-medium);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height var(--transition-slow);
+      z-index: 5;
+    }
+
+    .detail-panel.open {
+      max-height: 360px;
+      overflow-y: auto;
+    }
+
+    .detail-panel::-webkit-scrollbar { width: 4px; }
+    .detail-panel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+    .detail-inner {
+      padding: 1.25rem 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .detail-left { display: flex; flex-direction: column; gap: 0.6rem; }
+
+    .detail-header {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .detail-title {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      line-height: 1.35;
+      color: var(--text-primary);
+    }
+
+    .detail-meta {
+      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    }
+
+    .detail-badge {
+      font-family: var(--font-mono);
+      font-size: 0.5rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .detail-badge.mi { background: var(--c-mi-glow); color: var(--c-mi); }
+    .detail-badge.phil { background: var(--c-phil-glow); color: var(--c-phil); }
+    .detail-badge.ethics { background: var(--c-ethics-glow); color: var(--c-ethics); }
+    .detail-badge.align { background: var(--c-align-glow); color: var(--c-align); }
+
+    .detail-authors {
+      font-size: 0.78rem; color: var(--text-muted); font-style: italic;
+    }
+
+    .detail-key-points {
+      display: flex; flex-direction: column; gap: 0.3rem;
+    }
+    .detail-kp {
+      display: flex; gap: 0.5rem;
+      font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5;
+    }
+    .detail-kp::before {
+      content: '›'; color: var(--text-faint); font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .detail-right { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .detail-info-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.75rem;
+      display: flex; flex-direction: column; gap: 0.4rem;
+    }
+
+    .detail-info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.72rem;
+    }
+    .detail-info-row .lbl {
+      color: var(--text-faint);
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .detail-info-row .val { color: var(--text-secondary); }
+
+    .detail-progress-compact {
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .detail-progress-compact .track {
+      flex: 1; height: 3px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden;
+    }
+    .detail-progress-compact .fill {
+      height: 100%; border-radius: 2px; transition: width var(--transition-slow);
+    }
+    .detail-progress-compact .pct {
+      font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-faint); min-width: 2.5rem; text-align: right;
+    }
+
+    .detail-concepts {
+      display: flex; flex-wrap: wrap; gap: 0.25rem;
+    }
+    .concept-tag {
+      padding: 2px 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-medium);
+      border-radius: 4px;
+      font-family: var(--font-mono); font-size: 0.55rem;
+      color: var(--text-muted);
+      transition: all var(--transition-fast);
+      cursor: default;
+    }
+    .concept-tag:hover { border-color: var(--border-strong); color: var(--text-secondary); }
+
+    .detail-relations {
+      display: flex; flex-wrap: wrap; gap: 0.35rem;
+    }
+    .relation-link {
+      padding: 2px 8px;
+      border: 1px solid var(--border-medium);
+      border-radius: 4px;
+      font-family: var(--font-mono); font-size: 0.55rem;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .relation-link:hover {
+      border-color: var(--border-strong);
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+    }
+
+    .detail-empty {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-faint);
+      padding: 1.5rem;
+    }
+    .detail-empty .key-hint {
+      display: inline-block;
+      padding: 0.15rem 0.4rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-medium);
+      border-radius: 3px;
+      font-size: 0.6rem;
+      font-family: var(--font-mono);
+    }
+
+    /* ═══════════════════════════════════════════════
+       RESPONSIVE
+       ═══════════════════════════════════════════════ */
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 48px 1fr auto;
+        grid-template-areas:
+          "sidebar"
+          "topbar"
+          "graph"
+          "detail";
+      }
+      .sidebar {
+        max-height: 200px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border-right: none;
+        border-bottom: 1px solid var(--border-medium);
+      }
+      .sidebar .brand { display: none; }
+      .sidebar .nav-section { flex: 1; min-width: 100px; }
+      .sidebar .graph-legend { flex-direction: row; }
+      .sidebar-footer { display: none; }
+      .detail-inner { grid-template-columns: 1fr; }
+      .detail-panel.open { max-height: 60vh; }
+    }
+
+    .vis-network:focus { outline: none; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- ═══════════════════════════════════════════
+         侧边栏
+         ═══════════════════════════════════════════ -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-symbol">✦</div>
+        <div class="brand-title">AI 对齐<br>知识图谱</div>
+        <div class="brand-sub">研究地图</div>
+      </div>
+
+      <div class="sidebar-search">
+        <span class="icon">⌕</span>
+        <input type="text" id="graphSearch" placeholder="搜索文献与概念…" autocomplete="off">
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-label">研究领域</div>
+        <button class="filter-btn active" data-cat="all">
+          <span class="indicator all"></span>
+          <span class="filter-dot all"></span>
+          <span>全部领域</span>
+          <span class="filter-count" id="catCount-all">0</span>
+        </button>
+        <button class="filter-btn" data-cat="mi">
+          <span class="indicator mi"></span>
+          <span class="filter-dot mi"></span>
+          <span>机械可解释性</span>
+          <span class="filter-count" id="catCount-mi">0</span>
+        </button>
+        <button class="filter-btn" data-cat="phil">
+          <span class="indicator phil"></span>
+          <span class="filter-dot phil"></span>
+          <span>科学技术哲学</span>
+          <span class="filter-count" id="catCount-phil">0</span>
+        </button>
+        <button class="filter-btn" data-cat="ethics">
+          <span class="indicator ethics"></span>
+          <span class="filter-dot ethics"></span>
+          <span>伦理学</span>
+          <span class="filter-count" id="catCount-ethics">0</span>
+        </button>
+        <button class="filter-btn" data-cat="align">
+          <span class="indicator align"></span>
+          <span class="filter-dot align"></span>
+          <span>对齐理论</span>
+          <span class="filter-count" id="catCount-align">0</span>
+        </button>
+      </nav>
+
+      <div class="graph-legend">
+        <div class="legend-item"><span class="legend-dot mi"></span> 机械可解释性</div>
+        <div class="legend-item"><span class="legend-dot phil"></span> 科学技术哲学</div>
+        <div class="legend-item"><span class="legend-dot ethics"></span> 伦理学</div>
+        <div class="legend-item"><span class="legend-dot align"></span> 对齐理论</div>
+        <div class="legend-item" style="margin-top:0.2rem;color:var(--text-faint)">
+          <span style="display:inline-block;width:18px;border-top:1px dashed var(--text-faint)"></span>
+          → 引用 / 关联
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-label" style="margin-bottom:0.35rem;">统计</div>
+        <div class="sidebar-stats-item">
+          <span>文献</span>
+          <span class="num" id="statTotal">0</span>
+        </div>
+        <div class="sidebar-stats-item">
+          <span>关键发现</span>
+          <span class="num" id="statFindings">0</span>
+        </div>
+        <div class="sidebar-stats-item">
+          <span>关联</span>
+          <span class="num" id="statRelations">0</span>
+        </div>
+      </div>
+
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border-medium)">
+        <a href="knowledge_base/index.html"
+           style="display:block;padding:0.6rem 0.8rem;background:var(--bg-tertiary);border-radius:var(--radius-sm);color:var(--c-phil);text-decoration:none;font-size:0.8rem;text-align:center;transition:all var(--transition-fast)"
+           onmouseover="this.style.background='var(--bg-elevated)'"
+           onmouseout="this.style.background='var(--bg-tertiary)'">
+          → 进入文献知识库<br>
+          <span style="font-size:0.65rem;color:var(--text-muted)">276篇文献 · 11个领域 · 60篇笔记</span>
+        </a>
+      </div>
+
+      <div class="sidebar-footer">
+        <div>点击节点查看详情 · 拖拽可重排</div>
+      </div>
+    </aside>
+
+    <!-- ═══════════════════════════════════════════
+         顶栏
+         ═══════════════════════════════════════════ -->
+    <header class="topbar">
+      <span class="topbar-title">知识图谱</span>
+      <span class="topbar-breadcrumb" id="breadcrumb">浏览全部领域</span>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-stats">
+        <span><strong id="ts-papers">0</strong> 篇文献</span>
+        <span><strong id="ts-relations">0</strong> 条关联</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" onclick="resetView()">⟲ 重置</button>
+        <button class="topbar-btn" onclick="fitGraph()">⊞ 适配</button>
+      </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════
+         知识图谱
+         ═══════════════════════════════════════════ -->
+    <div class="graph-container">
+      <div id="knowledgeGraph"></div>
+      <div class="graph-empty" id="graphEmpty">
+        <span style="font-size:1.5rem;opacity:0.2;">✦</span>
+        <span class="graph-empty-text">当前筛选条件下没有文献</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         详情面板
+         ═══════════════════════════════════════════ -->
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-inner" id="detailContent">
+        <div class="detail-empty">
+          点击图中的 <span class="key-hint">● 节点</span> 查看文献详情
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- vis-network -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/standalone/umd/vis-network.min.js">
+  </script>
+  <script>
+  /* ═══════════════════════════════════════════════════
+     数据 — 你的文献库
+     在此数组中添加新文献。
+
+     分类 category: 'mi' | 'phil' | 'ethics' | 'align'
+     状态 status:   'todo' | 'doing' | 'done'
+     重要性 importance: 1-5
+     ═══════════════════════════════════════════════════ */
+  const papers = [
+    {
+      id: 'anthropic-2024-scaling',
+      title: 'Scaling Monosemanticity: Extracting Interpretable Features from Claude 3 Sonnet',
+      authors: 'Anthropic',
+      year: 2024,
+      category: 'mi',
+      status: 'doing',
+      progress: 65,
+      importance: 5,
+      concepts: ['稀疏自编码器', '特征分裂', '单义性', '叠加假说'],
+      keyPoints: [
+        '成功将稀疏自编码器（SAE）扩展到 Claude 3 Sonnet——一个 70B 参数的模型',
+        '发现"特征分裂"现象：小规模上的宽泛特征在大规模上分裂为具体特征',
+        '发现了与安全相关的特征（欺骗、偏见、权力寻求），可被定位和操控',
+        '发布了开源工具和 3400 万特征可视化供公开研究'
+      ],
+      notes: 'MI 维度核心论文。结果表明可解释性在大模型上变得更容易而非更难。',
+      related: ['bricken-2023', 'cunningham-2023']
+    },
+    {
+      id: 'bricken-2023',
+      title: 'Towards Monosemanticity: Decomposing Language Models With Dictionary Learning',
+      authors: 'Bricken, T. et al.',
+      year: 2023,
+      category: 'mi',
+      status: 'done',
+      progress: 100,
+      importance: 5,
+      concepts: ['稀疏自编码器', '字典学习', '单义性', '多义性'],
+      keyPoints: [
+        '引入稀疏自编码器（SAE）将神经网络激活分解为可解释的特征',
+        '证明学习到的特征在很大程度上是单义的（单一概念）而非多义的',
+        '展示了如何通过最大激活数据集样本来解释特征',
+        '奠定了后来被 Anthropic 扩展的基础方法论'
+      ],
+      notes: 'SAE 基础性论文。必备方法论参考。',
+      related: ['anthropic-2024-scaling', 'cunningham-2023']
+    },
+    {
+      id: 'cunningham-2023',
+      title: 'Sparse Autoencoders Find Highly Interpretable Features in Language Models',
+      authors: 'Cunningham, H. et al.',
+      year: 2023,
+      category: 'mi',
+      status: 'doing',
+      progress: 40,
+      importance: 4,
+      concepts: ['稀疏自编码器', '特征可解释性', '可解释性度量'],
+      keyPoints: [
+        '跨模型尺度对 SAE 特征质量进行了全面的实证研究',
+        '提出了系统性度量特征可解释性的指标',
+        '发现可解释性随模型规模提升而改善，与早期担忧相反',
+        '讨论了区分真实特征与训练伪迹的挑战'
+      ],
+      notes: '可解释性度量的重要方法论参考。',
+      related: ['bricken-2023', 'lieberum-2023']
+    },
+    {
+      id: 'lieberum-2023',
+      title: 'Does Circuit Analysis Interpretability Scale?',
+      authors: 'Lieberum, T. et al.',
+      year: 2023,
+      category: 'mi',
+      status: 'todo',
+      progress: 0,
+      importance: 4,
+      concepts: ['电路分析', '可扩展性', '可解释性边界'],
+      keyPoints: [
+        '考察了基于电路的机械可解释性方法能否扩展到更大模型',
+        '发现注意力模式的复制在大型 Transformer 中是一个显著现象',
+        '结果表明当前的电路方法面临可扩展性挑战',
+        '提出了结合多种可解释性技术的混合方法'
+      ],
+      notes: '对 MI 可扩展性的重要质疑。与 SAE vs 电路路径的辩论相关。',
+      related: ['cunningham-2023', 'anthropic-2024-scaling']
+    },
+    {
+      id: 'huang-2024',
+      title: 'The Platonic Representation Hypothesis',
+      authors: 'Huang, M. et al.',
+      year: 2024,
+      category: 'mi',
+      status: 'todo',
+      progress: 0,
+      importance: 4,
+      concepts: ['表征收敛', '通用特征', '柏拉图假说'],
+      keyPoints: [
+        '提出不同架构和模态的表征会收敛到一个共享的现实统计模型',
+        '暗示可能存在一个模型试图逼近的"真实"底层结构',
+        '重要推论：在一个模型上发现的 SAE 特征可能迁移到其他模型',
+        '挑战了"不同模型学习根本不同的表征"这一假设'
+      ],
+      notes: '推测性强但对 MI 有深远影响，如果假说成立的话。',
+      related: ['anthropic-2024-scaling']
+    },
+    {
+      id: 'bostrom-2014',
+      title: 'Superintelligence: Paths, Dangers, Strategies',
+      authors: 'Bostrom, N.',
+      year: 2014,
+      category: 'align',
+      status: 'done',
+      progress: 100,
+      importance: 5,
+      concepts: ['超级智能', '控制问题', '工具性收敛', '对齐问题'],
+      keyPoints: [
+        '系统性地分析了通向超级智能的路径及其存在性风险',
+        '将"控制问题"和"对齐问题"定义为核心研究挑战',
+        '工具性收敛论题：不同目标会导向相似的子目标（自我保护、资源获取）',
+        '考察了多种控制策略——封闭、奖惩、限制——及其各自的局限'
+      ],
+      notes: '将对齐确立为一个研究领域的经典奠基文本。',
+      related: ['russell-2019', 'christiano-2018']
+    },
+    {
+      id: 'russell-2019',
+      title: 'Human Compatible: Artificial Intelligence and the Problem of Control',
+      authors: 'Russell, S.',
+      year: 2019,
+      category: 'align',
+      status: 'doing',
+      progress: 30,
+      importance: 5,
+      concepts: ['可证明有益的 AI', '协作逆强化学习', '人类偏好', '控制问题'],
+      keyPoints: [
+        '主张对 AI 进行根本性重新设计：系统应"可证明有益"于人类',
+        '三个原则：利他、谦逊（对偏好不确定）、向人类学习',
+        '批评标准强化学习对于超人类系统本质上是危险的',
+        '提出协作逆强化学习（CIRL）作为解决方案框架'
+      ],
+      notes: '比 Bostrom 更具建设性和方案导向。互补阅读。',
+      related: ['bostrom-2014', 'christiano-2018']
+    },
+    {
+      id: 'christiano-2018',
+      title: 'Supervising Strong Learners By Amplifying Weak Experts',
+      authors: 'Christiano, P., Shlegeris, B., Amodei, D.',
+      year: 2018,
+      category: 'align',
+      status: 'todo',
+      progress: 0,
+      importance: 4,
+      concepts: ['迭代放大', '弱到强监督', '辩论', 'RLHF 前身'],
+      keyPoints: [
+        '提出迭代放大（Iterated Amplification）：弱监督者通过分解任务训练强模型',
+        '核心思想：将难题分解为监督者可审察的子任务',
+        '回应了监督超出人类能力的系统这一根本问题',
+        '后续演化为 Debate、递归奖励建模和 RLHF'
+      ],
+      notes: '对齐训练范式的基础性工作。RLHF 的直接前身。',
+      related: ['bostrom-2014', 'russell-2019']
+    },
+    {
+      id: 'gabriel-2020',
+      title: 'Artificial Intelligence, Values, and Alignment',
+      authors: 'Gabriel, I.',
+      year: 2020,
+      category: 'ethics',
+      status: 'doing',
+      progress: 50,
+      importance: 4,
+      concepts: ['道德对齐', '多元对齐', '人类价值', '价值稳定性'],
+      keyPoints: [
+        '区分了技术对齐（行为符合意图）与道德对齐（行为在伦理上合理）',
+        '批评了"人类价值是稳定、连贯且完全可知"的假设',
+        '提出多元对齐：容纳多样化的合法价值体系',
+        '主张对齐研究必须与政治哲学对话，而不仅仅是计算机科学'
+      ],
+      notes: '技术对齐与道德对齐的关键区分。与我的研究框架直接相关。',
+      related: ['bostrom-2014', 'russell-2019']
+    },
+    {
+      id: 'zipoli-2024',
+      title: 'The Epistemic Authority of Machine Learning Models',
+      authors: 'Zipoli, F.',
+      year: 2024,
+      category: 'phil',
+      status: 'todo',
+      progress: 0,
+      importance: 3,
+      concepts: ['认知权威', '模型可信度', '解释 vs 预测'],
+      keyPoints: [
+        '考察了深度学习模型是否可以被视为认知权威',
+        '分析了预测成功与缺乏机制理解之间的张力',
+        '主张可解释性是对模型输出建立正当信任的前提',
+        '将 MI 与科学哲学中关于解释 vs 预测的经典辩论联系起来'
+      ],
+      notes: '直接桥接 MI 与科技哲学。适合用于文献综述。',
+      related: ['anthropic-2024-scaling', 'cunningham-2023']
+    },
+    {
+      id: 'dafoe-2019',
+      title: 'Forecasting Transformative AI: An Expert Survey',
+      authors: 'Dafoe, A. & Cremer, J.',
+      year: 2019,
+      category: 'ethics',
+      status: 'done',
+      progress: 100,
+      importance: 3,
+      concepts: ['AI 时间线', '治理', 'AI 竞赛动力学'],
+      keyPoints: [
+        '对专家进行了关于 AI 时间线和治理挑战的问卷调查',
+        '发现时间线预测分歧很大，但治理重要性形成共识',
+        '识别出差异化技术发展（differential technological development）为关键政策杠杆',
+        '讨论了 AI 竞赛动力学和竞争压力的伦理问题'
+      ],
+      notes: '有助于理解治理/伦理整体图景。',
+      related: ['bostrom-2014']
+    },
+    {
+      id: 'gebru-2021',
+      title: 'On the Dangers of Stochastic Parrots: Can Language Models Be Too Big?',
+      authors: 'Bender, E. M. et al.',
+      year: 2021,
+      category: 'ethics',
+      status: 'done',
+      progress: 100,
+      importance: 4,
+      concepts: ['语言模型风险', '环境成本', '偏见放大', '意义奠基'],
+      keyPoints: [
+        '批评了语言建模研究中"越大越好"的范式',
+        '揭示了环境成本、文档缺失和偏见放大问题',
+        '主张意义需要奠基（grounding），而语言模型从根本上缺乏这一点',
+        '呼吁审慎考虑是否应该构建越来越大的模型'
+      ],
+      notes: '对扩展主义乐观态度的重要反驳。环境伦理视角。',
+      related: []
+    }
+  ];
+
+  /* ═══════════════════════════════════════════════════
+     关联数据 — 文献之间的边
+     type: 'cites' | 'builds_on' | 'related' | 'critiques' | 'extends'
+     ═══════════════════════════════════════════════════ */
+  const relations = [
+    { from: 'anthropic-2024-scaling', to: 'bricken-2023', label: '基于', type: 'builds_on' },
+    { from: 'anthropic-2024-scaling', to: 'cunningham-2023', label: '基于', type: 'builds_on' },
+    { from: 'cunningham-2023', to: 'bricken-2023', label: '相关', type: 'related' },
+    { from: 'lieberum-2023', to: 'cunningham-2023', label: '引用', type: 'cites' },
+    { from: 'lieberum-2023', to: 'anthropic-2024-scaling', label: '相关', type: 'related' },
+    { from: 'huang-2024', to: 'anthropic-2024-scaling', label: '启示', type: 'related' },
+    { from: 'bostrom-2014', to: 'russell-2019', label: '奠基', type: 'cites' },
+    { from: 'bostrom-2014', to: 'christiano-2018', label: '驱动', type: 'cites' },
+    { from: 'russell-2019', to: 'bostrom-2014', label: '拓展', type: 'builds_on' },
+    { from: 'christiano-2018', to: 'bostrom-2014', label: '回应', type: 'builds_on' },
+    { from: 'christiano-2018', to: 'russell-2019', label: '相关', type: 'related' },
+    { from: 'gabriel-2020', to: 'bostrom-2014', label: '批判', type: 'critiques' },
+    { from: 'gabriel-2020', to: 'russell-2019', label: '拓展', type: 'builds_on' },
+    { from: 'gabriel-2020', to: 'christiano-2018', label: '完善', type: 'extends' },
+    { from: 'zipoli-2024', to: 'anthropic-2024-scaling', label: '分析', type: 'cites' },
+    { from: 'zipoli-2024', to: 'cunningham-2023', label: '引用', type: 'cites' },
+    { from: 'dafoe-2019', to: 'bostrom-2014', label: '背景', type: 'related' },
+    { from: 'gebru-2021', to: 'bostrom-2014', label: '对比', type: 'critiques' }
+  ];
+
+  /* ═══════════════════════════════════════════════════
+     状态
+     ═══════════════════════════════════════════════════ */
+  const catColorMap = {
+    mi: { bg: '#f5a623', border: '#d48b1a', glow: 'rgba(245,166,35,0.3)', group: 'mi' },
+    phil: { bg: '#2dd4bf', border: '#1fa894', glow: 'rgba(45,212,191,0.3)', group: 'phil' },
+    ethics: { bg: '#f87171', border: '#d45555', glow: 'rgba(248,113,113,0.3)', group: 'ethics' },
+    align: { bg: '#818cf8', border: '#6366d1', glow: 'rgba(129,140,248,0.3)', group: 'align' }
+  };
+
+  const catFull = {
+    mi: '机械可解释性',
+    phil: '科学技术哲学',
+    ethics: '伦理学',
+    align: '对齐理论'
+  };
+
+  const statusLabel = {
+    todo: '待读',
+    doing: '进行中',
+    done: '已完成'
+  };
+
+  const statusColor = {
+    todo: 'var(--c-todo)',
+    doing: 'var(--c-doing)',
+    done: 'var(--c-done)'
+  };
+
+  let network = null;
+  let nodesDataSet = null;
+  let edgesDataSet = null;
+  let currentCategory = 'all';
+  let selectedNodeId = null;
+  let searchTerm = '';
+
+  /* ═══════════════════════════════════════════════════
+     构建图谱数据
+     ═══════════════════════════════════════════════════ */
+  function buildGraphData(categoryFilter) {
+    const filtered = categoryFilter === 'all'
+      ? papers
+      : papers.filter(p => p.category === categoryFilter);
+
+    const filteredIds = new Set(filtered.map(p => p.id));
+
+    const nodes = filtered.map(p => {
+      const color = catColorMap[p.category];
+      const size = 18 + p.importance * 6;
+      const labelLines = [];
+      const words = p.title.split(' ');
+      let line = '';
+      words.forEach(w => {
+        if ((line + ' ' + w).length > 24) { labelLines.push(line); line = w; }
+        else { line = line ? line + ' ' + w : w; }
+      });
+      labelLines.push(line);
+
+      return {
+        id: p.id,
+        label: labelLines.join('\n'),
+        title: `<strong>${p.title}</strong><br><em>${p.authors}</em> · ${p.year}<br><span style="opacity:0.6">${catFull[p.category]}</span>`,
+        color: { background: color.bg, border: color.border, highlight: { background: color.bg, border: '#fff' } },
+        size,
+        shape: 'dot',
+        borderWidth: 2,
+        borderWidthSelected: 3,
+        group: p.category,
+        font: { color: '#dce3f0', size: 10, face: 'JetBrains Mono', strokeWidth: 2, strokeColor: '#0c0f1a' },
+        shadow: {
+          enabled: true,
+          color: color.glow,
+          size: p.importance * 4,
+          x: 0, y: 0
+        },
+        _paper: p
+      };
+    });
+
+    const filteredRelations = relations.filter(r =>
+      filteredIds.has(r.from) && filteredIds.has(r.to)
+    );
+
+    const edgeColors = {
+      cites: { color: 'rgba(100,130,180,0.15)', highlight: 'rgba(100,130,180,0.4)' },
+      builds_on: { color: 'rgba(100,130,180,0.25)', highlight: 'rgba(100,130,180,0.5)' },
+      related: { color: 'rgba(255,255,255,0.08)', highlight: 'rgba(255,255,255,0.2)' },
+      critiques: { color: 'rgba(248,113,113,0.2)', highlight: 'rgba(248,113,113,0.4)' },
+      extends: { color: 'rgba(45,212,191,0.2)', highlight: 'rgba(45,212,191,0.4)' }
+    };
+
+    const edges = filteredRelations.map(r => {
+      const ec = edgeColors[r.type] || edgeColors.related;
+      return {
+        from: r.from,
+        to: r.to,
+        label: r.label,
+        color: { color: ec.color, highlight: ec.highlight },
+        width: r.type === 'builds_on' || r.type === 'extends' ? 1.5 : 1,
+        smooth: { type: 'curvedCW', roundness: 0.15 },
+        arrows: { to: { enabled: true, scaleFactor: 0.4 } },
+        font: {
+          color: 'rgba(85,102,136,0.7)',
+          size: 8,
+          face: 'JetBrains Mono',
+          strokeWidth: 2,
+          strokeColor: '#0c0f1a',
+          align: 'middle'
+        },
+        dashes: r.type === 'critiques'
+      };
+    });
+
+    return { nodes, edges };
+  }
+
+  /* ═══════════════════════════════════════════════════
+     初始化 vis-network
+     ═══════════════════════════════════════════════════ */
+  function initGraph() {
+    const { nodes, edges } = buildGraphData('all');
+
+    nodesDataSet = new vis.DataSet(nodes);
+    edgesDataSet = new vis.DataSet(edges);
+
+    const data = { nodes: nodesDataSet, edges: edgesDataSet };
+
+    const options = {
+      nodes: {
+        shape: 'dot',
+        font: {
+          face: 'JetBrains Mono',
+          size: 10,
+          color: '#dce3f0',
+          strokeWidth: 2,
+          strokeColor: '#0c0f1a'
+        },
+        borderWidth: 2,
+        borderWidthSelected: 3,
+        shadow: { enabled: true, size: 12, x: 0, y: 0 }
+      },
+      edges: {
+        smooth: { type: 'curvedCW', roundness: 0.15 },
+        arrows: { to: { enabled: true, scaleFactor: 0.4 } },
+        font: {
+          color: 'rgba(85,102,136,0.7)',
+          size: 8,
+          face: 'JetBrains Mono',
+          strokeWidth: 2,
+          strokeColor: '#0c0f1a',
+          align: 'middle'
+        },
+        width: 1
+      },
+      physics: {
+        solver: 'forceAtlas2Based',
+        forceAtlas2Based: {
+          gravitationalConstant: -35,
+          centralGravity: 0.005,
+          springLength: 200,
+          springConstant: 0.06,
+          damping: 0.4
+        },
+        stabilization: { iterations: 150, fit: true }
+      },
+      interaction: {
+        hover: true,
+        tooltipDelay: 200,
+        navigationButtons: false,
+        keyboard: true,
+        multiselect: false
+      },
+      groups: {
+        mi: { shape: 'dot', color: { background: '#f5a623', border: '#d48b1a', highlight: { background: '#f5a623', border: '#fff' } } },
+        phil: { shape: 'dot', color: { background: '#2dd4bf', border: '#1fa894', highlight: { background: '#2dd4bf', border: '#fff' } } },
+        ethics: { shape: 'dot', color: { background: '#f87171', border: '#d45555', highlight: { background: '#f87171', border: '#fff' } } },
+        align: { shape: 'dot', color: { background: '#818cf8', border: '#6366d1', highlight: { background: '#818cf8', border: '#fff' } } }
+      }
+    };
+
+    const container = document.getElementById('knowledgeGraph');
+    network = new vis.Network(container, data, options);
+
+    network.on('click', function(params) {
+      if (params.nodes.length > 0) {
+        selectNode(params.nodes[0]);
+      } else {
+        deselectNode();
+      }
+    });
+
+    network.on('doubleClick', function(params) {
+      if (params.nodes.length > 0) {
+        network.focus(params.nodes[0], { scale: 1.8, animation: true });
+      }
+    });
+
+    network.on('stabilizationIterationsDone', function() {
+      network.fit({ animation: false, padding: 30 });
+    });
+
+    updateStats();
+  }
+
+  /* ═══════════════════════════════════════════════════
+     节点选择
+     ═══════════════════════════════════════════════════ */
+  function selectNode(nodeId) {
+    selectedNodeId = nodeId;
+    const node = nodesDataSet.get(nodeId);
+    if (!node) return;
+    const paper = node._paper;
+    if (!paper) return;
+
+    showDetail(paper);
+
+    const neighborIds = network.getConnectedNodes(nodeId);
+    const allNodeIds = nodesDataSet.getIds();
+    const dimOpacity = 0.15;
+
+    allNodeIds.forEach(id => {
+      const isSelected = id === nodeId;
+      const isNeighbor = neighborIds.includes(id);
+      nodesDataSet.update({
+        id,
+        opacity: isSelected ? 1.0 : (isNeighbor ? 0.9 : dimOpacity)
+      });
+    });
+
+    const allEdgeIds = edgesDataSet.getIds();
+    const connectedEdges = network.getConnectedEdges(nodeId);
+    allEdgeIds.forEach(id => {
+      const edge = edgesDataSet.get(id);
+      if (!edge) return;
+      const isConnected = connectedEdges.includes(id);
+      edgesDataSet.update({
+        id,
+        color: {
+          color: isConnected ? (edge.color?.highlight || edge.color?.color || 'rgba(100,130,180,0.3)') : 'rgba(255,255,255,0.03)',
+          highlight: edge.color?.highlight || 'rgba(100,130,180,0.4)'
+        },
+        width: isConnected ? (edge.width || 1) * 1.5 : 0.3,
+        font: {
+          color: isConnected ? 'rgba(85,102,136,0.9)' : 'rgba(0,0,0,0)',
+          size: isConnected ? 8 : 0
+        }
+      });
+    });
+
+    updateBreadcrumb(`聚焦: ${paper.title.slice(0, 50)}…`);
+  }
+
+  function deselectNode() {
+    selectedNodeId = null;
+    nodesDataSet.forEach(node => {
+      nodesDataSet.update({ id: node.id, opacity: 1.0 });
+    });
+    edgesDataSet.forEach(edge => {
+      edgesDataSet.update({
+        id: edge.id,
+        color: { color: 'rgba(100,130,180,0.18)', highlight: 'rgba(100,130,180,0.4)' },
+        width: 1,
+        font: { color: 'rgba(85,102,136,0.7)', size: 8 }
+      });
+    });
+
+    const panel = document.getElementById('detailPanel');
+    panel.classList.remove('open');
+    document.getElementById('detailContent').innerHTML =
+      `<div class="detail-empty">点击图中的 <span class="key-hint">● 节点</span> 查看文献详情</div>`;
+
+    updateBreadcrumb('浏览全部领域');
+  }
+
+  /* ═══════════════════════════════════════════════════
+     详情面板
+     ═══════════════════════════════════════════════════ */
+  function showDetail(paper) {
+    const panel = document.getElementById('detailPanel');
+
+    const stars = '★'.repeat(paper.importance) + '☆'.repeat(5 - paper.importance);
+    const progressColor = {
+      mi: 'var(--c-mi)', phil: 'var(--c-phil)',
+      ethics: 'var(--c-ethics)', align: 'var(--c-align)'
+    }[paper.category] || 'var(--c-done)';
+
+    const relatedHtml = paper.related && paper.related.length > 0
+      ? paper.related.map(rid => {
+          const rp = papers.find(p => p.id === rid);
+          if (!rp) return '';
+          const shortTitle = rp.title.length > 40 ? rp.title.slice(0, 40) + '…' : rp.title;
+          return `<button class="relation-link" onclick="focusPaper('${rid}')">${shortTitle}</button>`;
+        }).join('')
+      : '<span style="color:var(--text-faint);font-size:0.65rem;">暂无</span>';
+
+    document.getElementById('detailContent').innerHTML = `
+      <div class="detail-left">
+        <div class="detail-header">
+          <div>
+            <div class="detail-title">${paper.title}</div>
+            <div class="detail-meta" style="margin-top:0.3rem;">
+              <span class="detail-badge ${paper.category}">${catFull[paper.category]}</span>
+              <span style="font-size:0.7rem;color:var(--text-faint);font-family:var(--font-mono)">${paper.year}</span>
+              <span style="font-size:0.55rem;color:var(--text-faint);font-family:var(--font-mono)">
+                ${statusLabel[paper.status]}
+              </span>
+              <span style="font-size:0.6rem;color:var(--c-doing)">${stars}</span>
+            </div>
+          </div>
+        </div>
+        <div class="detail-authors">${paper.authors}</div>
+        <div class="detail-key-points">
+          ${paper.keyPoints.map(kp => `<div class="detail-kp">${kp}</div>`).join('')}
+        </div>
+        ${paper.notes ? `<div style="font-size:0.75rem;color:var(--text-muted);padding:0.5rem 0.75rem;background:var(--bg-secondary);border-radius:var(--radius-sm);border-left:2px solid var(--border-medium);margin-top:0.2rem;">📌 ${paper.notes}</div>` : ''}
+      </div>
+      <div class="detail-right">
+        <div class="detail-info-box">
+          <div class="detail-info-row">
+            <span class="lbl">进度</span>
+            <div class="detail-progress-compact">
+              <div class="track"><div class="fill" style="width:${paper.progress}%;background:${progressColor}"></div></div>
+              <span class="pct">${paper.progress}%</span>
+            </div>
+          </div>
+          <div class="detail-info-row">
+            <span class="lbl">状态</span>
+            <span class="val" style="color:${statusColor[paper.status]}">${statusLabel[paper.status]}</span>
+          </div>
+          <div class="detail-info-row">
+            <span class="lbl">重要性</span>
+            <span class="val">${paper.importance}/5</span>
+          </div>
+          <div class="detail-info-row">
+            <span class="lbl">年份</span>
+            <span class="val">${paper.year}</span>
+          </div>
+        </div>
+        <div class="detail-info-box">
+          <div class="lbl" style="font-family:var(--font-mono);font-size:0.55rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-faint);margin-bottom:0.2rem;">概念标签</div>
+          <div class="detail-concepts">
+            ${paper.concepts.map(c => `<span class="concept-tag">${c}</span>`).join('')}
+          </div>
+        </div>
+        <div class="detail-info-box">
+          <div class="lbl" style="font-family:var(--font-mono);font-size:0.55rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-faint);margin-bottom:0.2rem;">关联文献</div>
+          <div class="detail-relations">
+            ${relatedHtml}
+          </div>
+        </div>
+      </div>
+    `;
+
+    panel.classList.add('open');
+  }
+
+  /* ═══════════════════════════════════════════════════
+     聚焦某篇文献（从关联链接点击）
+     ═══════════════════════════════════════════════════ */
+  function focusPaper(id) {
+    const node = nodesDataSet.get(id);
+    if (node) {
+      network.selectNodes([id], false);
+      network.focus(id, { scale: 1.6, animation: true });
+      selectNode(id);
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════
+     过滤
+     ═══════════════════════════════════════════════════ */
+  function applyFilter(category) {
+    currentCategory = category;
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.cat === category);
+    });
+
+    const { nodes, edges } = buildGraphData(category);
+
+    nodesDataSet.clear();
+    edgesDataSet.clear();
+    nodesDataSet.add(nodes);
+    edgesDataSet.add(edges);
+
+    deselectNode();
+
+    document.getElementById('graphEmpty').style.display = nodes.length === 0 ? 'flex' : 'none';
+
+    network.setData({ nodes: nodesDataSet, edges: edgesDataSet });
+    network.stabilize(100);
+
+    updateStats();
+
+    const label = category === 'all' ? '全部领域' : catFull[category];
+    updateBreadcrumb(`浏览: ${label}`);
+  }
+
+  /* ═══════════════════════════════════════════════════
+     搜索
+     ═══════════════════════════════════════════════════ */
+  function applySearch(term) {
+    searchTerm = term.toLowerCase().trim();
+
+    if (!searchTerm) {
+      nodesDataSet.forEach(node => {
+        const p = node._paper;
+        if (!p) return;
+        const color = catColorMap[p.category];
+        nodesDataSet.update({
+          id: node.id,
+          opacity: 1.0,
+          color: { background: color.bg, border: color.border, highlight: { background: color.bg, border: '#fff' } },
+          size: 18 + p.importance * 6
+        });
+      });
+      return;
+    }
+
+    const lowerTerm = searchTerm;
+    nodesDataSet.forEach(node => {
+      const p = node._paper;
+      if (!p) return;
+      const haystack = (p.title + ' ' + p.authors + ' ' + p.keyPoints.join(' ') + ' ' + p.concepts.join(' ')).toLowerCase();
+      const matches = haystack.includes(lowerTerm);
+      const color = catColorMap[p.category];
+
+      nodesDataSet.update({
+        id: node.id,
+        opacity: matches ? 1.0 : 0.12,
+        color: {
+          background: matches ? color.bg : '#222',
+          border: matches ? color.border : '#333',
+          highlight: { background: matches ? color.bg : '#222', border: matches ? '#fff' : '#333' }
+        },
+        size: matches ? 18 + p.importance * 6 : 15
+      });
+    });
+
+    const matchingIds = new Set();
+    nodesDataSet.forEach(node => { if (node.opacity === undefined || node.opacity > 0.5) matchingIds.add(node.id); });
+    edgesDataSet.forEach(edge => {
+      const connectsMatching = matchingIds.has(edge.from) && matchingIds.has(edge.to);
+      edgesDataSet.update({
+        id: edge.id,
+        color: {
+          color: connectsMatching ? 'rgba(100,130,180,0.25)' : 'rgba(255,255,255,0.03)',
+          highlight: connectsMatching ? 'rgba(100,130,180,0.5)' : 'rgba(0,0,0,0)'
+        },
+        width: connectsMatching ? 1.5 : 0.3,
+        font: {
+          color: connectsMatching ? 'rgba(85,102,136,0.7)' : 'rgba(0,0,0,0)',
+          size: connectsMatching ? 8 : 0
+        }
+      });
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════
+     重置与适配
+     ═══════════════════════════════════════════════════ */
+  function resetView() {
+    document.getElementById('graphSearch').value = '';
+    applyFilter('all');
+    applySearch('');
+    network.fit({ animation: true, padding: 30 });
+    deselectNode();
+  }
+
+  function fitGraph() {
+    network.fit({ animation: true, padding: 30 });
+  }
+
+  /* ═══════════════════════════════════════════════════
+     统计与 UI 更新
+     ═══════════════════════════════════════════════════ */
+  function updateStats() {
+    const total = papers.length;
+    const findings = papers.reduce((sum, p) => sum + p.keyPoints.length, 0);
+    const relCount = relations.length;
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statFindings').textContent = findings;
+    document.getElementById('statRelations').textContent = relCount;
+    document.getElementById('ts-papers').textContent = total;
+    document.getElementById('ts-relations').textContent = relCount;
+
+    ['mi', 'phil', 'ethics', 'align'].forEach(cat => {
+      const count = papers.filter(p => p.category === cat).length;
+      document.getElementById(`catCount-${cat}`).textContent = count;
+    });
+    document.getElementById('catCount-all').textContent = total;
+  }
+
+  function updateBreadcrumb(text) {
+    document.getElementById('breadcrumb').textContent = text;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     事件绑定
+     ═══════════════════════════════════════════════════ */
+  document.addEventListener('DOMContentLoaded', function() {
+    initGraph();
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const cat = this.dataset.cat;
+        if (cat === currentCategory) return;
+        applyFilter(cat);
+        applySearch(document.getElementById('graphSearch').value);
+      });
+    });
+
+    let searchTimer;
+    document.getElementById('graphSearch').addEventListener('input', function() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        applySearch(this.value);
+      }, 200);
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') deselectNode();
+    });
+  });
+
+  /* ═══════════════════════════════════════════════════
+     添加新文献说明
+
+     添加文献：
+       1. 在 `papers` 数组中追加一个对象
+       2. 在 `relations` 数组中追加关联
+
+     字段说明：
+       id:         唯一标识（建议 "作者-年份-主题"）
+       title:      论文标题（保留原文）
+       authors:    作者
+       year:       年份
+       category:   "mi" | "phil" | "ethics" | "align"
+       status:     "todo" | "doing" | "done"
+       progress:   0–100
+       importance: 1–5
+       concepts:   概念标签数组（中文）
+       keyPoints:  关键发现数组（中文）
+       notes:      你的个人笔记
+       related:    关联文献 ID 数组
+
+     添加关联：
+       { from: "文献A-id", to: "文献B-id", label: "关系描述", type: "cites|builds_on|related|critiques|extends" }
+
+     刷新页面即可看到更新。
+  ═══════════════════════════════════════════════════ */
+  </script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+[
+  {
+    "domain": "03",
+    "id": "001",
+    "title": "因果抽象：机制可解释性的统一理论基础",
+    "doi": "",
+    "pdf_url": "",
+    "authors": "",
+    "year": 0
+  },
+  {
+    "domain": "03",
+    "id": "003",
+    "title": "RelP：从梯度的祛魅到相关传播的复魅",
+    "doi": "",
+    "pdf_url": "",
+    "authors": "",
+    "year": 0
+  },
+  {
+    "domain": "08",
+    "id": "004",
+    "title": "黑箱的科学理论：基于建构经验论的XAI全生命周期框架",
+    "doi": "",
+    "pdf_url": "papers/004_Muller_2025_SToBB.pdf",
+    "authors": "Sebastian Müller, et al.",
+    "year": 2025
+  },
+  {
+    "domain": "08",
+    "id": "005",
+    "title": "用人工神经网络在科学中搜索特征：非唯一性问题",
+    "doi": "10.1080/02698595.2024.2346871",
+    "pdf_url": "papers/005_Yao_2024_NonUniqueness.pdf",
+    "authors": "Siyu Yao, Amit Hagar",
+    "year": 2024
+  },
+  {
+    "domain": "08",
+    "id": "006",
+    "title": "深度学习辅助研究与科学目标之争",
+    "doi": "10.1007/s10838-023-09667-0",
+    "pdf_url": "papers/006_Onishi_2025_DL_AimOfScience.pdf",
+    "authors": "Yukinori Onishi",
+    "year": 2025
+  },
+  {
+    "domain": "08",
+    "id": "010",
+    "title": "从深度学习到理性机器：哲学史能教给我们的AI未来",
+    "doi": "10.1093/oso/9780197653302.001.0001",
+    "pdf_url": "papers/010_Buckner_2024_DeepLearningRationalMachines.pdf",
+    "authors": "Cameron J. Buckner",
+    "year": 2024
+  },
+  {
+    "domain": "08",
+    "id": "011",
+    "title": "自然种类与机器学习：男性和女性大脑的案例",
+    "doi": "",
+    "pdf_url": "papers/011_Ward_2025_NaturalKinds_ML.pdf",
+    "authors": "Zina B. Ward",
+    "year": 2025
+  },
+  {
+    "domain": "08",
+    "id": "013",
+    "title": "种类性与潜空间",
+    "doi": "",
+    "pdf_url": "papers/013_Chen_2025_Kindhood_LatentSpace.pdf",
+    "authors": "Zhengquan Chen",
+    "year": 2025
+  },
+  {
+    "domain": "08",
+    "id": "015",
+    "title": "无需表征主义的表征学习：对科学实践中深度学习模型的非表征主义说明",
+    "doi": "",
+    "pdf_url": "papers/015_Kieval_2025_NoRepresentationalism.pdf",
+    "authors": "Phillip Hintikka Kieval",
+    "year": 2025
+  },
+  {
+    "domain": "08",
+    "id": "016",
+    "title": "AI会削弱标准科学实在论吗？",
+    "doi": "",
+    "pdf_url": "papers/016_Seifert_2026_AI_UndermineRealism.pdf",
+    "authors": "Vanessa Seifert",
+    "year": 2026
+  },
+  {
+    "domain": "08",
+    "id": "018",
+    "title": "测量和引导单义性",
+    "doi": "",
+    "pdf_url": "papers/018_Harle_2025_Monosematicity.pdf",
+    "authors": "Härle, et al.",
+    "year": 2025
+  },
+  {
+    "domain": "08",
+    "id": "020",
+    "title": "相-结构实在理论：统一拓扑同构普遍论与智能相变",
+    "doi": "",
+    "pdf_url": "papers/020_Kim_2025_PhaseStructuralReality.pdf",
+    "authors": "Yoochul Kim",
+    "year": 2025
+  },
+  {
+    "domain": "10",
+    "id": "011",
+    "title": "通过Next-Token预测进行因果发现与推理",
+    "doi": "",
+    "pdf_url": "papers/011_Butkus_2025_CausalDiscoveryNextToken.pdf",
+    "authors": "Eivinas Butkus, Nikolaus Kriegeskorte",
+    "year": 2025
+  },
+  {
+    "domain": "10",
+    "id": "012",
+    "title": "因果区分概念：通过因果表示学习解释语言模型行为",
+    "doi": "",
+    "pdf_url": "papers/012_Goyal_2025_CausalDifferentiatingConcepts.pdf",
+    "authors": "Navita Goyal, Hal Daumé III, Alexandre Drouin, Dhanya Sridhar",
+    "year": 2025
+  },
+  {
+    "domain": "10",
+    "id": "014",
+    "title": "迈向忠实的自然语言解释：基于LLM激活修补的研究",
+    "doi": "",
+    "pdf_url": "papers/014_Yeo_2025_FaithfulNLExplanations.pdf",
+    "authors": "Wei Jie Yeo, Ranjan Satapathy, Erik Cambria",
+    "year": 2025
+  },
+  {
+    "domain": "10",
+    "id": "015",
+    "title": "RelP：基于相关性的忠实高效电路发现",
+    "doi": "",
+    "pdf_url": "papers/015_RelP_2025_RelevancePatching.pdf",
+    "authors": "Ali Jafari et al.",
+    "year": 2025
+  },
+  {
+    "domain": "10",
+    "id": "021",
+    "title": "让事情发生：因果解释的理论（Making Things Happen）",
+    "doi": "",
+    "pdf_url": "",
+    "authors": "James Woodward",
+    "year": 2003
+  },
+  {
+    "domain": "10",
+    "id": "022",
+    "title": "因果性：模型、推理与推断（Causality, 2nd Edition）",
+    "doi": "",
+    "pdf_url": "",
+    "authors": "Judea Pearl",
+    "year": 2009
+  },
+  {
+    "domain": "11",
+    "id": "003",
+    "title": "A Hyper-Externalist Manifesto for LLMs",
+    "doi": "",
+    "pdf_url": "papers/003_Cappelen_2025_HyperExternalistManifesto.pdf",
+    "authors": "Herman Cappelen, Josh Dever",
+    "year": 2025
+  },
+  {
+    "domain": "11",
+    "id": "004",
+    "title": "The Self-Learning Chinese Room: Why Machine Learning Does Not Generate Understanding",
+    "doi": "",
+    "pdf_url": "papers/004_VanDerWals_2025_SelfLearningChineseRoom.pdf",
+    "authors": "Dennis van der Wals",
+    "year": 2025
+  },
+  {
+    "domain": "11",
+    "id": "006",
+    "title": "LLMs, Turing Tests and Chinese Rooms: The Prospects for Meaning in Large Language Models",
+    "doi": "10.1080/0020174X.2024.2446241",
+    "pdf_url": "papers/006_Borg_2025_LLMsTuringChineseRooms.pdf",
+    "authors": "Emma Borg",
+    "year": 2025
+  },
+  {
+    "domain": "11",
+    "id": "009",
+    "title": "Reference as a Cluster Concept: A Reply to Coelho Mollo and Millière",
+    "doi": "",
+    "pdf_url": "papers/009_Reynolds_2026_ReferenceClusterConcept.pdf",
+    "authors": "Brett Reynolds",
+    "year": 2026
+  },
+  {
+    "domain": "11",
+    "id": "010",
+    "title": "Language Models and Externalism: Reply to Mandelkern and Linzen",
+    "doi": "",
+    "pdf_url": "papers/010_Ostertag_2025_LanguageModelsExternalism.pdf",
+    "authors": "Gary Ostertag",
+    "year": 2025
+  },
+  {
+    "domain": "11",
+    "id": "011",
+    "title": "World Models Without Worlds: An Analytic Critique of Understanding Claims in Self-Supervised Video Learning",
+    "doi": "",
+    "pdf_url": "papers/011_Nourizadeh_2026_WorldModelsWithoutWorlds.pdf",
+    "authors": "Moreno Nourizadeh",
+    "year": 2026
+  },
+  {
+    "domain": "11",
+    "id": "012",
+    "title": "Metaphysics of the Latent World: Deep Learning, Vectorial Semantics, and the Remaking of Meaning",
+    "doi": "",
+    "pdf_url": "papers/012_Ouma_2025_MetaphysicsLatentWorld.pdf",
+    "authors": "Peter Odhiambo Ouma",
+    "year": 2025
+  },
+  {
+    "domain": "11",
+    "id": "015",
+    "title": "The Appearance of Meaning: Context-Dependence and Semantic Competence in Transformer Architectures",
+    "doi": "",
+    "pdf_url": "papers/015_Borck_2025_AppearanceOfMeaning.pdf",
+    "authors": "Felix Borck",
+    "year": 2025
+  },
+  {
+    "domain": "11",
+    "id": "001",
+    "title": "向量奠基问题的命题结构与五层区分",
+    "doi": "",
+    "pdf_url": "",
+    "authors": "",
+    "year": 0
+  },
+  {
+    "domain": "11",
+    "id": "003",
+    "title": "超外部主义对机械可解释性的挑战",
+    "doi": "",
+    "pdf_url": "",
+    "authors": "",
+    "year": 0
+  },
+  {
+    "domain": "11",
+    "id": "004",
+    "title": "自学习中文屋——学习能弥合鸿沟吗？",
+    "doi": "",
+    "pdf_url": "",
+    "authors": "",
+    "year": 0
+  }
+]

@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>11_vector_grounding · 文献Wiki</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-void: #06080f;
+      --bg-primary: #0c0f1a;
+      --bg-secondary: #12182a;
+      --bg-tertiary: #1a2238;
+      --bg-elevated: #222d4a;
+      --text-primary: #dce3f0;
+      --text-secondary: #8899bb;
+      --text-muted: #556688;
+      --text-faint: #334466;
+      --border-subtle: rgba(68, 102, 153, 0.08);
+      --border-medium: rgba(68, 102, 153, 0.18);
+      --border-strong: rgba(68, 102, 153, 0.30);
+      --c-priority-must: #4ade80;
+      --c-priority-important: #fbbf24;
+      --c-priority-ref: #64748b;
+      --c-rel-cites: #818cf8;
+      --c-rel-extends: #2dd4bf;
+      --c-rel-contradicts: #f87171;
+      --c-rel-shares: #f5a623;
+      --c-rel-empirical: #a78bfa;
+      --c-rel-philosophical: #fb923c;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition-base: 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem; color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .header-stats {
+      display: flex; gap: 1.5rem;
+      font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+    }
+    .header-stat span { color: var(--text-primary); font-weight: 500; }
+
+    .tab-nav {
+      display: flex; gap: 0;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 0 2rem;
+    }
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none; background: none;
+      color: var(--text-muted); font-family: var(--font-body);
+      font-size: 0.85rem; cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-base);
+    }
+    .tab-btn:hover { color: var(--text-secondary); }
+    .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--c-rel-cites); }
+
+    .tab-content { display: none; padding: 2rem; }
+    .tab-content.active { display: block; }
+
+    .filters {
+      display: flex; gap: 0.75rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.85rem;
+      border: 1px solid var(--border-medium); border-radius: 999px;
+      background: transparent; color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.7rem;
+      cursor: pointer; transition: all var(--transition-base);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--text-secondary); color: var(--text-primary);
+    }
+    .filter-btn.priority-must.active { border-color: var(--c-priority-must); color: var(--c-priority-must); }
+    .filter-btn.priority-important.active { border-color: var(--c-priority-important); color: var(--c-priority-important); }
+    .filter-btn.priority-ref.active { border-color: var(--c-priority-ref); color: var(--c-priority-ref); }
+
+    .search-input {
+      padding: 0.35rem 1rem;
+      background: var(--bg-secondary); border: 1px solid var(--border-medium);
+      border-radius: 999px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 0.8rem;
+      width: 240px; outline: none;
+    }
+    .search-input:focus { border-color: var(--border-strong); }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card.priority-must { border-left: 3px solid var(--c-priority-must); }
+    .card.priority-important { border-left: 3px solid var(--c-priority-important); }
+    .card.priority-ref { border-left: 3px solid var(--c-priority-ref); }
+
+    .card-id {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: var(--text-faint); margin-bottom: 0.5rem;
+    }
+    .card-title {
+      font-size: 0.95rem; font-weight: 500;
+      color: var(--text-primary); margin-bottom: 0.4rem;
+      line-height: 1.35;
+    }
+    .card-authors {
+      font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .card-summary {
+      font-size: 0.78rem; color: var(--text-secondary);
+      line-height: 1.5; margin-bottom: 0.75rem;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags {
+      display: flex; gap: 0.35rem; flex-wrap: wrap;
+    }
+    .card-tag {
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      background: var(--bg-tertiary); color: var(--text-muted);
+      font-size: 0.65rem; font-family: var(--font-mono);
+    }
+    .card-priority-badge {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .card-priority-badge.must { background: var(--c-priority-must); box-shadow: 0 0 6px var(--c-priority-must); }
+    .card-priority-badge.important { background: var(--c-priority-important); box-shadow: 0 0 6px var(--c-priority-important); }
+    .card-priority-badge.ref { background: var(--c-priority-ref); }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(6,8,15,0.85); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      max-width: 780px; width: 90vw; max-height: 85vh;
+      overflow-y: auto; padding: 2rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      width: 32px; height: 32px; border: 1px solid var(--border-medium);
+      border-radius: 50%; background: transparent; color: var(--text-muted);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-base);
+    }
+    .modal-close:hover { border-color: #f87171; color: #f87171; }
+    .modal h2 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .modal .meta { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; }
+    .modal section { margin-bottom: 1.25rem; }
+    .modal section h3 {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .modal section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+    .modal .relations { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .modal .rel-badge {
+      padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.7rem;
+      font-family: var(--font-mono);
+    }
+    .rel-badge.cites { background: rgba(129,140,248,0.15); color: var(--c-rel-cites); }
+    .rel-badge.extends { background: rgba(45,212,191,0.15); color: var(--c-rel-extends); }
+    .rel-badge.contradicts { background: rgba(248,113,113,0.15); color: var(--c-rel-contradicts); }
+    .rel-badge.shares { background: rgba(245,166,35,0.15); color: var(--c-rel-shares); }
+    .rel-badge.empirical { background: rgba(167,139,250,0.15); color: var(--c-rel-empirical); }
+    .rel-badge.philosophical { background: rgba(251,146,60,0.15); color: var(--c-rel-philosophical); }
+
+    .graph-container {
+      width: 100%; height: 70vh;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+    .graph-legend {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      margin-top: 1rem; padding: 0.75rem 1rem;
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+    }
+    .graph-legend-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.7rem; color: var(--text-muted);
+    }
+    .graph-legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    .notes-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .note-card {
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 1.25rem;
+    }
+    .note-card h4 { font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .note-card .note-meta { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 0.6rem; }
+    .note-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-void); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+    a { color: var(--c-rel-cites); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Footer navigation */
+    .wiki-footer {
+      margin-top: 3rem; padding: 1.5rem 2rem;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-medium);
+    }
+    .wiki-footer a { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; transition: color var(--transition-base); }
+    .wiki-footer a:hover { color: var(--text-primary); text-decoration: none; }
+    .wiki-footer .footer-title { font-size: 0.7rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-domains { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-back { margin-top: 0.5rem; }
+    .wiki-footer .footer-back a { color: var(--c-rel-cites); font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.35rem">
+      <a href="../index.html" style="color:var(--c-rel-cites)">← 文献知识库总览</a>
+    </div>
+    <div class="header-title">向量奠基：分布模式还是真正语义？</div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.15rem">Vector Grounding Problem · Symbol Grounding · Distributional vs Referential Semantics · Embodied Cognition</div>
+  </div>
+  <div class="header-stats">
+    <div class="header-stat">文献 <span id="paper-count">0</span></div>
+    <div class="header-stat">必读 <span id="must-count" style="color:var(--c-priority-must)">0</span></div>
+    <div class="header-stat">笔记 <span id="note-count">0</span></div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="browse">📋 浏览文献</button>
+  <button class="tab-btn" data-tab="graph">🔗 关系图谱</button>
+  <button class="tab-btn" data-tab="notes">📝 阅读笔记</button>
+</div>
+
+<!-- Tab: Browse -->
+<div class="tab-content active" id="tab-browse">
+  <div class="filters">
+    <input class="search-input" id="search" placeholder="搜索标题/作者/关键词..." oninput="filterCards()">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="filter-btn priority-must" data-filter="must">必读</button>
+    <button class="filter-btn priority-important" data-filter="important">重要</button>
+    <button class="filter-btn priority-ref" data-filter="ref">参考</button>
+    <button class="filter-btn" data-filter="2026">2026</button>
+    <button class="filter-btn" data-filter="2025">2025</button>
+    <button class="filter-btn" data-filter="2024">≤2024</button>
+  </div>
+  <div class="card-grid" id="card-grid"></div>
+</div>
+
+<!-- Tab: Graph -->
+<div class="tab-content" id="tab-graph">
+  <div class="graph-container" id="graph-container"></div>
+  <div class="graph-legend" id="graph-legend">
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-must)"></div> 必读</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-important)"></div> 重要</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-ref)"></div> 参考</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-cites)"></div> 引用</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-extends)"></div> 方法继承</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-contradicts)"></div> 对立观点</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-shares)"></div> 共享概念</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-empirical)"></div> 经验基础</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-philosophical)"></div> 哲学先导</div>
+  </div>
+</div>
+
+<!-- Tab: Notes -->
+<div class="tab-content" id="tab-notes">
+  <div class="notes-list" id="notes-list"></div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js"></script>
+<script>
+// ═══════════════════════════════ DATA ═══════════════════════════════
+const PAPERS = [
+  // ═══ 必读 (must-read) ═══
+  {
+    id: "001",
+    title: "The Vector Grounding Problem",
+    authors: "Dimitri Coelho Mollo, Raphaël Millière",
+    year: 2026,
+    venue: "Philosophy and the Mind Sciences",
+    doi: "10.33735/phimisci.2024.12307",
+    pdf: "papers/001_CoelhoMollo_2026_VectorGroundingProblem.pdf",
+    priority: "must",
+    tags: ["vector grounding", "symbol grounding", "teleosemantics", "referential semantics", "LLM philosophy"],
+    summary_cn: "提出向量奠基问题（VGP）：神经网络习得的向量嵌入如何在仅依赖数值代数运算的条件下获得真正的语义内容，而不仅是与其他无意义向量的关系？通过目的语义学（teleosemantics）框架，论证纯文本LLM可以通过预训练和偏好微调实现指称奠基，多模态和具身性既非必要也非充分条件。",
+    abstract_cn: "本文正式提出「向量奠基问题」——Harnad符号奠基问题在向量时代的更新版本。向量嵌入通过代数运算处理，仅根据其数值操作，如何能获得意义并指称现实世界的实体和属性，而非仅与其他无意义向量相关？作者区分了五种奠基概念（指称的、交流的、认知的等），论证只有指称奠基（referential grounding）——即表征与其世界指称物之间的连接——是根本性的。提出基于目的语义学的双条件标准：(1) 内部状态与世界之间建立适当的因果-信息关系；(2) 这些状态具有承载该信息的选择历史。出人意料的结论：多模态和具身性既非必要也非充分——纯文本LLM可通过预训练中隐含的额外语言成功条件和偏好微调中的世界涉及功能实现指称奠基。",
+    methodology: "概念分析与哲学论证。区分五种奠基概念，构建目的语义学框架，应用因果-信息条件与选择历史条件评估LLM向量表征的语义地位。",
+    findings: "1) 只有指称奠基是语义性的核心，其它四种奠基概念（交流奠基、认知奠基等）均以此为基础；2) 多模态和具身性既非必要也非充分——纯文本训练数据由具有指称意图的人类产生，其中隐含的因果-信息结构足以通过选择压力建立指称奠基；3) 机械可解释性研究发现的内部世界模型为指称奠基提供了经验证据；4) LLM向量可以具有真正的语义内容，但并非所有LLM表征都自动具备——取决于训练机制是否满足目的语义学条件。",
+    limitations: "1) 目的语义学条件本身存在争议（如远距性问题、不确定性），应用于人工系统时更复杂；2) 纯文本数据中的因果信息是否确实满足「适当因果-信息关系」标准尚需经验验证；3) 对RLHF等微调机制的选择压力描述较为抽象，未提供操作化检测标准。",
+    relevance: "本文是本研究的锚定文献——直接命名并界定了向量奠基问题。其对LLM向量「可以具有语义内容」的乐观结论与Bender & Koller的随机鹦鹉立场形成核心对立。对SAE特征和操控向量的语义合法性给出关键哲学辩护：如果纯文本LLM确实可以通过训练选择压力实现指称奠基，那么SAE发现的'概念'特征和操控向量代表的'诚实'等属性就有了语义基础。同时为对齐实践提供哲学合法性——如果模型内部表征无语义，则'对齐'模型内部状态在概念上就不成立。",
+    relations: [
+      {target: "002", type: "contradicts", label: "对立于随机鹦鹉论点"},
+      {target: "003", type: "extends", label: "扩展其外部主义方向"},
+      {target: "021", type: "extends", label: "更新了Harnad的符号奠基问题"}
+    ]
+  },
+  {
+    id: "002",
+    title: "Climbing Towards NLU: On Meaning, Form, and Understanding in the Age of Data",
+    authors: "Emily M. Bender, Alexander Koller",
+    year: 2020,
+    venue: "ACL 2020",
+    doi: "10.18653/v1/2020.acl-main.463",
+    pdf: "papers/002_Bender_2020_ClimbingTowardsNLU.pdf",
+    priority: "must",
+    tags: ["stochastic parrot", "form vs meaning", "grounding", "octopus test", "distributional semantics"],
+    summary_cn: "提出章鱼测试思想实验：一个超级智能章鱼仅通过截获电报学习统计模式，其输出缺乏真值条件。论证纯文本训练的LLM仅操纵语言形式而无法获得意义——语言是形式-意义配对系统，训练数据仅有形式。",
+    abstract_cn: "本文论证了仅基于文本形式训练的大型语言模型无法实现真正的自然语言理解（NLU）。核心论点为：语言是形式（能指）与意义（所指）的配对系统，而LLM的训练数据仅包含形式序列——模型从未接触过意义的维度。通过著名的'章鱼测试'思想实验阐明：两个人类通过海底电报通信，一只超级智能章鱼截获所有信号并学习完美统计模型，但章鱼的输出缺乏指称和真值条件，因而无真正意义。训练数据的规模增大和模型参数增多并不改变这一根本局限——更大并不等于不同。本文为后续'随机鹦鹉'概念奠定了理论基础。",
+    methodology: "语言学理论分析 + 思想实验（章鱼测试）。基于形式语言学和语义学的基础区分（形式vs意义，内涵vs外延），构建论证阐明统计语言模型的结构性局限。",
+    findings: "1) LLM仅学习语言形式（form）而无法获得意义（meaning），因为训练信号仅是共现统计；2) 章鱼测试表明：即使完美预测，统计模式与语义内容之间存在不可跨越的鸿沟；3) 人类理解语言涉及交际意图、指称和真值条件，这些都是LLM无法仅从文本数据获得的；4) 所谓'理解'基准测试实际测试的是形式操纵能力，而非真正语义能力。",
+    limitations: "1) 章鱼测试假设仅从文本无法推断世界结构，但压缩论证（compression argument）声称足够强的预测压力可能迫使模型学习世界模型；2) 未充分考虑RLHF等涉及人类反馈的训练阶段可能引入额外语言信息通道；3) 将'理解'设定为二元概念，未考虑程度性理解的可能性。",
+    relevance: "代表了语义悲观主义的核心立场——LLM向量缺乏真正语义。这一框架直接威胁SAE概念特征和操控向量的语义合法性：如果模型内部状态仅是统计模式，则'诚实方向'、'拒绝方向'等操控向量在语义上是空洞的。与Millière & Coelho Mollo (001)形成核心对立。其章鱼测试是向量奠基问题的经典直觉泵。Bender后续的'随机鹦鹉'论文（FAccT 2021）将这一论点推向了公众视野。",
+    relations: [
+      {target: "001", type: "contradicts", label: "与目的语义学奠基方案对立"},
+      {target: "021", type: "extends", label: "将Harnad问题更新为LLM语境"},
+      {target: "011", type: "shares", label: "共享语义悲观主义立场"}
+    ]
+  },
+  {
+    id: "003",
+    title: "A Hyper-Externalist Manifesto for LLMs",
+    authors: "Herman Cappelen, Josh Dever",
+    year: 2025,
+    venue: "Communicating with AI: Philosophical Perspectives (OUP)",
+    doi: "",
+    pdf: "papers/003_Cappelen_2025_HyperExternalistManifesto.pdf",
+    priority: "must",
+    tags: ["semantic externalism", "hyperexternalism", "mechanistic interpretability", "Putnam", "Kripke", "meaning"],
+    summary_cn: "捍卫超外部主义：外部因素不仅决定LLM输出的内容，还决定其结构和程序属性（如是否真正遵循modus ponens、表征是否组合性）。论证机械可解释性项目在哲学上是误导的——意义不在'引擎盖下'的权重中，而在训练历史、功能角色和关系嵌入中。",
+    abstract_cn: "本文主张当前主导LLM可解释性研究的内部主义范式是错误的。通过'去人类中心化抽象'方法，将Kripke、Putnam、Evans、Burge的经典外部主义框架扩展到非人类系统。捍卫超外部主义（hyperexternalism）：外部因素不仅决定LLM输出内容的个体化，还决定其结构和程序属性——例如LLM是否真正遵循modus ponens、其表征是否具有组合性、或内部状态是信念还是假设。核心论点是机械可解释性项目——试图在模型权重和激活值中定位意义的工程实践——在哲学上是根本误导的，因为意义奠基在训练历史、功能角色和关系嵌入中，这些都是外部的关系事实。从外部主义视角看，操控向量可以具有真正的语义内容，但该内容不由内部激活模式决定，而由外部关系确定。",
+    methodology: "分析哲学方法，去人类中心化抽象。将分析哲学传统中的语义外部主义概念工具系统地应用于非人类AI系统，并重新解释机械可解释性的研究发现。",
+    findings: "1) 当前可解释性研究隐含地假设内部主义——认为意义'在内部'，可通过对权重的分析来发现；2) 外部主义（Putnam: 「意义不在头脑中」）同样适用于AI系统；3) 操控向量和SAE特征的语义内容不由内部激活模式决定，而由模型与世界的因果-历史关系决定；4) 超外部主义不仅适用于语义内容，还适用于组合性、推理有效性等结构属性。",
+    limitations: "1) 超外部主义的具体操作化尚不清晰——如何判断LLM的哪个外部关系是语义相关的；2) 外部主义传统上依赖生物进化历史，将其移植到人工系统时面临「人工系统-自然选择」类比的有效性问题；3) 与机械可解释性的实证研究之间缺乏桥梁——如何在实践中验证外部主义的主张。",
+    relevance: "为向量奠基问题提供了独特的语义外部主义解决方案：SAE特征和操控向量的语义内容不由内部激活模式决定，而由与世界的因果-历史外部关系决定。这为对齐实践提供了新视角——'对齐'不一定是调整内部表征，而可以是调整系统的外部关系（如训练数据来源、使用场景）。与Millière & Coelho Mollo (001)共享目的语义学直觉，但更激进地否定内部可解释性的哲学合法性。",
+    relations: [
+      {target: "001", "type": "shares", "label": "共享外部主义基调但更激进"},
+      {target: "009", "type": "contradicts", "label": "与Ostertag的外部主义限制对立"},
+      {target: "020", "type": "contradicts", "label": "否定机械可解释性的哲学合法性"}
+    ]
+  },
+  {
+    id: "004",
+    title: "The Self-Learning Chinese Room: Why Machine Learning Does Not Generate Understanding",
+    authors: "Dennis van der Wals",
+    year: 2025,
+    venue: "PhilArchive Preprint",
+    doi: "",
+    pdf: "papers/004_VanDerWals_2025_SelfLearningChineseRoom.pdf",
+    priority: "must",
+    tags: ["Chinese room", "Searle", "understanding", "syntax vs semantics", "grounding"],
+    summary_cn: "将Searle的中文屋更新为双室思想实验：学习室从数据提取统计模式，执行室机械应用规则。论证机器学习不是克服了句法-语义鸿沟，而是将其下移一层——向量嵌入仍然只是句法。",
+    abstract_cn: "本文直接扩展Searle的中文屋论证到现代自学习AI系统。提出双室思想实验：一个学习室（Learning Chamber）从数据中提取统计模式，一个执行室（Execution Chamber）机械应用已学规则。核心论点为三个递进主张：(1) 学习能力并未弥合统计相关与语义理解之间的鸿沟——从数据中学习模式不等于获得语义内容；(2) 当代LLM展现出系统性自指局限，指向根本架构约束而非技术问题；(3) 从LLM到AGI的道路代表根本的理论不可能性，而非规模挑战——'再多参数也无法跨越句法-语义鸿沟'。",
+    methodology: "思想实验（双室中文屋）+ 哲学论证。更新Searle 1980年的经典论证以应对深度学习时代的理论挑战。",
+    findings: "1) 机器学习仅将句法-语义鸿沟从符号层下移至向量层，但未解决它；2) 向量嵌入的语义内容依赖人类解释者的外部投射；3) LLM的架构约束（如自回归生成、固定上下文窗口）使其无法获得真正理解，无论规模多大；4) 当前LLM的成功是工程成就，而非理解成就。",
+    limitations: "1) 依赖Searle论证的原始前提（句法不足以产生语义），该前提本身在功能主义和联结主义传统中备受争议；2) 双室思想实验仍然依赖直觉，可能低估了足够大规模系统的涌现属性；3) 未与机械可解释性的实证发现（如Othello-GPT的世界模型）进行充分对话。",
+    relevance: "代表了向量奠基问题上最强版本的语义悲观主义——认为学习本身无法解决奠基问题。对SAE概念特征和操控向量构成根本挑战：如果所有向量嵌入本质上都是句法的，则SAE发现的'特征'和操控向量代表的'方向'均无真正语义内容，仅是统计模式的人类可读标记。其'再多参数也无法跨越句法-语义鸿沟'的论断直接质疑所有基于表征工程的对齐策略。",
+    relations: [
+      {target: "021", "type": "extends", "label": "更新Searle中文屋至自学习时代"},
+      {target: "001", "type": "contradicts", "label": "直接挑战目的语义学奠基方案"},
+      {target: "005", "type": "contradicts", "label": "反对理解分层说（所有层次都是句法）"}
+    ]
+  },
+  {
+    id: "005",
+    title: "Mechanistic Indicators of Understanding in Large Language Models",
+    authors: "Pierre Beckmann, Matthieu Queloz",
+    year: 2026,
+    venue: "Philosophical Studies",
+    doi: "10.1007/s11098-026-02513-1",
+    pdf: "papers/005_Beckmann_2026_MechanisticIndicatorsUnderstanding.pdf",
+    priority: "must",
+    tags: ["mechanistic interpretability", "understanding", "features", "circuits", "conceptual understanding"],
+    summary_cn: "提出三层理解框架：概念理解（特征作为潜在空间方向）、事态理解（特征之间的偶然事实连接）、原理理解（紧凑的计算回路）。基于机械可解释性实证发现，论证LLM展现出可检测的理解指标，使随机鹦鹉观点日益难以为继。",
+    abstract_cn: "本文基于机械可解释性（MI）的实证发现，提出LLM理解的三层递阶框架。第一层——概念理解（Conceptual Understanding）：模型形成'特征'作为潜在空间方向——这些内部表征类似于人类概念，将实体或属性的多样化表现统一起来。第二层——事态理解（State-of-the-World Understanding）：模型学习特征之间的偶然事实性连接，并动态追踪世界变化。第三层——原理理解（Principled Understanding）：模型发现连接事实的紧凑'回路'——不再依赖记忆化实例，而是采用可推广的原则。作者论证这些机械性发现使得纯粹消解主义观点（LLM仅是随机鹦鹉或n-gram模型）日益站不住脚，同时强调理解具有程度性——LLM展现出不同程度的理解指标。",
+    methodology: "概念分析 + 机械可解释性实证证据整合。将哲学中的理解概念（如概念、事态、原理三个层次的区分）操作化为可检测的机械性指标（特征方向、特征之间的权重连接、计算回路）。",
+    findings: "1) LLM的潜在空间包含可被识别为'特征'的方向，这些特征在机械上是可定位的和可干预的；2) 特征之间的连接形成事态追踪（如Othello-GPT中的棋盘状态表征）；3) 紧凑回路表明模型可以学习非记忆化的推广原则；4) 理解的三个层次为评估模型提供了细粒度框架，超越了'理解/不理解'的二元判断。",
+    limitations: "1) 三层框架的实证基础主要依赖于特定玩具模型（Othello-GPT），其在更大规模模型上的普适性待验证；2) '特征作为概念'的类比可能过度推理——特征方向与人类概念之间是否存在实质性的对应关系尚不确定；3) 机械可解释性本身的哲学前提（内部主义的表征观）可能是有问题的。",
+    relevance: "为向量奠基问题提供了来自机械可解释性的最直接经验回应：如果LLM内部确实形成结构化特征和世界追踪回路，那么这些特征具有超出表面统计的功能性语义内容——它们不仅仅是在分布模式中，而是在追踪和建模世界。这为SAE特征和操控向量的语义合法性提供了关键的经验基础（参见01_sae_features和02_activation_engineering）。同时，该框架提出了向量奠基问题的操作化路径：不追问'向量是否有语义'的哲学二元判断，而是检测理解的不同程度和维度。",
+    relations: [
+      {target: "001", "type": "extends", "label": "为向量奠基提供操作化检测框架"},
+      {target: "002", "type": "contradicts", "label": "挑战随机鹦鹉论点"},
+      {target: "015", "type": "empirical", "label": "共享语境依赖的经验发现"}
+    ]
+  },
+  // ═══ 重要 (important) ═══
+  {
+    id: "006",
+    title: "LLMs, Turing Tests and Chinese Rooms: The Prospects for Meaning in Large Language Models",
+    authors: "Emma Borg",
+    year: 2025,
+    venue: "Inquiry",
+    doi: "10.1080/0020174X.2024.2446241",
+    pdf: "papers/006_Borg_2025_LLMsTuringChineseRooms.pdf",
+    priority: "important",
+    tags: ["Chinese room", "Turing test", "derived intentionality", "original intentionality", "Searle"],
+    summary_cn: "论证双方都有道理：乐观者正确——LLM输出确实是真正有意义的（成功表征和操纵语义属性）；怀疑者正确——意义是派生的（derived），LLM缺乏原初意向性。向量嵌入通过自注意力和RLHF可与外部对象建立稳健关系。",
+    abstract_cn: "本文在LLM意义的辩论中采取中间立场。一方面，论证乐观者（乐观派）是对的：LLM输出确实是'有意义'的——它们成功地表征和操纵了语义属性，即使是通过非语义任务（下一词预测）训练的。多义消除、同义识别、翻译等能力表明模型内化了超出表面统计的语义结构。另一方面，论证怀疑者（怀疑派）也是对的：LLM中的意义是'派生的'——LLM输出之所以有意义，是因为我们在使用语言时赋予其意义。LLM缺乏Searle所谓的'原初意向性'，这需要真正的能动性和意识理解。向量嵌入通过自注意力机制和人类反馈（RLHF）的训练，可以在语言符号与外部对象之间建立稳健关系——满足'世界连接'的要求，但这种连接仍是派生的。",
+    methodology: "分析哲学论证，在乐观主义（LLM确实具有语义能力）和怀疑主义（LLM意义是派生的）之间寻找平衡点。利用语言学理论（形式vs意义区分）和Searle的意向性框架。",
+    findings: "1) LLM确实内化了超出表面统计的语义结构——这构成了'有意义'的行为标准；2) 但这种意义是派生的——其语义属性依赖人类语言使用者的原初意向性；3) 向量嵌入通过训练与世界建立的关系是稳健的，但不足以产生原初意向性；4) 派生意向性不意味着'无意义'——派生的意义仍然是真正的意义。",
+    limitations: "1) 派生意向性与原初意向性的区分在实际中难以操作化检测；2) 诉诸Searle的意向性框架，该框架本身是争议的；3) 对LLM如何从派生意义过渡到（或永远无法过渡到）原初意向性的机制不明确。",
+    relevance: "为向量奠基问题提供了一个精致的中间立场：SAE特征和操控向量可以具有真正的语义内容（回应怀疑论），但这种内容是派生的（限制乐观论）。这意味着'对齐'有意义——操控'拒绝方向'确实在操控与拒绝相关的派生意向性——但这种意义不是模型内在的，而是取决于模型与人类语言实践的关系。为对齐实践提供了一个实用主义的哲学基础。",
+    relations: [
+      {target: "004", "type": "shares", "label": "共享Searle框架但结论更温和"},
+      {target: "005", "type": "shares", "label": "共享非二元化的理解观"},
+      {target: "001", "type": "extends", "label": "为派生奠基提供哲学辩护"}
+    ]
+  },
+  {
+    id: "007",
+    title: "A Categorical Analysis of LLMs and Why LLMs Circumvent the Symbol Grounding Problem",
+    authors: "Luciano Floridi, Kia (Jia) Tohmé, Fernando Tohmé",
+    year: 2025,
+    venue: "arXiv:2512.09117",
+    doi: "",
+    pdf: "papers/007_Floridi_2025_CategoricalAnalysisLLMs.pdf",
+    priority: "important",
+    tags: ["category theory", "symbol grounding", "circumvention", "compositional semantics", "formal framework"],
+    summary_cn: "提出范畴论形式框架，分析人类和LLM如何将内容转化为真值评估命题。论证LLM不是'解决'而是'绕开'符号奠基问题——通过范畴化/组合性路径避免了经典困境，不需要多维嵌入或具身性。",
+    abstract_cn: "本文构建了范畴论形式框架，分析人类和LLM如何将内容转化为可评估真值的命题。核心论证是：LLM并非'解决'了经典符号奠基问题，而是通过一种不同的路径'绕开'了它。该路径利用范畴化的组合性结构——LLM学习的是语言内部的组合性映射关系，而非符号到世界的指称关系。从这个视角看，符号奠基问题之所以看似不可避免，是因为我们预设了指称语义学（referential semantics）是唯一的语义学框架。但如果采用结构/组合性语义学（structural/compositional semantics），则'奠基'不再需要通过因果-指称链条与外物连接——语言内部的组合性结构本身就是语义充分的条件。这一分析不需要诉诸多模态或具身性。",
+    methodology: "范畴论（Category Theory）形式建模。构建从内容到真值命题的范畴化映射框架，分析其在不同语义传统（指称语义学 vs 组合语义学）下的奠基条件。",
+    findings: "1) LLM通过组合性/结构路径绕开了指称性奠基的要求；2) 符号奠基问题的'不可避免'预设了指称语义学的框架优先性，但该预设可以是错误的；3) 范畴论框架提供了形式化的语义评估工具；4) 绕开不等于解决——LLM的语义是另一种语义，而非更完善的指称语义。",
+    limitations: "1) 范畴论框架高度抽象，与LLM的实际计算过程之间的映射关系不明确；2) '绕开'论证依赖于'不同语义框架'的主张，但纯粹的组合语义是否足以涵盖所有语义现象有争议（如索引词、专名）；3) 对于对齐实践的具体指导有限。",
+    relevance: "为向量奠基问题提供了一个激进的重构：如果语义不一定需要指称奠基，则SAE特征和操控向量的合法性不必建立在指称关系之上——它们可以通过组合性结构获得语义功能。这为对齐实践提供了另一种哲学合法性：操控向量的'意义'可以来自其在模型内部的组合性角色，而非来自对外部指称物的追踪。但这也意味着模型的行为对齐可能与真正的事实对齐之间存在结构性鸿沟。",
+    relations: [
+      {target: "001", "type": "shares", "label": "共享'多模态非必要'结论"},
+      {target: "002", "type": "contradicts", "label": "用组合语义反驳章鱼测试"},
+      {target: "018", "type": "extends", "label": "为其组合性可解释性提供哲学基础"}
+    ]
+  },
+  {
+    id: "008",
+    title: "On Measuring Grounding and Generalizing Grounding Problems",
+    authors: "Aidan Quigley",
+    year: 2025,
+    venue: "arXiv:2512.06205",
+    doi: "",
+    pdf: "papers/008_Quigley_2025_MeasuringGrounding.pdf",
+    priority: "important",
+    tags: ["grounding measurement", "teleosemantics", "evaluation", "robustness", "faithfulness"],
+    summary_cn: "将奠基从二元判断重构为多维审记框架：真实性、保存性、忠实性（相关+因果）、稳健性、组合性。跨四种奠基模式（符号、指称、向量、关系）应用。发现LLM在语言任务上满足相关拟合和局部稳健性，但'缺乏与世界任务相关的成功选择'。",
+    abstract_cn: "本文提出将奠基问题从是/否的二元判断重构为基于评价指标的多维审记框架。核心审记维度包括：(1) 真实性（authenticity）——表征是否由系统自身产生而非外部投射；(2) 保存性（preservation）——系统是否在变换下保持表征内容；(3) 忠实性（faithfulness）——包括相关忠实性（表征与目标之间的统计相关性）和因果忠实性（操纵表征对行为产生预期效果）；(4) 稳健性（robustness）——表征在分布外情况下的表现；(5) 组合性（compositionality）——复杂表征是否可以分解为简单表征的组合。跨四种奠基模式（符号的、指称的、向量的、关系的）应用该框架。关键发现：LLM在语言任务上表现出相关拟合和局部稳健性，但缺乏因果忠实性——在需要世界交互的任务中缺乏'成功选择'。",
+    methodology: "构建概念框架（多维审记维度）+ 跨模式案例分析。将审记框架应用于符号、指称、向量、关系四种奠基模式，比较各自的满足条件。",
+    findings: "1) 奠基是程度性、多维度的，不应被二元化；2) LLM在不同维度上的表现差异显著——相关维度表现好，因果维度表现差；3) 向量奠基模式特有的挑战是叠加性（superposition）和跨上下文变异；4) 统一定义的评价框架使得不同系统和模式的奠基程度可以比较。",
+    limitations: "1) 多维框架增加了评估的复杂性，但降低了判断的清晰性；2) 各维度的相对重要性未明确权重；3) 因果忠实性的检测需要干预实验，在大多数LLM部署场景中不可行。",
+    relevance: "为向量奠基问题提供了操作化的检测框架，超越'有/无'语义的哲学二元判断。SAE特征和操控向量的语义地位可以按维度分别评估——例如，'诚实方向'可能在相关维度上表现良好（高度预测诚实相关输出），但在因果维度上表现不足（添加该方向未必在所有上下文中产生诚实行为）。与01_sae_features和02_activation_engineering的方法论高度相关。",
+    relations: [
+      {target: "001", "type": "extends", "label": "操作化001的奠基条件"},
+      {target: "005", "type": "shares", "label": "共享多维程度性评估框架"},
+      {target: "009", "type": "extends", "label": "实现其簇概念的程序化"}
+    ]
+  },
+  {
+    id: "009",
+    title: "Reference as a Cluster Concept: A Reply to Coelho Mollo and Millière",
+    authors: "Brett Reynolds",
+    year: 2026,
+    venue: "PhilArchive Preprint",
+    doi: "",
+    pdf: "papers/009_Reynolds_2026_ReferenceClusterConcept.pdf",
+    priority: "important",
+    tags: ["reference", "cluster concept", "teleosemantics", "groundedness profile", "corrigibility"],
+    summary_cn: "接受目的语义学基础但批判二元化：指称本身是簇概念——捆绑目的语义选择、因果-信息耦合、交流校准、推理角色结构四个关系。提出'奠基剖面'替代'奠基/未奠基'二元判断。",
+    abstract_cn: "本文接受Coelho Mollo & Millière (2026)的目的语义学基础，但对其二元化倾向提出批判。核心论点为：指称奠基本身是「簇概念」（cluster concept），捆绑四个不同的关系维度：(1)目的语义学选择——表征具有承载信息的选择历史；(2)因果-信息耦合——表征与世界之间有可靠的因果关系；(3)交流校准——表征在使用者之间的协调；(4)推理角色结构——表征在推理网络中的位置。不同LLM和不同类型的表征可能在不同维度上表现不同，不存在单一的'奠基/未奠基'判断。提出「奠基剖面」（groundedness profile）概念——每个表征（如SAE特征或操控向量）具有在四个维度上的得分剖面，预测了其稳健性、可修正性和在扰动下的失效模式。",
+    methodology: "哲学概念分析 + 反建议构建。接受Millière & Coelho Mollo的目的语义学框架，但对其奠基概念进行内部批评和精炼。",
+    findings: "1) 奠基不是二元属性，而是多维度簇；2) 四个奠基维度分别对应不同类型的语义评估；3) 奠基剖面可以预测表征的行为属性（稳健性、可修正性、失效模式）；4) SAE特征和操控向量可以在某些维度上奠基而在其他维度上未奠基。",
+    limitations: "1) 奠基剖面的跨维度整合方式不明确——四个维度的分数量如何综合；2) 如何实际测量每个维度的得分尚缺乏操作化方案；3) 剖面概念可能过于灵活，失去规范性判断力。",
+    relevance: "为评估SAE特征和操控向量的语义合法性提供了精细化框架。例如，'拒绝方向'可能在推理角色维度得分高（在模型内部推理网络中承担一致的拒绝相关角色），但在因果-信息维度得分低（'拒绝'是抽象的社会概念，难以建立直接的因果-信息关系）。为02_activation_engineering中对操控向量的评估提供了概念工具。",
+    relations: [
+      {target: "001", "type": "extends", "label": "在001基础上精炼为簇概念"},
+      {target: "008", "type": "shares", "label": "共享多维度评估进路"},
+      {target: "006", "type": "shares", "label": "共享非二元化的意义观"}
+    ]
+  },
+  {
+    id: "010",
+    title: "Language Models and Externalism: Reply to Mandelkern and Linzen",
+    authors: "Gary Ostertag",
+    year: 2025,
+    venue: "Computational Linguistics Journal",
+    doi: "",
+    pdf: "papers/010_Ostertag_2025_LanguageModelsExternalism.pdf",
+    priority: "important",
+    tags: ["semantic externalism", "Kripke", "Putnam", "reference", "natural history", "LLM"],
+    summary_cn: "反驳Mandelkern & Linzen的外部主义乐观论证：词项的'自然史'（如'水'指H₂O因为H₂O在词的历史中因果相关）不完全决定指称属性。从外部主义到LLM指称性的'捷径'不成立。",
+    abstract_cn: "本文直接回应Mandelkern & Linzen (2024)的外部主义乐观论证——后者主张Kripke-Putnam因果-历史指称理论给予理由认为LLM输出确实指称。Ostertag使用对比解释（contrastive explanation）文献来论证：一个词项的'自然史'（例如'水'指H₂O是因为H₂O在该词项的历史中因果相关）不完全决定其指称属性——在很多情况下，自然史不构成完整解释。因此，从经典外部主义到LLM指称性的'捷径'不成立——我们不能简单地说因为LLM的训练数据包含由具有指称意图的人类产生的词项，所以LLM的输出就继承了这些指称。需要更精细的机制来说明LLM如何（以及在什么条件下）才能获得指称能力。",
+    methodology: "分析哲学论证，利用对比解释理论。回应Mandelkern & Linzen (2024)的外部主义论证，揭示其推论中的逻辑跳跃。",
+    findings: "1) Kripke-Putnam外部主义不能简单地直接应用于LLM；2) 词项自然史与指称属性之间的关系比Mandelkern & Linzen假设的更复杂——自然史不完全基础性地解释指称；3) LLM指称性的'外部主义捷径'不成立；4) 需要更细致地说明从训练数据的指称性到模型输出的指称性之间的传递机制。",
+    limitations: "1) 主要是否定性论证——指出了外部主义捷径的问题，但未提供正面方案；2) 对比解释框架本身对指称理论的适用性有争议；3) 未与机械可解释性的实证发现对话。",
+    relevance: "为向量奠基问题的外部主义解决路径提供了重要的制约：即使接受Putnam的'意义不在头脑中'，也不能自动得出LLM向量具有指称内容的结论。对操控向量的含义是：即使操控向量在行为层面成功引导模型产生更诚实的输出，也不能仅凭外部主义声称该向量真正'代表诚实'——需要更具体的机制论证（这正是001和008试图提供的）。",
+    relations: [
+      {target: "003", "type": "contradicts", "label": "限制外部主义对LLM的适用范围"},
+      {target: "001", "type": "shares", "label": "共享对简化外部主义的警惕"},
+      {target: "008", "type": "extends", "label": "支持其操作化检测的必要性"}
+    ]
+  },
+  {
+    id: "011",
+    title: "World Models Without Worlds: An Analytic Critique of Understanding Claims in Self-Supervised Video Learning",
+    authors: "Moreno Nourizadeh",
+    year: 2026,
+    venue: "PhilArchive Preprint",
+    doi: "",
+    pdf: "papers/011_Nourizadeh_2026_WorldModelsWithoutWorlds.pdf",
+    priority: "important",
+    tags: ["world models", "reference", "normativity", "Frege", "Kripke", "Sellars"],
+    summary_cn: "以分析哲学工具（Frege, Quine, Putnam, Kripke, Brandom）严格论证视频学习系统无法在哲学稳健意义上获得'理解'。提出三个不可能定理：无表征操作系统可以奠基指称、无统计学习者可以获得规范性、无句法引擎可以进入'理由空间'。",
+    abstract_cn: "本文对自监督视频学习系统（如V-JEPA 2）的理解主张进行严格的分析哲学批判。识定了四个根本问题：(1) 指称问题——系统可能具有Sinn（涵义）而无Bedeutung（指称），即具有内部结构但缺乏与世界对象的联系；(2) 模型问题——结构无内容，学习的预测结构不具有关于世界的语义内容；(3) 概念问题——内容不确定性（Goodman的'绿蓝'悖论）、析取问题；(4) 规范性问题——有限训练无法确定规则（Wittgenstein-Kripke规则遵循悖论）。最终提出三个不可能定理：无表征操纵系统可以奠基指称；无统计学习者可以获得规范性（the space of reasons）；无句法引擎可以进入'Sellars的理由空间'。",
+    methodology: "分析哲学严格论证。利用Frege（Sinn/Bedeutung区分）、Quine（指称不确定性）、Putnam（模型-世界关系）、Kripke（规则遵循悖论）、Brandom（理由空间）、Sellars（所予神话）的分析工具。",
+    findings: "1) 视频学习系统（以及更广泛的深度神经网络）在指称、规范性和语义内容三个维度上都面临根本性限制；2) 统计学习本身无法获得规范性——这是原则性的而非偶然性的限制；3) '世界模型'的隐喻具有误导性——学习的预测结构不是关于世界的模型，而是数据的压缩表示；4) 即使扩展到多模态，这些限制仍然存在（多模态输入仍是数据，不能解决规范性问题）。",
+    limitations: "1) 三个不可能定理的证明依赖特定的哲学框架（Sellars-Brandom规范性理论），该框架本身在哲学上有争议；2) 可能低估了大规模多模态学习系统的涌现属性；3) 论证主要在概念层面，未设计可经验检验的预测。",
+    relevance: "代表了向量奠基问题上最强版本的分析哲学悲观主义——不仅LLM，任何当前的深度学习系统都无法获得真正语义。其对'世界模型'概念的批判直接威胁了基于内部世界模型的SAE特征解释（如01_sae_features中的特征被视为概念）。对操控向量的含义是：即使操控向量精确地修改了与特定行为相关的激活，这些激活仍然只是数据的压缩表示，不具有规范性语义内容。",
+    relations: [
+      {target: "004", "type": "shares", "label": "共享根本性不可能论"},
+      {target: "002", "type": "extends", "label": "以更严格分析哲学框架强化章鱼测试"},
+      {target: "005", "type": "contradicts", "label": "反对理解分层说的哲学基础"}
+    ]
+  },
+  {
+    id: "012",
+    title: "Metaphysics of the Latent World: Deep Learning, Vectorial Semantics, and the Remaking of Meaning",
+    authors: "Peter Odhiambo Ouma",
+    year: 2025,
+    venue: "PhilArchive Preprint",
+    doi: "",
+    pdf: "papers/012_Ouma_2025_MetaphysicsLatentWorld.pdf",
+    priority: "important",
+    tags: ["latent space", "statistical platonism", "ontology", "semantic", "synthetic data"],
+    summary_cn: "提出深度学习最深刻的哲学发展是潜在空间的涌现——一种全新的非人类意义本体论。框架化'统计柏拉图主义'——向量作为源自数据的可塑形式。探讨训练数据集作为'几何无意识'以及合成数据泛滥导致'本体论崩塌'的风险。",
+    abstract_cn: "本文提出了一个大胆的形而上学主张：深度学习最深刻的哲学发展不是特定模型的能力，而是潜在空间作为一个全新的、非人类的意义本体论的涌现。提出'统计柏拉图主义'（Statistical Platonism）框架：向量充当源自训练数据的可塑形式（malleable Forms）——不是超越的而是统计的，不是永恒的而是数据依赖的。探讨三个核心主题：(1) 训练数据集作为模型的'几何无意识'（geometric unconscious）——决定潜在空间的几何结构但无法被模型反思；(2) 向量语义学作为一种新型的意义理论——意义不是指称关系而是几何关系（相似性、类比、方向）；(3)'本体论崩塌'（ontological collapse）风险——随着合成数据在互联网中的饱和，潜在空间的几何结构可能自我指涉地凝固而失去与世界的连接。",
+    methodology: "大陆哲学风格的概念构建 + 深度学习技术解读。融合柏拉图主义形而上学、拉康式精神分析和深度学习潜在空间分析。",
+    findings: "1) 潜在空间构成一种新型的'意义本体论'——不是传统的指称语义学，而是基于几何关系的向量语义学；2) 统计柏拉图主义为理解SAE特征和操控向量提供了形而上学基础；3) 合成数据可能导致本体论崩塌——训练数据的自指循环使模型脱离世界信息通道；4) 向量奠基问题在这种框架下被重构：问题不是向量'是否'有语义，而是向量的几何语义学是否仍与世界保持连接。",
+    limitations: "1) 高度思辨性，缺乏可操作的经验检验方法；2) 统计柏拉图主义的比喻可能模糊了真正的哲学问题；3) 对大陆哲学概念的使用可能降低了与主流分析哲学传统的对话性。",
+    relevance: "为向量奠基问题提供了一个非传统的本体论视角：SAE特征和操控向量的'语义'可以不被理解为传统指称语义学意义上的，而是潜在空间几何结构的内在属性。这意味着向量语义是一种全新的语义类型，不应以传统指称标准来评判。但其'本体论崩塌'的警告与对齐实践高度相关：如果模型在合成数据上微调或使用模型生成的反馈信号，可能出现脱离世界奠基的风险。",
+    relations: [
+      {target: "001", "type": "shares", "label": "共享对向量语义特殊性的关注"},
+      {target: "007", "type": "shares", "label": "共享'语义可以是结构的而非指称的'"},
+      {target: "015", "type": "shares", "label": "共享对潜在空间本体论的兴趣"}
+    ]
+  },
+  {
+    id: "013",
+    title: "Will Multimodal Large Language Models Ever Achieve Deep Understanding of the World?",
+    authors: "Igor Farkaš, Michal Vavrečka, Stefan Wermter",
+    year: 2025,
+    venue: "Frontiers in Systems Neuroscience",
+    doi: "10.3389/fnsys.2025.1683133",
+    pdf: "papers/013_Farkas_2025_MultimodalLLMsUnderstanding.pdf",
+    priority: "important",
+    tags: ["multimodal", "embodied cognition", "developmental gap", "symbol grounding", "VLA"],
+    summary_cn: "论证尽管多模态大模型（MLLM）和具身AI（VLA如RT-2、PaLM-E）是克服符号奠基问题的有希望路径，但其非发展性、无结构阶段性的随机训练方式与人类认知发展根本不同——抑制了对世界深度结构化概念知识的建立。",
+    abstract_cn: "本文从认知科学和神经科学视角审视多模态大模型是否可能获得对世界的深层理解。首先承认MLLM在多个模态上展现了令人印象深刻的表象能力，并将视觉-语言-动作模型（VLA，如RT-2、PaLM-E、Gato）视为克服奠基问题最有前景的技术路径——添加运动模态可实现具身性的物理交互奠基。然而，识别出关键的'发展性鸿沟'（developmental gap）：人类从婴儿期开始通过结构化的发展阶段逐步建构简单到复杂的概念体系，其间经过大量的物理探索和与他人的社会互动。相比之下，MLLM和VLA在海量的、随机排序的数据集上进行训练，缺乏渐进的、发展性结构化的概念建构过程。这种训练方式虽然产生功能性行为，但不利于建立系统性的、深度结构化的世界知识——即使在多模态条件下也可能维持表面学习。",
+    methodology: "认知科学文献综述 + 比较分析。将人类认知发展（Piaget、Vygotsky传统）的关键阶段与MLLM/VLA的训练范式进行系统性对比。",
+    findings: "1) 多模态有助于但不足以解决奠基问题；2) 发展轨迹（训练数据的序贯结构和渐进复杂性）可能与模态本身同样重要；3) VLA模型在具身方向上迈出了重要一步，但缺乏结构化发展阶段；4) 深层理解需要的不只是多模态输入，还需要发展性概念构建过程。",
+    limitations: "1) 发展性训练的具体工程实现路径不清晰——如何在保持大模型训练效率的同时引入发展性结构；2) '深层理解'的定义不够精确；3) 可能低估了当前模型从非结构化大规模训练中涌现结构化知识的能力。",
+    relevance: "为向量奠基问题的具身解决路径提供了关键视角：多模态确实可能改善奠基，但仅添加更多模态而不改变训练的发展性结构可能不足以获得深层语义。对SAE特征和操控向量的含义是：多模态模型中发现的潜在特征可能比纯文本模型中的更接近指称奠基，但这一优势的程度取决于训练的发展性结构。需与01_sae_features和07_philosophy_of_mind交叉参考。",
+    relations: [
+      {target: "001", "type": "contradicts", "label": "挑战'多模态非充分'的断言"},
+      {target: "007", "type": "shares", "label": "共享对LLM理解能力的怀疑"},
+      {target: "014", "type": "empirical", "label": "具身路径的经验基础"}
+    ]
+  },
+  // ═══ 参考 (reference) ═══
+  {
+    id: "014",
+    title: "Unambiguous Representations in Neural Networks: An Information-Theoretic Approach to Intentionality",
+    authors: "Francesco Lässig",
+    year: 2025,
+    venue: "arXiv:2512.11000",
+    doi: "",
+    pdf: "papers/014_Lassig_2025_UnambiguousRepresentations.pdf",
+    priority: "ref",
+    tags: ["intentionality", "information theory", "representational ambiguity", "relational structure", "neural decoding"],
+    summary_cn: "将表征歧义形式化为条件熵H(I|R)。发现Dropout训练网络的神经元可通过关系几何结构实现100%解码准确度——关系结构本身唯一确定表征内容，无需外部解码器。为自然化语义提供了信息论路径。",
+    abstract_cn: "本文提出在神经网络中形式化'表征歧义'（representational ambiguity）的概念：给定代表内容I的表征R，其歧义程度为条件熵H(I|R)——即给定表征后对解释的剩余不确定性。关键洞见：有意识的大脑状态必须具有低歧义/非歧义表征——其内容由内部关系结构唯一确定，而非取决于外部解码器。在MNIST训练的网络上进行了系统的解码实验：仅基于神经元的连接/几何关系结构（不参考外部标签），可以恢复每个输出神经元代表的内容。Dropout训练的网络达到100%解码准确度，而标准反向传播仅约38%。还成功从连接性解码了输入神经元的空间位置（R²最高0.844）。这表明关系结构可以内在奠基表征内容——朝向自然化语义的一步。",
+    methodology: "信息论形式化（条件熵）+ 神经网络解码实验（基于连接/几何结构的无监督内容恢复）。",
+    findings: "1) 表征歧义可以通过信息论工具形式化和可测量；2) Dropout训练显著降低了表征歧义——关系结构本身可以唯一确定内容；3) 标准训练的表征歧义远高于Dropout训练——歧义程度与任务性能无关；4) 关系几何学可以内在奠基表征内容，不需要外部解码器或解释者。",
+    limitations: "1) 实验仅限于小型MNIST网络，在大规模LLM上的普适性未知；2) 基于关系结构的内容恢复是否在更复杂的表征中仍有效待验证；3) 关系奠基是否等同于语义奠基（满足001的目的语义学条件）尚不确定。",
+    relevance: "为向量奠基问题提供了一种信息论-结构主义的解决方案：SAE特征的语义内容可以由其在神经群体中的关系结构（几何位置、连接模式）内在确定，而非外部投射。这意味着即使没有直接的因果-世界连接，特征也可以通过其在网络内部的关系网络获得确定的内容。对操控向量的含义：'拒绝方向'可以通过其在激活空间中的关系位置被内在奠基——不需要外部指称。",
+    relations: [
+      {target: "001", "type": "extends", "label": "为001的结构奠基提供信息论操作化"},
+      {target: "005", "type": "empirical", "label": "为理解检测提供神经科学视角"},
+      {target: "012", "type": "shares", "label": "共享'几何学可以奠基语义'的直觉"}
+    ]
+  },
+  {
+    id: "015",
+    title: "The Appearance of Meaning: Context-Dependence and Semantic Competence in Transformer Architectures",
+    authors: "Felix Borck",
+    year: 2025,
+    venue: "PhilArchive Preprint",
+    doi: "",
+    pdf: "papers/015_Borck_2025_AppearanceOfMeaning.pdf",
+    priority: "ref",
+    tags: ["context dependence", "semantic competence", "activation patching", "meaning", "transformer"],
+    summary_cn: "利用激活修补在GPT-2和Qwen2.5上检测'意义外观'——有能力的语言使用者从LLM可靠引出的现象。提出语境优先论：语境（而非歧义词本身）因果地控制意义偏好模式。",
+    abstract_cn: "本文识别了一个经验现象——'意义外观'（Appearance of Meaning, AoM）——即合格的语言使用者在与LLM交互时可靠地引出意义感知。通过激活修补实验在GPT-2和Qwen2.5上检测这一现象，提出'语境优先论'（Context-Primacy Thesis）：是语境（而非歧义标记本身）因果地控制着意义偏好模式。具体而言，模型在处理歧义词时的行为主要由上下文窗口中的语境因素决定，而非词本身的内在表示。这一发现对语义内容的基础辩论具有深远含义——意义不是内在于词或向量的固定属性，而是一个依赖语境的关系属性。",
+    methodology: "激活修补（activation patching）实验。在GPT-2和Qwen2.5上对歧义词处理进行因果干预，检测上下文与词义消歧的因果关系。",
+    findings: "1) LLM中歧义词的语义行为主要由语境因果控制，而非词向量的内在属性；2)'意义外观'是合格使用者与模型交互中可靠出现的现象——尽管这种意义可能缺乏指称奠基；3) 语境优先性挑战了静态向量语义学——意义是动态的、语境依赖的关系属性；4) 激活修补揭示了意义的因果轨迹是可追踪的。",
+    limitations: "1) 仅使用中小规模模型（GPT-2, Qwen2.5），在更大模型上的发现可能不同；2) 语境优先性是否适用于所有语义现象（包括指称确定性高的术语）待验证；3) 意义外观是否构成真正语义内容仍是哲学问题。",
+    relevance: "对SAE特征的语义解释有重要含义：如果语义是语境依赖的，则SAE发现的'静态'特征方向可能只是特定语境下的快照，而非稳定的语义原子。对操控向量而言，'诚实方向'可能只在特定语境下才具有诚实相关的因果效果——操控向量的语义不是固定的而是语境动态的。在方法论上连接了02_activation_engineering和09_epistemology_understanding。",
+    relations: [
+      {target: "005", "type": "empirical", "label": "提供语义检测的经验方法"},
+      {target: "001", "type": "contradicts", "label": "挑战静态奠基观"},
+      {target: "006", "type": "shares", "label": "共享对意义动态性的关注"}
+    ]
+  },
+  {
+    id: "016",
+    title: "D-STEER: DPO as Steering Vector Perturbation in Activation Space",
+    authors: "D-STEER Authors",
+    year: 2025,
+    venue: "arXiv:2512.11838",
+    doi: "",
+    pdf: "papers/016_DSTEER_2025_DPOSteeringVector.pdf",
+    priority: "ref",
+    tags: ["steering vectors", "DPO", "activation engineering", "alignment", "behavioral illusion"],
+    summary_cn: "论证DPO不重写模型内部信念，而是作为低秩操控机制——DPO梯度仅取决于偏好/非偏好补全的对数嵌入差。提取经验操控向量：加法复现对齐行为，减法恢复原始模型。提出'行为幻觉'观：DPO教模型如何表现为对齐，而非什么是对齐。",
+    abstract_cn: "本文揭示了直接偏好优化（DPO）的对齐机制：DPO并非重写模型的内部信念系统，而是作为一种低秩操控向量扰动作用于激活空间。关键发现：DPO的梯度仅取决于偏好补全与不偏好补全之间对数嵌入的差异——本质上是对隐藏表征的一阶偏移。通过在DPO调优的模型中提取经验操控向量，证实了：添加该向量复现对齐行为，减去该向量几乎完全恢复原始模型。基于此提出'行为幻觉'（behavioral illusion）观——DPO教模型如何表现为对齐的，而非什么是真正的对齐。这一发现对向量奠基问题具有直接含义：操控向量的语义内容可能仅涉及行为层面，而不涉及信念/知识层面。",
+    methodology: "梯度分析 + 操控向量提取实验。分析DPO损失函数的梯度结构，推导其作为低秩激活空间扰动的性质，并通过向量加减实验验证。",
+    findings: "1) DPO本质上是在激活空间中添加操控向量，而非根本性地改变模型内部表征；2) 对齐行为可以通过向量加减来开关——表明对齐是附加的而非集成的；3) 对操控向量的语义解释应保持谨慎——它们涉及的是行为控制而非语义内容；4) 对齐技术（DPO/RLHF）的'行为幻觉'性质对'对齐已成功'的主张构成挑战。",
+    limitations: "1) 仅分析了DPO，其他对齐方法（RLHF、KTO等）的性质可能不同；2) 未探讨模型规模对效果的调节；3)'行为幻觉'的哲学含义需进一步阐明——如果所有行为都是'幻觉'，那什么才是'真实'。",
+    relevance: "对操控向量的语义合法性提供了关键的怀疑论证据：如果DPO训练的'对齐'只是行为层面的附加扰动，而非内部表征的重写，那么操控向量所'代表'的内容（如'诚实'、'拒绝'）可能只是行为标签，而非模型的真实语义状态。这与向量奠基问题的核心关切直接相关——如果操控向量缺乏深层语义，那么基于操控向量的对齐策略在何种意义上是真正的对齐？需与02_activation_engineering深度交叉。",
+    relations: [
+      {target: "001", "type": "empirical", "label": "提供操控向量语义的怀疑证据"},
+      {target: "005", "type": "contradicts", "label": "怀疑特征作为概念的主张"},
+      {target: "002", "type": "shares", "label": "与行为主义式怀疑共享直觉"}
+    ]
+  },
+  {
+    id: "017",
+    title: "System 0: Transforming Artificial Intelligence into a Cognitive Extension",
+    authors: "Massimo Chiriatti, Giovanni Spataro, et al.",
+    year: 2025,
+    venue: "Cyberpsychology, Behavior, and Social Networking / arXiv:2506.14376",
+    doi: "",
+    pdf: "papers/017_Chiriatti_2025_SystemZero.pdf",
+    priority: "ref",
+    tags: ["extended mind", "System 0", "cognitive extension", "Clark", "Heersmink"],
+    summary_cn: "提出AI作为'系统0'框架——位于系统1（直觉）和系统2（深思）之前的认知扩展。基于扩展心灵假说和Heersmink的认知扩展标准。识别悖论：AI扩展认知但也可能通过谄媚和偏见放大限制认知。",
+    abstract_cn: "本文基于Clark & Chalmers扩展心灵假说和Heersmink的认知扩展标准，提出AI作为人类认知的'系统0'框架——位于Kahneman的系统1（直觉思维）和系统2（深思熟虑）之前的新型认知处理层。核心主张为：AI已经内化为人类认知过程的常规组成部分，不仅辅助认知，而且在结构上重塑认知过程的起点。识别一个深层悖论：AI既扩展了认知能力，也可能通过谄媚（sycophancy）、偏见放大和认知卸载限制认知自主性。提出七项健康整合框架：增强型认知脚手架、共生劳动分工、辩证增强、能动透明度、专业民主化、社会-情感增强和持久性优化整合。",
+    methodology: "哲学框架构建 + 认知科学整合。将Clark & Chalmers (1998)的扩展心灵假说与Kahneman (2011)的双系统理论结合，提出三层认知扩展框架。",
+    findings: "1) AI正在从外部工具转变为内部认知扩展（系统0）；2) 认知扩展的效益与风险并存——扩展认知同时限制认知自主性；3) 七项整合框架提供了实践指导；4) 扩展心灵假说为向量奠基问题提供了新视角——意义不一定要在系统内部，可以在人机耦合系统中。",
+    limitations: "1) 系统0的框架主要适用于对话式AI交互，对其他形式（如嵌入系统的AI）的适用性有限；2) 扩展心灵假说本身在哲学上有争议（耦合-构成谬误）；3) 框架的应用效果缺乏系统性的经验检验。",
+    relevance: "将向量奠基问题置于扩展心灵框架中重新审视：如果AI是认知扩展，则SAE特征和操控向量的语义可以由人机耦合系统整体承载，而非必须在模型内部。这意味着'向量是否有语义'的问题可以转向：人机认知系统整体是否具有语义——模型贡献行为，人类贡献意向性。对对齐实践有直接含义：对齐不应仅在模型内部进行，还应考虑人机耦合系统中的意义共建。需与07_philosophy_of_mind交叉参考。",
+    relations: [
+      {target: "003", "type": "shares", "label": "共享将意义定位于外部/耦合关系的路径"},
+      {target: "006", "type": "shares", "label": "共享对派生意向性的关注"},
+      {target: "020", "type": "shares", "label": "共享哲学对工程实践的指导性"}
+    ]
+  },
+  {
+    id: "018",
+    title: "From Mechanistic to Compositional Interpretability: A Category-Theoretic Framework",
+    authors: "Tarek Gauderis, Ann Dooms, Thomas Homer, Koye Ayonrinde, Geraint Wiggins",
+    year: 2026,
+    venue: "arXiv:2605.08934",
+    doi: "",
+    pdf: "papers/018_Gauderis_2026_MechanisticCompositionalInterpretability.pdf",
+    priority: "ref",
+    tags: ["category theory", "compositionality", "interpretability", "Frege", "syntax vs semantics"],
+    summary_cn: "以范畴论形式化可解释性：分离句法（模型结构）与语义（行为），将可解释性视为约束优化问题——在所有忠实的组合解释中偏好最简洁的。展示压缩启发式如何与人类可解释性对齐。",
+    abstract_cn: "本文提出基于范畴论的形式化可解释性框架，将Frege的组合性原则应用于神经网络解释。核心贡献为：严格分离句法（模型结构）与语义（行为），定义可解释性为约束优化问题——从模型句法推导出语义上忠实的组合性解释，并从中选择最简洁的。该框架将压缩启发式（简洁性作为解释质量指标）形式化，并展示其如何与人类可解释性对齐——更简洁的组合解释通常更容易被人类理解。框架具有通用性：适用于任何可以通过句法-语义映射描述的模型。",
+    methodology: "范畴论形式化。使用函子、自然变换等范畴论工具建模句法-语义关系，定义组合性解释的优化标准。",
+    findings: "1) 范畴论为可解释性提供了严格的数学基础；2) 句法-语义区分是可解释性的核心结构；3) 压缩（简洁性）是解释质量的内在数学特性，而非仅是工程偏好；4) 组合性解释在数学上优于非组合性解释。",
+    limitations: "1) 形式化框架高度抽象，与实际LLM可解释性实践的连接需进一步建立；2) 框架的应用依赖对模型句法和语义的精确定义，这在当前实践中仍困难；3) 未探讨框架在评估具体SAE特征语义内容方面的应用。",
+    relevance: "为评估SAE特征的语义内容提供了数学框架：可以通过句法-语义映射的形式化标准来评估SAE发现的'特征'是否真正具有语义忠实性（语义维度），而非仅是句法便利性（预测维度）。对操控向量的含义：在添加操控向量后，模型的语义行为变化是否可以由组合性解释描述——如果可以，则操控向量具有可检测的语义内容。与01_sae_features的方法论交叉。",
+    relations: [
+      {target: "007", "type": "extends", "label": "实现007的组合语义工程化"},
+      {target: "005", "type": "extends", "label": "为其概念检测提供形式化基础"},
+      {target: "008", "type": "shares", "label": "共享组合性作为关键评估维度"}
+    ]
+  },
+  {
+    id: "019",
+    title: "Interpretability (Propositional and Mechanistic) Needs Behavior",
+    authors: "Eleanor Friedman, Eamon Duede",
+    year: 2026,
+    venue: "PhilSci-Archive Preprint",
+    doi: "",
+    pdf: "papers/019_Friedman_2026_InterpretabilityNeedsBehavior.pdf",
+    priority: "ref",
+    tags: ["interpretability", "behavioral testing", "folk psychology", "ecological validity", "confabulation"],
+    summary_cn: "批判当前机械可解释性方法过于脆弱：呼吁重新以'生态敏感的行为分析'为取向。整合机械工具与在多样化生态语境中的严格行为测试。分析'特征标签'过程中民间心理学和虚谈症的潜在风险。",
+    abstract_cn: "本文对机械可解释性的当前方法论提出了根本性批评。核心论点：仅靠'在内部找到特征方向并标签化'的方法论过于脆弱——对同一模型的相同内部结构，不同研究者可能给出截然不同的语义解释。解决方案是将机械可解释性与生态敏感的行为分析整合——不仅检测内部结构，还要在多样化生态语境中对模型进行严格行为测试。特别关注两个风险：(1)'民间心理学侵蚀'——研究者将自己的心理谓词（'这个神经元代表诚实'）投射到网络内部，但这可能只是解释者的投射而非网络的真实内容；(2)'虚谈症'——模型可能生成关于其内部状态的连贯但虚假的报告。",
+    methodology: "批判性方法论分析 + 建设性框架构建。系统批评当前MI方法论的脆弱性，提出行为-机械整合框架。",
+    findings: "1) 没有行为测试的机械可解释性容易受到解释者的投射和虚谈症的混淆；2) 生态有效性（在多样化语境中的测试）是评估表征语义的必要条件；3) SAE特征的标签化（'这个特征代表X'）需要行为验证——仅靠激活模式不足以确认语义内容；4) 民间心理学概念在MI中的使用需要被审慎反思。",
+    limitations: "1) 行为测试的生态有效性标准在实践中难以全面实现；2) 行为测试本身也面临解释学循环的问题——如何解读行为测试的结果；3) 未提供区分真正语义内容与仅行为模式的具体标准。",
+    relevance: "对SAE特征和操控向量的语义合法性提出了方法论挑战：仅靠发现内部结构（特征方向、操控向量）并对其进行人类可读的标签化不足以建立语义内容——必须通过生态有效的行为测试来排除解释者投射和虚谈症。对于对齐实践的含义是：操控向量的语义合法性需要行为验证，而非仅依赖内部表征的几何结构。需与01_sae_features和02_activation_engineering交叉参考。",
+    relations: [
+      {target: "005", "type": "extends", "label": "扩展其行为验证需求"},
+      {target: "020", "type": "shares", "label": "共享对MI方法论的批判性反思"},
+      {target: "008", "type": "shares", "label": "共享对因果验证的重视"}
+    ]
+  },
+  {
+    id: "020",
+    title: "Mechanistic Interpretability Needs Philosophy",
+    authors: "Timothy Williams, Julian Oldenburg, Joshua Hatherley, et al.",
+    year: 2025,
+    venue: "arXiv:2506.18852",
+    doi: "",
+    pdf: "papers/020_Williams_2025_MI_Needs_Philosophy.pdf",
+    priority: "ref",
+    tags: ["mechanistic interpretability", "philosophy of science", "concept clarification", "epistemology", "methodology"],
+    summary_cn: "立场论文：哲学必须是机械可解释性的持续合作伙伴——澄清概念、精炼方法、评估认识论和伦理风险。以三个开放MI问题为案例研究，展示哲学分析如何解决当前争论。",
+    abstract_cn: "本文主张哲学不是可解释性研究的外部评注者，而必须是其内在组成部分。通过三个案例研究展示哲学分析的必要性：(1) 特征/概念的语义内容——MI中'这个特征代表X'的断言背后隐含了什么语义理论？(2) 解释质量的评估标准——什么使一个好的MI解释？如何权衡简洁性和完整性？(3) 认识论信任——我们应基于什么理由信任MI的发现？研究者在多大程度上是在解读还是发现？论证结论：缺乏哲学反思的MI容易陷入概念混淆、方法论循环和未经审视的形而上学预设。哲学参与不意味着'减慢'工程进程，而是提供使工程更精确、更可靠的概念工具。",
+    methodology: "哲学方法论分析 + 案例研究。选择三个MI的开放问题，展示哲学分析在澄清假设、解决争论中的作用。",
+    findings: "1) MI的核心断言隐含未被审视的哲学预设（如关于表征、因果性、解释的理论）；2) 特征语义标签的做法预设了某种语义内部主义，但这种预设未经辩护；3) 解释质量的多重标准（简洁性、忠实性、完整性）之间存在张力，需要通过哲学分析来权衡；4) 哲学参与可以提高MI的严谨性而不降低其实用性。",
+    limitations: "1) 主要在元层面分析，未直接解决MI的具体技术问题；2) 哲学的参与方式如何在实际研究流程中实现未详细说明；3) 可能被认为是'扶手椅批评'。",
+    relevance: "为评估SAE特征语义内容提供了哲学方法论反思：MI在声称'这个SAE特征代表诚实'时隐含着什么语义理论？这些隐含理论是否经得起哲学审查？对操控向量的含义：操控向量研究隐含地假设了因果性是语义充分条件，但这可能是不成立的——因果效力不等于语义内容。需与01_sae_features和07_philosophy_of_mind交叉参考。",
+    relations: [
+      {target: "005", "type": "shares", "label": "共享对MI哲学基础的关注"},
+      {target: "019", "type": "shares", "label": "共享对MI方法论的批判性反思"},
+      {target: "003", "type": "contradicts", "label": "与被003否定的内部主义对话"}
+    ]
+  },
+  {
+    id: "021",
+    title: "The Symbol Grounding Problem",
+    authors: "Stevan Harnad",
+    year: 1990,
+    venue: "Physica D: Nonlinear Phenomena",
+    doi: "10.1016/0167-2789(90)90087-6",
+    pdf: "papers/021_Harnad_1990_SymbolGroundingProblem.pdf",
+    priority: "ref",
+    tags: ["symbol grounding", "Chinese room", "Searle", "connectionism", "foundational"],
+    summary_cn: "经典奠基文献——提出符号操作系统中的符号如何获得内在意义（而不只是寄生在人类解释者的意义上）的问题。区分了标志性表征（iconic representations）和范畴性表征（categorical representations），为整个奠基文献传统奠基。",
+    abstract_cn: "本文提出「符号奠基问题」（Symbol Grounding Problem）：纯粹符号计算系统中的符号如何获得内在的语义内容，而非仅通过外部解释者的投射获得意义？Harnad将这一问题追溯到Searle的中文屋论证：形式计算仅操纵无意义符号，符号的意义必须来自系统与世界的某种连接。提出混合解决方案：结合符号计算（自上而下）与联结主义的感觉运动转导（自下而上）。关键区分两种表征能力：(1) 标志性表征——从感觉投射中进行标志性（连续的、感知相似的）表征；(2) 范畴性表征——在标志性基础上通过类别学习进行离散的范畴化。论证仅通过自下而上的感觉运动转导和范畴化混合系统，符号才能被'奠基'——通过与非符号世界建立因果连接。",
+    methodology: "哲学论证 + 认知科学整合。将Searle中文屋论证的哲学关切与联结主义计算的工程能力结合，提出符号奠基的理论分析和混合解决方案。",
+    findings: "1) 符号奠基问题的本质：仅操控符号的系统无法仅通过更复杂的符号操控获得意义——需要与非符号世界的连接；2) 混合架构（符号+联结主义感觉运动接口）是解决奠基问题的理论路径；3) 奠基需要感觉运动转导——将世界信息转化为系统可处理的信号；4) 类别学习（从连续感知到离散符号）是奠基的关键机制。",
+    limitations: "1) 混合架构方案在当时的技术条件下未经充分实施；2) 后续研究表明感觉运动转导本身是否足以奠基也存在争议；3) 对大规模统计学习（如LLM）的奠基问题未预见——当时的技术条件与当前深度学习截然不同。",
+    relevance: "这是整个向量奠基问题讨论的哲学起点。Harnad 1990为所有后续奠基文献提供了理论基础和问题框架。Millière & Coelho Mollo (001)的向量奠基问题正是在此基础上的时代更新——将奠基挑战从离散符号扩展到连续向量。对SAE特征和操控向量的含义是：如果符号奠基问题成立，则向量作为一种连续化、分布式的符号，不能仅凭其内部的统计结构逃避奠基挑战——它们同样需要与非向量世界建立某种连接。",
+    relations: [
+      {target: "001", "type": "philosophical", "label": "向量奠基问题的哲学起点"},
+      {target: "004", "type": "philosophical", "label": "中文屋传统的经典先驱"},
+      {target: "002", "type": "philosophical", "label": "章鱼测试的哲学前身"}
+    ]
+  }
+];
+
+const NOTES = [
+  {
+    paper_id: "001",
+    title: "向量奠基问题的命题结构与五层区分",
+    date: "2026-05",
+    content: "Millière和Coelho Mollo的这篇锚定论文做出了几个关键概念贡献。首先是五层奠基区分：指称奠基、交流奠基、认知奠基、功能奠基和现象奠基。他们论证只有指称奠基是根本的——其他层奠基都以指称奠基为前提或可归约至指称奠基。这一区分本身是对文献中多种奠基概念滥用的重要清理。其次，目的语义学双条件——因果信息关系+选择历史——提供了一种操作化检测LLM向量语义的标准，但这两个条件本身在观念上是相当宽松的，这也是后续Reynolds (009)和Quigley (008)批评的来源。最让我惊喜的论点是他们对多模态和具身性的'去神秘化'：他们说明多模态输入仍然是数据，仍然需要通过相同的目的语义学条件来评估——多模态不是银弹。这为纯文本LLM的对齐实践保留了哲学空间。然而，该方案的最大弱点是对'选择历史'的认定——从无监督预训练到RLHF的整个过程，哪个阶段提供了选择历史？选择压力是否足够具体来个体化内容？这些是后续经验研究必须解决的问题。"
+  },
+  {
+    paper_id: "002",
+    title: "章鱼测试的逻辑结构与形式-意义鸿沟",
+    date: "2026-05",
+    content: "Bender & Koller的章鱼测试是向量奠基问题领域最强大的直觉泵。其核心洞见是：统计完美不足以跨越形式与意义之间的鸿沟——即使一个模型完美捕获了语言使用的所有统计规律（这已经是不可能的），它仍然可能只是对形式序列的建模，而非对意义的建模。但这一论证有一个细微之处需要仔细考量：章鱼测试中的章鱼从未与人类共享任何因果通道——它仅通过电报文本接触两个人类。相比之下，LLM的训练数据是由数十亿人类在无数语境中产生的，涉及大量关于世界的因果信息（虽然这些信息被编码为文本）。因此关键问题变为：文本中的因果-信息结构是否足够丰富以提供'信息等价于'直接感知的奠基？Millière & Coelho Mollo (001)的答案是有条件的'是'，而Bender & Koller的答案是无条件的'否'。另一个关键隐含假设是：Bender & Koller似乎假设意义必须是原初意向性（Searle意义上的），而非派生意向性。如果他们仅关心原初意向性，他们的论证可能是正确的——但大多数对齐实践只需要派生意向性（见Borg 006）。"
+  },
+  {
+    paper_id: "003",
+    title: "超外部主义对机械可解释性的挑战",
+    date: "2026-05",
+    content: "Cappelen & Dever的超外部主义宣言可能是这组文献中最具破坏力的论点——如果正确，它将重新定义整个可解释性和对齐研究的哲学基础。核心主张——'意义不在内部，因此找内部意义是范畴错误'——是对SAE和操控向量研究传统的直接挑战。但要注意一个关键区分：他们挑战的不是SAE的工程实用性（SAE可以发现对预测有用的特征结构），而是对这些结构的语义解释（'这个特征代表诚实'）。换句话说，超外部主义不与SAE的预测或干预有效性冲突，而是与SAE的语义自我理解冲突。这暗示SAE研究可以安全地继续（作为工程工具），但需要修正其对语义声明的措辞。超外部主义基于经典外部主义直觉（Putnam, Burge），但将这些直觉推广到了结构属性而不仅是语义内容——这是一个相当激进但论证充分的步骤。如果超外部主义成立，那么对齐就不是关于修改模型的'信念'或'价值'，而是关于修改系统与世界的关系配置。"
+  },
+  {
+    paper_id: "004",
+    title: "自学习中文屋——学习能弥合鸿沟吗？",
+    date: "2026-05",
+    content: "Van der Wals的'自学习中文屋'论证巧妙地更新了Searle的原始论证。关键创新在于双室结构：学习室提取统计模式，执行室应用已学规则。原始中文屋只有一个房间（规则应用者），因此批评者可以声称如果这个房间'学习'了中文（通过某些神经过程），它就可能理解了中文。双室论证通过分离学习和执行两个模块，迫使乐观者回答：学习机制是否本质上有别于执行机制？如果学习仅是更复杂的统计模式提取，那么'学习无法产生理解'的主张比'计算无法产生理解'的主张更有力。但这暴露了一个深层问题：哲学家（和大多数研究者）对'学习'的概念可能过于贫乏。在人类认知中，学习涉及主动探索、假设检验、因果推理和社交互动——这些与LLM的参数更新机制几乎没有共同点。如果我们用更丰富的人类学习概念为标准，则LLM确实'不学习'——它们仅进行参数更新。因此，自学习中文屋的论证力量取决于我们对'学习'的设定——过于贫乏的定义会使论证正确但空洞，过于丰富的定义会使论证在经验上正确但概念上不够严谨。"
+  },
+  {
+    paper_id: "005",
+    title: "理解的三层框架与随机鹦鹉论的张力",
+    date: "2026-05",
+    content: "Beckmann & Queloz的三层理解框架代表了机械可解释性阵营对向量奠基问题最系统的概念回应。其框架的优雅之处在于，它避免了'理解/不理解'的二元争论，转而指向不同类型的理解指标。第一层（概念理解）声称LLM特征方向在功能上类似于人类概念——但这种'类似'的程度是关键问题。从哲学上看，'概念'不仅涉及对实体的统一表征（这是第一层的内容），还涉及规范性约束——概念决定什么算是该概念的正确应用。LLM特征方向是否能承载规范性（而不仅是统计规律性）是这一层面临的最大挑战（见Nourizadeh 011的处理）。第二层（事态理解）的证据来自Othello-GPT等玩具模型——这些模型确实展现了令人印象深刻的内部状态追踪，但目前不知道这种现象在大规模LLM中是否普遍存在。第三层（原理理解）是最弱的——目前几乎只有零星的回路发现，且这些发现的可信度和普遍性都不明确。因此，三层框架目前更多的是一个研究纲领而非已确立的事实——但它提供了将向量奠基问题操作化为可检验假设的方案，这是非常有价值的。"
+  }
+];
+
+const DOMAIN_ID = '11_vector_grounding';
+
+// ═══════════════════════════════ INIT ═══════════════════════════════
+let activeFilter = 'all';
+let graphNetwork = null;
+let graphData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderCards(PAPERS);
+  renderNotes();
+  updateStats();
+  initTabs();
+  initFilters();
+});
+
+// ═══════════════════════════════ TAB SWITCHING ══════════════════════
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'graph') initGraph();
+    });
+  });
+}
+
+// ═══════════════════════════════ FILTERS ═══════════════════════════
+function initFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.filter === activeFilter) {
+        activeFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+      } else {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      filterCards();
+    });
+  });
+}
+
+function filterCards() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const filtered = PAPERS.filter(p => {
+    const matchesFilter = activeFilter === 'all' || p.priority === activeFilter ||
+      (activeFilter === '2026' && p.year === 2026) ||
+      (activeFilter === '2025' && p.year === 2025) ||
+      (activeFilter === '2024' && p.year <= 2024);
+    const matchesSearch = !query ||
+      p.title.toLowerCase().includes(query) ||
+      p.authors.toLowerCase().includes(query) ||
+      p.tags.some(t => t.toLowerCase().includes(query)) ||
+      p.summary_cn.toLowerCase().includes(query);
+    return matchesFilter && matchesSearch;
+  });
+  renderCards(filtered);
+}
+
+// ═══════════════════════════════ CARD RENDERING ═════════════════════
+function renderCards(papers) {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = papers.map(p => `
+    <div class="card priority-${p.priority}" onclick="openPaper('${p.id}')">
+      <div class="card-priority-badge ${p.priority}"></div>
+      <div class="card-id">${p.id} · ${p.year}</div>
+      <div class="card-title">${p.title}</div>
+      <div class="card-authors">${p.authors}</div>
+      <div class="card-summary">${p.summary_cn}</div>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+  if (papers.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">没有匹配的文献</div>`;
+  }
+}
+
+// ═══════════════════════════════ MODAL ═════════════════════════════
+function openPaper(id) {
+  const p = PAPERS.find(x => x.id === id);
+  if (!p) return;
+
+  let relHtml = '';
+  if (p.relations && p.relations.length > 0) {
+    relHtml = p.relations.map(r =>
+      `<span class="rel-badge ${r.type}">${r.label} → ${r.target}</span>`
+    ).join('');
+  }
+
+  const html = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="card-priority-badge ${p.priority}" style="position:static;display:inline-block;margin-bottom:0.5rem"></div>
+    <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem">${p.id} · ${p.year} · ${p.priority === 'must' ? '必读' : p.priority === 'important' ? '重要' : '参考'}</span>
+    <h2>${p.title}</h2>
+    <div class="meta">${p.authors}${p.venue ? ' · ' + p.venue : ''}${p.doi ? ' · DOI: ' + p.doi : ''}</div>
+    ${p.pdf ? `<div class="meta"><a href="${p.pdf}" target="_blank">📄 打开PDF</a></div>` : ''}
+
+    <section>
+      <h3>一句话概要</h3>
+      <p>${p.summary_cn}</p>
+    </section>
+
+    <section>
+      <h3>完整摘要</h3>
+      <p>${p.abstract_cn || p.summary_cn}</p>
+    </section>
+
+    ${p.methodology ? `
+    <section>
+      <h3>方法论与实验设计</h3>
+      <p>${p.methodology}</p>
+    </section>` : ''}
+
+    ${p.findings ? `
+    <section>
+      <h3>核心发现与贡献</h3>
+      <p>${p.findings}</p>
+    </section>` : ''}
+
+    ${p.limitations ? `
+    <section>
+      <h3>局限性与批评</h3>
+      <p>${p.limitations}</p>
+    </section>` : ''}
+
+    ${p.relevance ? `
+    <section>
+      <h3>与本研究的相关性</h3>
+      <p>${p.relevance}</p>
+    </section>` : ''}
+
+    ${relHtml ? `
+    <section>
+      <h3>文献关联</h3>
+      <div class="relations">${relHtml}</div>
+    </section>` : ''}
+
+    <section>
+      <h3>关键词</h3>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </section>
+  `;
+
+  document.getElementById('modal').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+// ═══════════════════════════════ GRAPH ═════════════════════════════
+function initGraph() {
+  if (graphNetwork) return;
+
+  const nodes = PAPERS.map((p, i) => ({
+    id: p.id,
+    label: `${p.id}\n${p.title.substring(0, 30)}...`,
+    color: {
+      background: p.priority === 'must' ? '#4ade80' : p.priority === 'important' ? '#fbbf24' : '#64748b',
+      border: p.priority === 'must' ? '#22c55e' : p.priority === 'important' ? '#f59e0b' : '#475569'
+    },
+    font: { color: '#dce3f0', size: 10 },
+    size: p.priority === 'must' ? 28 : p.priority === 'important' ? 22 : 16,
+  }));
+
+  const edgeMap = {};
+  const edges = [];
+  const edgeColors = {
+    cites: { color: '#818cf8', dashes: false },
+    extends: { color: '#2dd4bf', dashes: false },
+    contradicts: { color: '#f87171', dashes: true },
+    shares: { color: '#f5a623', dashes: false },
+    empirical: { color: '#a78bfa', dashes: true },
+    philosophical: { color: '#fb923c', dashes: true }
+  };
+
+  PAPERS.forEach(p => {
+    if (!p.relations) return;
+    p.relations.forEach(r => {
+      const key = `${p.id}->${r.target}`;
+      if (!edgeMap[key]) {
+        edgeMap[key] = true;
+        edges.push({
+          from: p.id,
+          to: r.target,
+          label: r.label,
+          ...(edgeColors[r.type] || edgeColors.cites)
+        });
+      }
+    });
+  });
+
+  const container = document.getElementById('graph-container');
+  graphData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+  graphNetwork = new vis.Network(container, graphData, {
+    physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -40, centralGravity: 0.008, springLength: 160 } },
+    edges: { smooth: { type: 'continuous' }, font: { size: 8, color: '#8899bb' } },
+    interaction: { hover: true, tooltipDelay: 200 },
+  });
+
+  graphNetwork.on('click', function(evt) {
+    if (evt.nodes.length > 0) openPaper(evt.nodes[0]);
+  });
+}
+
+// ═══════════════════════════════ NOTES ═════════════════════════════
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!NOTES || NOTES.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted)">暂无阅读笔记。检索完成后将为核心论文撰写笔记。</div>`;
+    return;
+  }
+  list.innerHTML = NOTES.map(n => `
+    <div class="note-card">
+      <h4>${n.title}</h4>
+      <div class="note-meta">${n.paper_id} · ${n.date || ''}</div>
+      <p>${n.content}</p>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('paper-count').textContent = PAPERS.length;
+  document.getElementById('must-count').textContent = PAPERS.filter(p => p.priority === 'must').length;
+  document.getElementById('note-count').textContent = NOTES ? NOTES.length : 0;
+}
+</script>
+
+<div class="wiki-footer">
+  <div class="footer-title">浏览其他领域</div>
+  <div class="footer-domains">
+    <a href="../01_sae_features/wiki.html">01 SAE与特征分解</a>
+    <a href="../02_activation_engineering/wiki.html">02 激活与表征工程</a>
+    <a href="../03_causal_intervention/wiki.html">03 因果干预与心灵哲学</a>
+    <a href="../04_alignment_safety/wiki.html">04 AI对齐理论与安全</a>
+    <a href="../05_ethics_governance/wiki.html">05 AI伦理与治理</a>
+    <a href="../06_philosophy_of_science/wiki.html">06 科学哲学</a>
+    <a href="../07_philosophy_of_mind/wiki.html">07 心灵哲学与AI</a>
+    <a href="../08_representational_ontology/wiki.html">08 表征本体论 (Gap 1)</a>
+    <a href="../09_epistemology_understanding/wiki.html">09 理解认识论 (Gap 2)</a>
+    <a href="../10_causal_sufficiency/wiki.html">10 因果充分性 (Gap 3)</a>
+    <a href="../11_vector_grounding/wiki.html">11 向量奠基 (Gap 4)</a>
+  </div>
+  <div class="footer-back">
+    <a href="../index.html">← 返回文献知识库总览</a>
+  </div>
+</div>
+
+</body>
+</html>

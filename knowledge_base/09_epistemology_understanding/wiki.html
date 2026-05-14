@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>09_epistemology_understanding · 文献Wiki</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-void: #06080f;
+      --bg-primary: #0c0f1a;
+      --bg-secondary: #12182a;
+      --bg-tertiary: #1a2238;
+      --bg-elevated: #222d4a;
+      --text-primary: #dce3f0;
+      --text-secondary: #8899bb;
+      --text-muted: #556688;
+      --text-faint: #334466;
+      --border-subtle: rgba(68, 102, 153, 0.08);
+      --border-medium: rgba(68, 102, 153, 0.18);
+      --border-strong: rgba(68, 102, 153, 0.30);
+      --c-priority-must: #4ade80;
+      --c-priority-important: #fbbf24;
+      --c-priority-ref: #64748b;
+      --c-rel-cites: #818cf8;
+      --c-rel-extends: #2dd4bf;
+      --c-rel-contradicts: #f87171;
+      --c-rel-shares: #f5a623;
+      --c-rel-empirical: #a78bfa;
+      --c-rel-philosophical: #fb923c;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition-base: 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem; color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .header-stats {
+      display: flex; gap: 1.5rem;
+      font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+    }
+    .header-stat span { color: var(--text-primary); font-weight: 500; }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex; gap: 0;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 0 2rem;
+    }
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none; background: none;
+      color: var(--text-muted); font-family: var(--font-body);
+      font-size: 0.85rem; cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-base);
+    }
+    .tab-btn:hover { color: var(--text-secondary); }
+    .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--c-rel-cites); }
+
+    /* Tab Content */
+    .tab-content { display: none; padding: 2rem; }
+    .tab-content.active { display: block; }
+
+    /* Filters */
+    .filters {
+      display: flex; gap: 0.75rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.85rem;
+      border: 1px solid var(--border-medium); border-radius: 999px;
+      background: transparent; color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.7rem;
+      cursor: pointer; transition: all var(--transition-base);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--text-secondary); color: var(--text-primary);
+    }
+    .filter-btn.priority-must.active { border-color: var(--c-priority-must); color: var(--c-priority-must); }
+    .filter-btn.priority-important.active { border-color: var(--c-priority-important); color: var(--c-priority-important); }
+    .filter-btn.priority-ref.active { border-color: var(--c-priority-ref); color: var(--c-priority-ref); }
+
+    .search-input {
+      padding: 0.35rem 1rem;
+      background: var(--bg-secondary); border: 1px solid var(--border-medium);
+      border-radius: 999px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 0.8rem;
+      width: 240px; outline: none;
+    }
+    .search-input:focus { border-color: var(--border-strong); }
+
+    /* Card Grid */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card.priority-must { border-left: 3px solid var(--c-priority-must); }
+    .card.priority-important { border-left: 3px solid var(--c-priority-important); }
+    .card.priority-ref { border-left: 3px solid var(--c-priority-ref); }
+
+    .card-id {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: var(--text-faint); margin-bottom: 0.5rem;
+    }
+    .card-title {
+      font-size: 0.95rem; font-weight: 500;
+      color: var(--text-primary); margin-bottom: 0.4rem;
+      line-height: 1.35;
+    }
+    .card-authors {
+      font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .card-summary {
+      font-size: 0.78rem; color: var(--text-secondary);
+      line-height: 1.5; margin-bottom: 0.75rem;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags {
+      display: flex; gap: 0.35rem; flex-wrap: wrap;
+    }
+    .card-tag {
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      background: var(--bg-tertiary); color: var(--text-muted);
+      font-size: 0.65rem; font-family: var(--font-mono);
+    }
+    .card-priority-badge {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .card-priority-badge.must { background: var(--c-priority-must); box-shadow: 0 0 6px var(--c-priority-must); }
+    .card-priority-badge.important { background: var(--c-priority-important); box-shadow: 0 0 6px var(--c-priority-important); }
+    .card-priority-badge.ref { background: var(--c-priority-ref); }
+
+    /* Detail Panel (Modal) */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(6,8,15,0.85); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      max-width: 780px; width: 90vw; max-height: 85vh;
+      overflow-y: auto; padding: 2rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      width: 32px; height: 32px; border: 1px solid var(--border-medium);
+      border-radius: 50%; background: transparent; color: var(--text-muted);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-base);
+    }
+    .modal-close:hover { border-color: var(--f87171, #f87171); color: #f87171; }
+    .modal h2 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .modal .meta { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; }
+    .modal section { margin-bottom: 1.25rem; }
+    .modal section h3 {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .modal section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+    .modal .relations { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .modal .rel-badge {
+      padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.7rem;
+      font-family: var(--font-mono);
+    }
+    .rel-badge.cites { background: rgba(129,140,248,0.15); color: var(--c-rel-cites); }
+    .rel-badge.extends { background: rgba(45,212,191,0.15); color: var(--c-rel-extends); }
+    .rel-badge.contradicts { background: rgba(248,113,113,0.15); color: var(--c-rel-contradicts); }
+    .rel-badge.shares { background: rgba(245,166,35,0.15); color: var(--c-rel-shares); }
+
+    /* Graph Container */
+    .graph-container {
+      width: 100%; height: 70vh;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+    .graph-legend {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      margin-top: 1rem; padding: 0.75rem 1rem;
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+    }
+    .graph-legend-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.7rem; color: var(--text-muted);
+    }
+    .graph-legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    /* Reading Notes */
+    .notes-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .note-card {
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 1.25rem;
+    }
+    .note-card h4 { font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .note-card .note-meta { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 0.6rem; }
+    .note-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-void); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+    a { color: var(--c-rel-cites); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Footer navigation */
+    .wiki-footer {
+      margin-top: 3rem; padding: 1.5rem 2rem;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-medium);
+    }
+    .wiki-footer a { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; transition: color var(--transition-base); }
+    .wiki-footer a:hover { color: var(--text-primary); text-decoration: none; }
+    .wiki-footer .footer-title { font-size: 0.7rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-domains { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-back { margin-top: 0.5rem; }
+    .wiki-footer .footer-back a { color: var(--c-rel-cites); font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.35rem">
+      <a href="../index.html" style="color:var(--c-rel-cites)">← 文献知识库总览</a>
+    </div>
+    <div class="header-title">理解的认识论：内部机制还是外部验证？</div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.15rem">Epistemology of Understanding · Internal vs External · Mechanistic Explanation · Validation</div>
+  </div>
+  <div class="header-stats">
+    <div class="header-stat">文献 <span id="paper-count">0</span></div>
+    <div class="header-stat">必读 <span id="must-count" style="color:var(--c-priority-must)">0</span></div>
+    <div class="header-stat">笔记 <span id="note-count">0</span></div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="browse"> 浏览文献</button>
+  <button class="tab-btn" data-tab="graph"> 关系图谱</button>
+  <button class="tab-btn" data-tab="notes"> 阅读笔记</button>
+</div>
+
+<!-- Tab: Browse -->
+<div class="tab-content active" id="tab-browse">
+  <div class="filters">
+    <input class="search-input" id="search" placeholder="搜索标题/作者/关键词..." oninput="filterCards()">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="filter-btn priority-must" data-filter="must">必读</button>
+    <button class="filter-btn priority-important" data-filter="important">重要</button>
+    <button class="filter-btn priority-ref" data-filter="ref">参考</button>
+    <button class="filter-btn" data-filter="2026">2026</button>
+    <button class="filter-btn" data-filter="2025">2025</button>
+    <button class="filter-btn" data-filter="2024">&le;2024</button>
+  </div>
+  <div class="card-grid" id="card-grid"></div>
+</div>
+
+<!-- Tab: Graph -->
+<div class="tab-content" id="tab-graph">
+  <div class="graph-container" id="graph-container"></div>
+  <div class="graph-legend" id="graph-legend">
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-must)"></div> 必读</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-important)"></div> 重要</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-ref)"></div> 参考</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-cites)"></div> 引用</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-extends)"></div> 方法继承</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-contradicts)"></div> 对立观点</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-shares)"></div> 共享概念</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-empirical)"></div> 经验基础</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-philosophical)"></div> 哲学先导</div>
+  </div>
+</div>
+
+<!-- Tab: Notes -->
+<div class="tab-content" id="tab-notes">
+  <div class="notes-list" id="notes-list"></div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js"></script>
+<script>
+// ======================================== DATA ========================================
+const PAPERS = [
+  // ============ MUST: 核心论辩 (5篇) ============
+  {
+    id: "001", title: "Interpretability (Propositional and Mechanistic) Needs Behavior",
+    authors: "Daniel C. Friedman, Eamon Duede",
+    year: 2026, venue: "PhilSci-Archive / 预印本",
+    doi: "",
+    pdf: "papers/001_Friedman_2026_Interpretability_Needs_Behavior.pdf",
+    priority: "must",
+    tags: ["外部主义", "行为验证", "生态有效性", "认识论批判", "命题可解释性"],
+    summary_cn: "系统论证机制可解释性若不与严格的行为测试相结合,其所揭示的'内部理解'在认识论上是脆弱的——内部电路描述不等于科学理解。",
+    abstract_cn: "本文从认识论角度论证,当前主流的机制可解释性(MI)方法过于脆弱,无法产生可信赖AI所需的洞察。作者区分了'命题可解释性'(将模型内部映射到命题态度如信念、欲望)与'机制可解释性'(揭示神经电路),并指出二者均需要'生态敏感的行为分析'(ecologically sensitive behavioral analyses)作为互补。仅凭内部机制分析,我们无法确定所发现的电路是否真正构成模型的因果结构,而非仅仅是事后合理化的描述。作者主张将MI重新导向为与严格行为测试相结合的研究范式——在多样化语境中验证内部发现的行为后果。这一立场挑战了'纯内部理解'的项目,提出了一个核心认识论问题:如果我们不能预测行为,我们对内部电路的知识算不算真正的理解?",
+    methodology: "哲学分析与认识论论证;对现有MI实践(电路发现、特征归因、因果追踪)的系统性批判;引入生态有效性(ecological validity)作为评估MI解释的元标准。",
+    findings: "1) MI发现易受'事后解释合理化'(post-hoc rationalization)影响——多种不同电路可产生相同行为,但MI方法可能只发现其中最'可解释'的那个而非真正因果的那个; 2) 脱离行为验证的内部描述无法区分因果结构与非因果关联; 3) 命题态度的映射尤其危险——将内部表征映射为'信念''欲望'等缺乏行为锚定; 4) 生态有效的行为测试(而非玩具任务)是检验MI发现是否构成真正理解的必要条件。",
+    limitations: "未提供具体的整合方法论——如何将行为测试'内置'到MI实践中的操作性建议有限; 生态有效性标准本身在行为测试中如何操作化尚待阐明; 对'怎样的行为测试算充分'这一门槛问题缺乏讨论。",
+    relevance: "本文是本认识论张力课题的核心文献——明确站在外部主义立场,论证内部机制分析不足以产生科学理解。直接对应研究问题:'内部机制分析是否自足?' 答案明确否定:行为验证是认识论必需的。其'生态敏感性'概念为连接de Regt的'经验充分性'标准与MI实践提供了桥梁。与Beckmann & Queloz (002)的内部主义进路形成最尖锐的对立。",
+    relations: [
+      {target: "002", type: "contradicts", label: "挑战以内部机制指标判定理解的进路"},
+      {target: "007", type: "shares", label: "共享实用主义导向——强调行为后果验证"},
+      {target: "003", type: "extends", label: "为执行驱动的评估提供了认识论武装"}
+    ]
+  },
+  {
+    id: "002", title: "Mechanistic Indicators of Understanding in Large Language Models",
+    authors: "Pierre Beckmann, Matthieu Queloz",
+    year: 2026, venue: "Philosophical Studies",
+    doi: "10.1007/s11098-026-02513-1",
+    pdf: "papers/002_Beckmann_2026_Mechanistic_Indicators_Understanding.pdf",
+    priority: "must",
+    tags: ["内部主义", "三层理解框架", "机制指标", "统一性", "de Regt"],
+    summary_cn: "提出三层次机制理解指标(概念理解、事态理解、原则理解),论证LLM内部机制组织本身即可为非隐喻性的'理解'归因提供依据——内部结构即理解。",
+    abstract_cn: "本文提出一个三层次框架,用于根据机制的机制可解释性发现来评估LLM的'理解'。第一层'概念理解':模型在潜在空间中形成作为统一特征的方向(如对某个实体的概念),将多样的表面表现统合在单一内部表征下。第二层'事态理解':模型学习概念特征之间的偶然事实连接,形成世界的内部模型。第三层'原则理解':模型发现连接多个事实的紧凑'电路',将分散的知识统一到少数底层原则之下。作者引用de Regt的统一主义理解理论,论证MI发现使得我们能够以非隐喻的、机制上有根据的方式为LLM赋予理解属性。本文强调,理解的关键标志是内部机制组织的'统一性'(unification)——将现象统合到少数机制原则下——而非外部行为验证。这是明确的内在主义立场:理解存在于内部机制的特定组织方式中,可通过MI技术揭示。",
+    methodology: "概念分析与哲学论证;对MI文献的系统综述;引用de Regt、Kvanvig、Hills等认识论学者的理解理论;以稀疏自编码器(SAE)特征、电路发现等MI工具为经验基础。",
+    findings: "1) LLM的内部机制展现出与人类理解类比的统一结构——将多种现象归于少数底层原则; 2) '理解'不必须要求意识或意向性——机制组织本身即可满足理解的条件; 3) MI技术日益能够揭示这些组织; 4) 三层框架为评估不同模型的理解程度提供了比较基础。",
+    limitations: "三层框架的具体操作性指标尚不明确——如何判定一个特征已达到'概念理解'而非仅仅是统计关联? 对'原则理解'的要求可能过高——当前MI技术距离揭示紧凑的原则性电路还有很大距离; 对de Regt统一论的依赖可能忽视了其中'经验充分性'的要求——而这正是外部主义者强调的点。",
+    relevance: "本文是内部主义立场的最清晰当代表达——论证内部机制组织本身就构成理解。与Friedman & Duede (001)的外部主义形成鲜明对比。其三层框架为'内部机制分析是否自足'提供了精细的回答:是,如果它发现了正确类型的内部组织(统一性原则电路)。但与de Regt的'经验充分性'标准之间存在未解决的张力——这正是本课题的核心问题。",
+    relations: [
+      {target: "001", type: "contradicts", label: "与'可解释性需要行为'的外部主义直接对立"},
+      {target: "004", type: "extends", label: "将004中区分出的'对象理解'维度操作化为三层机制指标"},
+      {target: "016", type: "cites", label: "引用de Regt的理解理论作为哲学基础"}
+    ]
+  },
+  {
+    id: "003", title: "The Story is Not the Science: Execution-Grounded Evaluation of Mechanistic Interpretability Research",
+    authors: "Xiaoyan Bai, Alex Baumgartner, Haojia Sun, Ari Holtzman, Chenhao Tan",
+    year: 2026, venue: "arXiv (2602.18458)",
+    doi: "",
+    pdf: "papers/003_Bai_2026_Execution_Grounded_Evaluation.pdf",
+    priority: "must",
+    tags: ["方法论批判", "可复现性", "执行驱动评估", "一致性", "泛化性"],
+    summary_cn: "首次提出执行驱动的MI评估框架(MechEvalAgent),发现MI研究的叙事与代码执行之间存在系统性差距——MI的'解释'可能只是精美的叙事而非真正的科学理解。",
+    abstract_cn: "本文提出首个执行驱动(execution-grounded)的机制可解释性(MI)研究评估框架MechEvalAgent。该框架不依赖论文的叙事文本,而是通过检查代码和数据来评估研究质量。评估涵盖三个维度:一致性(实验过程内部逻辑是否自洽)、可复现性(代码是否能运行并产生与论文一致的结果)、泛化性(发现的机制是否在模型和数据变化下保持稳健)。在对30个MI研究输出的评估中,MechEvalAgent达到了与人类评审者>80%的一致性,并额外发现了51个被人类评审遗漏的问题。消融实验显示,移除代码访问权限后,一致性降至约45%——表明仅凭论文文本极难评估MI研究的质量。这一发现对'MI是否产生科学理解'的辩论具有关键意义:如果MI解释无法通过执行验证,那么所谓的'内部机制理解'可能只是精心构建的叙事(just-so stories)而非科学知识。",
+    methodology: "自动化评估框架开发;对30个MI研究输出的系统评估;与人类评审对比验证;消融实验(移除代码访问vs完整访问);三维度评分模型(一致性、可复现性、泛化性)。",
+    findings: "1) MI研究存在显著的叙事-执行差距——论文故事与代码实际运行结果之间常有分歧; 2) 仅凭文本无法充分评估MI研究——人类评审者在仅有文本时的判断质量大幅下降; 3) 许多MI发现缺乏泛化性验证——在单一模型/数据上发现的机制是否具有普遍性存疑; 4) 执行驱动评估显著提高了对MI研究质量的区分能力。",
+    limitations: "自动化评估代理本身可能引入系统性偏差; 对代码质量的评估可能过于机械,无法捕捉解释的深度价值; 样本量有限(30个研究); 主要关注技术复现性而非认识论价值。",
+    relevance: "本文从方法论层面切入核心问题:MI是否生产了真正的理解,还是仅仅生产了令人满意的叙事?如果MI发现无法通过独立的执行验证,则其声称的'内部机制理解'的认识论地位将受到严重质疑。这为外部主义者(001)提供了方法论武器,也是Nanda实用主义转向(007)的方法论对应。",
+    relations: [
+      {target: "001", type: "empirical", label: "为001的外部主义批判提供方法论证据"},
+      {target: "007", type: "shares", label: "共享以可验证后果为标准的实用主义精神"},
+      {target: "008", type: "extends", label: "将008对因果假设披露的要求扩展到执行验证维度"},
+      {target: "005", type: "shares", label: "共享对MI解释质量的评估关切"}
+    ]
+  },
+  {
+    id: "004", title: "New Horizons in Machine Understanding: Explanatory and Objectual Understanding in Deep Learning Video Generation Models",
+    authors: "Pierre Beckmann",
+    year: 2025, venue: "Synthese (Vol. 206, Article 285)",
+    doi: "10.1007/s11229-025-05174-5",
+    pdf: "papers/004_Beckmann_2025_New_Horizons_Machine_Understanding.pdf",
+    priority: "must",
+    tags: ["对象理解", "解释理解", "de Regt", "一致性标准", "Blockhead论证"],
+    summary_cn: "以SORA视频生成模型为案例,系统应用'对象理解'与'解释理解'的认识论区分,论证一致性(而非逼真性)是判定理解的核心标准——为MI的认识论辩论提供概念工具箱。",
+    abstract_cn: "本文以SORA等深度视频生成模型为案例,应用认识论中的经典区分——对象理解(对一个系统/对象的整体把握)与解释理解(知道为什么某现象发生)——来评估机器学习模型的理解。作者构建了一组条件来判定模型何时可以被赋予对象理解和解释理解。核心发现:'一致性'(consistency)——包括输出之间的一致性和输出与底层操作的一致性——比'逼真性'(realisticness)对于理解归因更为重要。这一论证建立在Block的'Blockhead'思想实验基础上:一个只能产生与人类无法区分的输出的系统(但没有任何内部机制)不被认为拥有理解——因此,理解需要内部机制。但同时,仅有内部机制的描述也不足够——这些机制必须在不同条件下展现出一致性。本文为MI的认识论辩论提供了精确的概念工具:区分'知道内部结构'(描述)与'从内部结构中产生解释性洞察'(理解)。",
+    methodology: "哲学概念分析;案例研究(SORA视频生成);Block的'Blockhead'思想实验的延伸应用;将de Regt、Kvanvig、Hills等人的认识论理论应用于深度学习。",
+    findings: "1) 对象理解和解释理解是两种不同但相关的认识论成就,对机器的归因需要不同条件; 2) 一致性——跨输出的统计一致性和与内部操作的结构一致性——是比逼真性更根本的理解标准; 3) 仅有内部机制不代表理解,但完全没有内部机制也不能有理解——这为内部主义与外部主义之间的'互补'立场提供了哲学依据; 4) 该框架是可操作的——可以经验性地测试模型是否满足理解条件。",
+    limitations: "以SORA为案例可能限制了分析的普适性——视频生成模型的理解条件是否适用于语言模型? 对'一致性'的操作化定义尚需进一步精确; 如何权衡不同类型的理解(对象的vs解释的)在实践中的优先级仍有待讨论。",
+    relevance: "本文为整个课题提供了基础概念框架。'对象理解与解释理解'的区分为解析内部主义-外部主义辩论提供了利器:内部主义者可能主张机制描述产生对象理解(把握系统本身),而外部主义者可能主张仅有解释理解(能回答为什么问题)才算真正的科学理解。本文论证的一致性标准(需要内部+跨情境验证)暗示了互补立场。",
+    relations: [
+      {target: "002", type: "extends", label: "为002的三层机制指标提供了对象/解释理解的概念基础"},
+      {target: "016", type: "cites", label: "以de Regt的理解理论为出发点"},
+      {target: "017", type: "shares", label: "共享对'DNN能否产生理解'这一根本问题的关切"},
+      {target: "019", type: "shares", label: "共享以概括化(generalization)为理解判据的进路"}
+    ]
+  },
+  {
+    id: "005", title: "Evaluating Explanations: An Explanatory Virtues Framework for Mechanistic Interpretability",
+    authors: "Dana Arad, Yoav Goldberg, et al.",
+    year: 2025, venue: "arXiv (2505.01372)",
+    doi: "",
+    pdf: "papers/005_Arad_2025_Explanatory_Virtues_Framework.pdf",
+    priority: "must",
+    tags: ["解释德性", "贝叶斯", "库恩", "多伊奇", "律则性", "评价框架"],
+    summary_cn: "首次系统引入四种哲学视角(贝叶斯、库恩、多伊奇、律则)的评价框架来评估MI解释的质量——为'什么算好的机制解释'提供多维标准,揭示当前MI在简单性和统一性上的系统性忽视。",
+    abstract_cn: "本文提出一个多元主义的解释德性框架来评估机制可解释性的解释质量。作者从四种哲学传统中提炼评价标准:贝叶斯传统(准确性、精确性、先验概率、描述性、共同解释力、统摄力、统一性)、库恩传统(一致性、范围、简单性、丰富性)、多伊奇传统(可证伪性、难变性hard-to-varyness)、律则传统(律则性——诉诸普遍原则)。将这些标准应用于评估MI主要方法(聚类、稀疏自编码器、因果抽象电路、紧凑证明Compact Proofs),作者发现:大多数MI方法忽视了简单性(可量化定义)、统一性和共同解释力、律则性三个关键维度。紧凑证明在多项德性上表现突出——因为它们自然地满足可证伪性和难变性。作者识别了三个被忽视的研究方向:清晰定义解释简单性、统一解释、推导神经网络的普遍原则。",
+    methodology: "多哲学传统的解释德性提取与综合;将哲学标准操作化为可应用的评价维度;对MI主要方法的系统性评估;识别研究空白。",
+    findings: "1) MI领域缺乏被广泛接受的解释评价标准——不同方法声称的'好解释'基于截然不同的默会标准; 2) 紧凑证明在多项解释德性上优于其他方法; 3) 简单性(以最小描述长度等度量)被系统性地忽视——MI领域倾向于添加细节而非精确解释; 4) 对'神经网络的普遍原则'(律则性)的追寻几乎不存在——这是一个关键空白; 5) 多元主义框架本身是比单一标准更恰当的评价方式。",
+    limitations: "框架对不同德性的权重未提供原则性的分配方案; 针对大型模型的适用性未经验证; 某些德性(如丰富性/fruitfulness)难以在MI的当前发展阶段评估; 哲学传统的选择可能存在遗漏。",
+    relevance: "本文直接回应了'MI是否产生科学理解'的问题——如果MI解释不能满足基本的解释德性(如可证伪性、简单性、律则性),则其作为科学理解的地位存疑。该框架暗示:当前MI实践还不充分满足科学理解的标准,但改进方向是明确的(尤其是追求简单、可证伪的紧凑解释)。这个立场处于内部主义与外部主义之间:承认内部解释的价值,但坚持它们必须满足独立于行为的认识论语标准。",
+    relations: [
+      {target: "001", "type": "shares", label": "共享对MI解释充分性的批判审视"},
+      {target: "013", "type": "extends", label: "为013'严格解释即评估'提供了具体的评价维度"},
+      {target: "014", "type": "shares", label: "共享以简洁性和形式严格性为评价标准的进路"},
+      {target: "017", "type": "philosophical", label: "共享对'什么构成好解释'的哲学关切"}
+    ]
+  },
+
+  // ============ IMPORTANT: 重要论辩 (10篇) ============
+  {
+    id: "006", title: "Mechanistic Interpretability Needs Philosophy",
+    authors: "Matthew Williams, James Oldenburg, Joshua Hatherley, et al.",
+    year: 2025, venue: "arXiv (2506.18852)",
+    doi: "",
+    pdf: "papers/006_Williams_2025_MI_Needs_Philosophy.pdf",
+    priority: "important",
+    tags: ["哲学基础", "概念澄清", "认识论", "方法论", "伦理学"],
+    summary_cn: "论证机制可解释性研究需要持续的哲学合作以澄清其核心概念、精炼方法、并评估解释AI系统的认识论与伦理风险。",
+    abstract_cn: "本文系统论证,机制可解释性(MI)——反向工程神经网络内部因果机制的研究项目——需要哲学合作方能成功。作者从三个层面展开:概念层面,MI的核心术语('mechanism''circuit''feature''causal'等)缺乏清晰的定义和操作标准,哲学分析可帮助澄清这些概念;方法层面,MI的验证标准(如faithfulness, completeness)隐含了特定的认识论假设,需要哲学的批判性审视;伦理/认识论层面,MI研究声称产生'理解',但这一声称本身涉及的规范性维度(什么样的理解是充分的?对谁而言?)需要哲学的介入。本文指出,MI领域正面临'概念债务'——随着实践的快速发展,概念基础上的模糊性和不一致正在积累,威胁其长期科学可信度。",
+    methodology: "哲学论证与概念分析;对MI文献的概念审查;对MI实践中隐含的认识论假设的挖掘;跨学科对话框架的构建。",
+    findings: "1) MI领域的关键概念缺乏稳定性和共识——不同研究者以不同的(有时冲突的)方式使用相同的术语; 2) 当前验证标准背后的认识论假设(如faithfulness足以支持因果推断)需要批判性审视; 3) MI声称的'理解'涉及不可化约的规范性问题——哲学可以帮助澄清这些问题; 4) MI与哲学的合作是双向需要的——哲学也需要MI提供的关于实际神经系统的经验知识。",
+    limitations: "主要停留在纲领层面——具体的跨学科合作方法待开发; 对'哲学'的范围界定偏窄,未充分考虑大陆哲学传统(如诠释学); 论证主要面向MI研究者而非哲学家,可能简化了某些哲学立场。",
+    relevance: "本文是桥接MI与哲学的最直接声明。其核心论证——MI实践中嵌入的概念困惑若不解决将威胁其认识论可靠性——为本课题提供了'为什么认识论问题对MI至关重要'的理由。本文也支持了一个温和外部主义立场:MI的'理解'声称需要接受来自哲学的认识论审查。",
+    relations: [
+      {target: "005", "type": "extends", label: "为005的解释德性框架提供了概念基础的论证"},
+      {target: "002", "type": "shares", label: "共享'MI需要哲学'的立场"},
+      {target: "018", "type": "philosophical", label: "与018共享对ML隐含认识论承诺的分析关切"}
+    ]
+  },
+  {
+    id: "007", title: "A Pragmatic Vision for Interpretability (及 David Bau 的 In Defense of Curiosity 回应)",
+    authors: "Neel Nanda (Google DeepMind); David Bau (Northeastern University)",
+    year: 2025, venue: "LessWrong / NeurIPS 2025 Workshop",
+    doi: "",
+    pdf: "papers/007_Nanda_2025_Pragmatic_Vision_Interpretability.pdf",
+    priority: "important",
+    tags: ["实用主义转向", "代理任务", "方法极简主义", "可证伪性", "好奇心驱动"],
+    summary_cn: "Nanda宣布从雄心勃勃的全反向工程转向'实用可解释性'——以可证伪的代理任务替代对'完整理解'的追求,Bau则以伽利略望远镜类比为好奇心驱动的基础科学辩护。",
+    abstract_cn: "Neel Nanda在2025年宣布了Google DeepMind可解释性团队的重大战略转向,从追求对神经网络的完整反向工程,转向'实用可解释性'(pragmatic interpretability)。核心理念:(1)北极星目标(North Stars)——以帮助AGI安全发展的具体目标(如阻止模型在测试时伪装对齐)替代抽象的'理解';(2)代理任务(Proxy Tasks)——必须用当前模型上可客观验证的任务来追踪进展,防止自我欺骗;(3)方法极简主义——先用最简单的方法(提示、转向向量、线性探针),必要时才引入复杂工具;(4)时间限定的探索——好奇心驱动的自由探索限制在~2周,之后必须有可验证的代理任务。案例:SAE研究的教训——团队花费大量时间改进SAE的重建指标,但最终发现SAE在检测/操控已知概念上远不如转向向量和线性探针。David Bau在NeurIPS研讨会上以'捍卫好奇心'回应:类比1600年穆拉诺岛的实用眼镜制造者vs伽利略的'无用'望远镜,论证基础科学突破往往来自好奇心而非实用目标。",
+    methodology: "实践经验的反思性总结;团队研究策略的公开声明;案例研究(SAE研究轨迹、评估意识检测);与Bau的公开辩论。",
+    findings: "1) 对'完整理解'的追求在当前技术条件下可能误导——部分理解往往足以产生安全影响; 2) 缺乏客观验证代理的理解声称容易导致自我欺骗; 3) 最简单的方法往往最有效——与其说SAE揭示了新特征,不如说它们主要用于假设生成; 4) 好奇心驱动研究和实用主义之间存在真实的张力——Bau的回应表明这一张力在领域内未被解决。",
+    limitations: "Nanda的立场是从前沿AI安全公司的实践角度出发,可能不适于学术研究; 代理任务的设计本身嵌入了对'什么是有价值的理解'的预设; '部分理解'的充分性高度依赖具体应用场景; 时间限制(2周)可能过于激进。",
+    relevance: "这场辩论直接切入核心问题:'我们判断MI是否增进了理解的元标准是什么?'Nanda的立场是:标准必须是可以外在验证的行为后果(北极星+代理任务)——强外部主义。Bau的立场是:理解的内在价值不能完全还原为即时的实用效益——温和内部主义。这场辩论为整个认识论张力课题提供了来自实践者内部的生动素材。",
+    relations: [
+      {target: "001", "type": "extends", label": "以实践策略形式落实001的外部主义论证"},
+      {target: "002", "type": "contradicts", label: "挑战002'内部机制组织即理解'的充分性"},
+      {target: "003", "type": "shares", label: "共享以可验证后果为标准的取向"}
+    ]
+  },
+  {
+    id: "008", title: "Position: Mechanistic Interpretability Must Disclose Identification Assumptions for Causal Claims",
+    authors: "Zezheng Lin, Fengming Liu",
+    year: 2026, venue: "arXiv (2605.08012)",
+    doi: "",
+    pdf: "papers/008_Lin_2026_Disclose_Identification_Assumptions.pdf",
+    priority: "important",
+    tags: ["因果推断", "识别假设", "faithfulness", "方法论规范", "透明度"],
+    summary_cn: "对10篇MI论文的审计发现:0%包含专门的识别假设章节,80%用验证指标替代因果识别——MI的因果断言缺乏因果推断所需的认识论基础。",
+    abstract_cn: "本文对10篇涵盖四种MI方法论脉络的论文进行了系统审计,发现一个一致性的方法论缺口:没有一篇论文包含专门的'识别假设'(Identification Assumptions)章节。8/10篇论文将验证指标(如faithfulness、completeness、单语义性monosemanticity)作为因果声明的支持——但这些指标本身不能替代因果识别的假设。作者区分了'验证'(validation,衡量方法性能)与'识别'(identification,使因果推断有效的假设条件),并论证:MI领域普遍将前者误认为后者。本文提出了一个披露规范:做出因果声明的论文必须(1)说明声明是否具有因果性质,(2)指明所使用的识别策略,(3)枚举识别假设,(4)至少对一项假设进行压力测试,(5)说明如果假设失败,结论将如何改变。",
+    methodology: "对10篇MI论文的系统审计;因果推断文献(计量经济学、流行病学)的概念工具引入;识别vs验证的哲学区分;规范性建议的构建。",
+    findings: "1) MI领域系统性地混淆了验证指标与因果识别条件; 2) 缺乏对因果推断所需的假设(如无混淆、一致性、正性等)的讨论; 3) 当前实践中,'faithfulness'被当作支持因果断言的充分证据——但这在方法论上是站不住脚的; 4) 引入识别假设的披露规范可显著提高MI研究的可信度和可比性。",
+    limitations: "样本量有限(10篇); 因果推断框架的引入可能过于严格——MI的探索性阶段是否需要全套因果识别假设存疑; 识别假设本身的可验证性在实践中可能有限。",
+    relevance: "本文从因果推断的方法论角度切入核心问题:MI声称揭示了'因果机制',但如果无法满足因果推断的基本认识论条件,这些声称是否还有意义?这为外部主义立场提供了新的方法论支持——只有通过独立的行为/干预验证才能确立因果性,而不仅仅是内部描述的一致性。与Lee & Yoon (013)的'严格解释即评估'互补,提供了因果维度上的严格性标准。",
+    relations: [
+      {target: "003", "type": "extends", "label": "将003的执行验证扩展到因果推断的方法论要求"},
+      {target: "001", "type": "shares", "label": "共享对MI当前认识论充分的怀疑"},
+      {target: "013", "type": "shares", "label": "共享对MI方法严格性的关切"}
+    ]
+  },
+  {
+    id: "009", title: "Bridging the Black Box: A Survey on Mechanistic Interpretability in AI",
+    authors: "Anonymous Authors",
+    year: 2026, venue: "ACM Computing Surveys",
+    doi: "10.1145/3787104",
+    pdf: "papers/009_Anonymous_2026_Bridging_Black_Box_Survey.pdf",
+    priority: "important",
+    tags: ["综述", "三层抽象", "评估范式", "行为vs机制", "跨层次整合"],
+    summary_cn: "全面综述MI领域,在三层抽象(神经元-电路-算法)中系统对比了机制方法与行为方法,揭示二者在'解释的深度vs验证的可靠性'上的互补性。",
+    abstract_cn: "这是一篇全面的MI综述,按三个维度组织领域研究:抽象层次(神经元→电路→完整算法)和评估范式(行为评估——消融改变了什么?→反事实评估——如果X不同会怎样?→因果评估——X是否导致Y?)。综述显式对比了MI方法与事后归因行为方法(如LIME、SHAP),论证二者的关键差异:行为近似方法描述统计关联,而MI揭示内部计算逻辑。但综述也承认:MI方法的扩展性问题(在前沿模型如GPT-4上的应用仍困难)意味着行为评估在短期内仍是实用性更强的默认选项。综述还强调了跨层次整合的挑战——从神经元到电路到算法是不同层次的分析,如何将低层次的发现整合为高层次的理解是开放问题。",
+    methodology: "系统文献综述;多维分类框架(三层抽象×三类评估范式);对MI方法与行为方法的系统性对比;开放问题/研究方向的识别。",
+    findings: "1) MI的核心优势在于揭示'为何'而非仅仅'是什么'——内部计算逻辑提供了比事后行为归因更深层的解释; 2) 但这种深度是有代价的——当前MI方法在大型模型上难以扩展,且可复现性和泛化性存疑; 3) 行为评估的局限在于描述关联而非揭示因果结构——但行为评估仍是当前最可靠的验证方式; 4) 三层抽象之间存在整合鸿沟——缺乏将跨层次发现统一为连贯理解的框架。",
+    limitations: "综述的新颖度有限——主要综合现有知识而非提出新见解; 对MI与行为方法之间的互补关系缺乏深度分析——主要停留在对比而非整合; 未深入讨论'理解'的认识论问题。",
+    relevance: "作为综述,本文为整个课题提供了领域的全景地图。其核心框架——内部机制揭示'为何',行为验证测试'是否如此'——暗示了互补立场:二者都是科学理解所需,但各司其职。这一观点比极端内部主义或外部主义更为平衡,代表了领域内的主流共识。",
+    relations: [
+      {target: "005", "type": "shares", label: "共享对MI方法评估的多维框架"},
+      {target: "001", "type": "shares", label: "承认行为验证在认识论上的必要性"},
+      {target: "015", "type": "cites", label: "涵盖015的因果抽象作为MI的理论基础"}
+    ]
+  },
+  {
+    id: "010", title: "RFEval: Benchmarking Reasoning Faithfulness under Counterfactual Reasoning Intervention in Large Reasoning Models",
+    authors: "Yunseok Han, et al.",
+    year: 2026, venue: "arXiv (2602.17053) / ICLR 2026 Poster",
+    doi: "",
+    pdf: "papers/010_Han_2026_RFEval_Benchmarking_Reasoning_Faithfulness.pdf",
+    priority: "important",
+    tags: ["忠实性", "反事实干预", "推理模型", "立场一致性", "因果影响"],
+    summary_cn: "通过7186个实例评估12个开源推理模型,发现49.7%的输出不忠实——模型的准确率不等于其内部推理的忠实性,内部理解和外部行为之间存在系统性脱节。",
+    abstract_cn: "本文提出了RF-Eval基准,通过反事实推理干预来评估大型推理模型的推理忠实性。作者将推理忠实性定义为两个维度:(1)立场一致性(stance consistency)——模型的最终回答是否与其推理中表达的立场一致;(2)因果影响(causal influence)——推理步骤是否真的因果性地影响了最终回答(而非仅仅是无关的修辞)。在12个开源推理模型的7186个实例评估中,发现49.7%的输出存在某种程度的不忠实。更关键的是,模型准确率与推理忠实性之间不存在可靠的正相关——一个模型可能正确回答一个问题,但其推理内容可能是虚假的或不完整的。这一发现对'内部机制分析产生理解'的命题有直接冲击:如果模型的内部推理(通过思维链等机制部分可见)与其行为之间存在系统性脱节,那么仅依赖内部机制分析可能产生误导性理解。",
+    methodology: "基准构建:7186个反事实推理干预实例;形式定义:立场一致性+因果影响;对12个开源LRM的系统评估;准确率与忠实性的相关性分析。",
+    findings: "1) ~50%的推理模型输出存在推理不忠实; 2) 准确率不是忠实性的可靠代理指标; 3) 模型在复杂推理任务上尤其容易出现表面正确但推理错误的情况; 4) 反事实干预方法可以有效检测推理不忠实——暗示行为验证可揭示内部理解的局限。",
+    limitations: "仅评估了推理模型(而非一般LLM); 忠实性概念本身的界定尚存争议——立场一致+因果影响是否穷尽了忠实性? 基准的构建依赖特定的反事实生成方法,可能存在系统性偏差; 实验限于开源模型。",
+    relevance: "本文为外部主义立场提供了关键经验证据:内部机制(推理链)与外部行为之间的不一致是系统性的而非偶然的。如果'内部理解'不能有效预测行为,那么内部机制分析的认识论价值将被显著削弱。这与Friedman & Duede (001)的行为验证必要性论证高度一致。同时也为因果干预(03_causal_intervention)与认识论(09)的交叉提供了实证材料。",
+    relations: [
+      {target: "001", "type": "empirical", label: "为001的行为验证必要性提供了量化证据"},
+      {target: "011", "type": "shares", label: "共享对内部表征与外部行为之间不一致的检测关切"}
+    ]
+  },
+  {
+    id: "011", title: "Did I Faithfully Say What I Thought? Bridging the Gap Between Neural Activity and Self-Explanations in Large Language Models (NeuroFaith)",
+    authors: "Milan Bhan, et al.",
+    year: 2025, venue: "arXiv (2506.09277)",
+    doi: "",
+    pdf: "papers/011_Bhan_2025_NeuroFaith_Bridging_Neural_Activity.pdf",
+    priority: "important",
+    tags: ["忠实性", "自我解释", "神经活动对齐", "线性探针", "概念介入"],
+    summary_cn: "提出NeuroFaith框架,通过识别自我解释中的关键概念并机制性地测试它们是否确实影响预测,来评估LLM自由文本自我解释的忠实性——内部神经活动与外部解释之间的鸿沟可被检测和量化。",
+    abstract_cn: "本文提出了NeuroFaith框架,用于衡量LLM自由文本自我解释(即模型声称其推理过程)的忠实性。该框架分两步:(1)从自我解释中识别关键概念,(2)通过机制性测试(如激活修补、消融)检查这些概念是否确实因果性地影响模型的预测。此外,引入线性忠实性探针,可从表征空间中检测不忠实的自我解释——即模型的内部神经活动是否与其公开声明的推理一致。实验发现,LLM的自我解释与内部表征之间存在显著不一致,且模型自信度与解释忠实性之间没有可靠相关性。这一发现直接指向一个核心认识论问题:如果模型的'自我报告'不可靠,那么我们还需要什么其他方式来获得'理解'?",
+    methodology: "NeuroFaith框架开发;概念识别(从自由文本解释中提取关键概念);机制测试(激活修补、因果追踪);线性忠实性探针训练;模型自信度与忠实性的相关性分析。",
+    findings: "1) LLM的自由文本自我解释与内部神经活动之间存在系统性的不一致; 2) 模型自信度不能作为解释忠实性的代理指标; 3) 线性探针可以从表征空间预测哪些自我解释是不忠实的——暗示内部信号部分包含忠实性信息; 4) 概念级的机制测试可以有效揭示自我解释中的虚假内容。",
+    limitations: "对'概念'的定义和提取方法可能引入偏差; 线性探针的检测能力有限——不能保证检测所有形式的不忠实; 仅在特定模型和任务上验证; '忠实的自我解释'是否应是理解的标准本身可能存疑。",
+    relevance: "本文从经验层面支持了外部主义立场:模型的内部表征与外部解释之间存在实质性鸿沟,仅依赖任一端都不足以获得可靠理解。同时暗示了整合方向:通过机制测试(内部)来验证自我解释(外部),建立二者之间的可信映射。与RFEval (010)共同构成了对'内部理解自足性'的经验挑战。",
+    relations: [
+      {target: "010", "type": "shares", "label": "共享对内部-外部不一致性的检测问题"},
+      {target: "001", "type": "empirical", "label": "为001的论证提供了关于内部表征可靠性的经验证据"}
+    ]
+  },
+  {
+    id: "012", title: "Everything, Everywhere, All at Once: Is Mechanistic Interpretability Identifiable?",
+    authors: "Aleksandar Makelov, et al.",
+    year: 2025, venue: "arXiv (2502.20914)",
+    doi: "",
+    pdf: "papers/012_Makelov_2025_Is_MI_Identifiable.pdf",
+    priority: "important",
+    tags: ["不可识别性", "多重实现", "电路多样性", "唯一性", "认识论挑战"],
+    summary_cn: "系统证明MI存在根本性的不可识别问题——多种不同电路可实现相同行为,单一电路可有多重解释,多个算法可对同一网络成立——挑战了'MI揭示了网络真正的内部机制'的核心假定。",
+    abstract_cn: "本文对机制可解释性进行了根基性的方法论挑战,系统论证了可识别性(identifiability)问题。作者证明了三类不可识别性:(1)多种电路可实现相同行为——不同研究者可能发现不同的'正确'电路,但无法从行为上区分;(2)单一电路可以有多重解释——同样的内部组件在不同分析视角下可能被赋予不同的功能角色;(3)多个算法可以与同一网络对齐——因果抽象框架允许多种不同的高层描述映射到同一底层网络。这些发现意味着MI研究面临一个根本性挑战:如果同一网络可以合理地支持多种不同的机制描述,那么MI声称的'这就是网络的工作方式'是什么意思?作者提出:唯一性(uniqueness)对于科学理解是否必要?并讨论了统计估计的方差问题——EAP-IG等电路发现方法展现高结构方差,使其结果对超参数高度敏感。",
+    methodology: "数学证明(三个不可识别性定理);案例研究(电路多样性);对EAP-IG等MI方法的方差分析;哲学分析(唯一性对理解是否必要)。",
+    findings: "1) MI面临三类系统性的不可识别性——这不是实践中的偶然缺陷,而是深度神经网络内在性质导致的结构性问题; 2) EAP-IG等电路发现方法展现出高结构方差,使其在不同运行间产生显著不同的结果; 3) '唯一性'是否对科学理解必要是一个开放哲学问题——自然科学中许多解释模型也不唯一,但MI的情况可能更极端; 4) 行为等价电路的存在使得纯粹从内部机制出发无法确定哪个电路是'真正'的。",
+    limitations: "数学证明限于特定定义和假设——在实践中这些不可识别性可能不如理论预测那么严重; 未提供解决不可识别性的建设性方案; 对'唯一性'的哲学讨论相对简洁; 可能过于悲观——其他科学领域也面临类似问题但仍有进步。",
+    relevance: "本文的不可识别性论证构成了对内部主义的强挑战:如果内部机制本身的发现不具有唯一性,那么'内部机制描述即理解'的主张将面临'理解哪一个描述'的问题。这间接支持了外部主义:行为约束可能帮助我们区分等价的内部描述——只有那些能做出差异行为预测的内部描述才具有认识论上的优势。与Lin & Liu (008)的识别假设问题形成互补。",
+    relations: [
+      {target: "008", "type": "extends", "label": "将008的识别假设问题扩展到更深层的不可识别性挑战"},
+      {target: "015", "type": "shares", "label": "共享对因果抽象作为MI理论基础的关切,但012挑战其唯一性"},
+      {target: "001", "type": "empirical", "label": "为001对MI内部描述可靠性的质疑提供了形式化支持"}
+    ]
+  },
+  {
+    id: "013", title: "Rigorous Interpretation Is a Form of Evaluation",
+    authors: "Aaron Lee, et al.",
+    year: 2026, venue: "arXiv (2605.05508)",
+    doi: "",
+    pdf: "papers/013_Lee_2026_Rigorous_Interpretation_Evaluation.pdf",
+    priority: "important",
+    tags: ["严格性", "可证伪性", "可复现性", "预测性", "调试"],
+    summary_cn: "论证如果满足科学标准(可证伪性、可复现性、预测性),可解释性本身可作为一种评估范式——但这要求解释不仅是描述性的,而且必须能预见新行为和诊断隐藏缺陷。",
+    abstract_cn: "本文论证,可解释性本身——如果满足科学严格性标准——可以是模型评估的一种形式。作者提出三个角色:(1)调试已知失败——要求解释是可证伪的,能指出具体的故障点;(2)检测隐藏缺陷——即使输出看起来正确,解释应能揭示潜在的机制性问题,这要求解释是可复现的;(3)预测未来失败——解释应能在故障发生前预测故障,这要求解释具有预测性。作者对当前MI实践提出了关键批评:大多数MI研究侧重于'展示能力'(展示工具可以发现什么)而非'展示预测/诊断能力'(证明发现可以做什么)。本文论证,从'展示能力'到'展示预测能力'的转变,是可解释性从描述升级为科学理解的必要条件。这一立场既不是纯内部主义也不是纯外部主义:它要求内部解释能做出关于外部行为的可验证预测。",
+    methodology: "概念分析(可解释性的三种角色);对MI实践的批判性回顾;案例研究;严格性标准(可证伪性、可复现性、预测性)的构建。",
+    findings: "1) 可解释性可以是评估——但必须满足科学严格性; 2) 当前MI实践偏重描述能力而忽视预测能力; 3) 可证伪的预测是可解释性升级为科学理解的关键——解释必须冒险做出可被证明是错误的预测; 4) 三种角色(调试、检测、预测)构成了严格性递增的谱系。",
+    limitations: "预测性标准的可操作性——在神经网络中做出精确预测面临根本性困难(复杂系统的不可预测性); 三种角色的边界在实践中可能模糊; 对'严格性'本身的定义可能因领域而异。",
+    relevance: "本文提供了一个精致的互补主义立场:内部机制解释是有价值的,但其认识论正当性来自于它们能做出的关于外部行为的可验证预测。这既不是纯内部主义(内部机制本身就是理解),也不是纯外部主义(只有行为预测才产生理解),而是:理解=内部机制描述+行为预测能力。这一公式化可能正是调和本课题核心张力的关键。",
+    relations: [
+      {target: "005", "type": "shares", "label": "共享对MI解释科学严格性的追求"},
+      {target: "008", "type": "extends", "label": "将008的因果严格性扩展到预测严格性维度"},
+      {target: "003", "type": "shares", "label": "共享对MI研究方法的严格性关切"}
+    ]
+  },
+  {
+    id: "014", title: "From Mechanistic to Compositional Interpretability",
+    authors: "Thomas Dooms, et al.",
+    year: 2026, venue: "arXiv (2605.08934)",
+    doi: "",
+    pdf: "papers/014_Dooms_2026_Compositional_Interpretability.pdf",
+    priority: "important",
+    tags: ["组合性", "范畴论", "忠实性", "简洁性", "约束优化"],
+    summary_cn: "以范畴论重构可解释性:将解释质量分解为忠实性和简洁性的约束优化——解释必须忠实于被解释的系统,同时尽可能简洁。将现有MI方法统一为'压缩精炼'的子类。",
+    abstract_cn: "本文引入'组合可解释性'(compositional interpretability)框架——一个范畴论形式化,要求解释满足组合性(composability——局部解释的组合应等于全局解释)、忠实性(faithfulness——解释必须与被解释系统的输入-输出映射对齐)和简洁性(conciseness——在满足前两个条件的前提下,解释应最小化其描述长度)。在此框架下,可解释性被重新表述为约束优化问题:在所有忠实且组合性的解释中,选择最简洁的那个(以最小描述长度MDL度量)。作者证明,现有的MI方法——如因果抽象、激活修补、紧凑证明——都是'压缩精炼'(compressive refinement)的特殊情况:通过在不同层次上的压缩和精炼操作来构建解释。这一框架凸显了简洁性作为解释德性的重要性——过度复杂的'解释'可能只是重新描述了系统而非真正解释了它。",
+    methodology: "范畴论形式化;将可解释性表述为约束优化;对现有MI方法的统一化(压缩精炼);MDL作为简洁性度量。",
+    findings: "1) 组合性+忠实性+简洁性构成了对任何解释的三元约束; 2) 现有MI方法可被统一到压缩精炼框架下; 3) 简洁性——在保持忠实性的前提下最小化描述长度——是区分解释与描述的关键; 4) 范畴论提供了严格处理组合性问题的数学语言; 5) 该框架为比较不同MI方法的解释质量提供了原则性基础。",
+    limitations: "范畴论形式化可能过于抽象,其与实验实践的联系尚待建立; MDL作为简洁性度量在神经网络中操作化面临困难; 组合性约束可能过于严格——许多有趣的现象可能本质上不可组合分解; 对'忠实性'的定义依赖特定的对齐概念。",
+    relevance: "本文提供了理解'什么区分解释与描述'的形式工具。核心论点——简洁性是区分解释与描述的关键——直接对应课题的核心问题:MI是否提供了理解(解释)还是仅仅提供了另一种描述?如果MI发现没有在忠实的前提下实现充分的简洁性(压缩),那么它可能只是重新描述而非解释。这一立场为内部主义设置了额外的约束:内部机制描述必须在满足简洁性的条件下才能算作理解。",
+    relations: [
+      {target: "005", "type": "extends", "label": "将005中'简单性'维度的关切发展为形式框架"},
+      {target: "015", "type": "extends", "label": "将015的因果抽象扩展到组合抽象的范畴论高度"},
+      {target: "009", "type": "shares", "label": "以形式化统一框架回应009对跨层次整合的呼吁"}
+    ]
+  },
+  {
+    id: "015", title: "Causal Abstraction: A Theoretical Foundation for Mechanistic Interpretability",
+    authors: "Atticus Geiger, Duligur Ibeling, Thomas Icard, et al.",
+    year: 2025, venue: "Journal of Machine Learning Research (JMLR), Vol. 26",
+    doi: "",
+    pdf: "papers/015_Geiger_2025_Causal_Abstraction_Foundation.pdf",
+    priority: "important",
+    tags: ["因果抽象", "理论统一", "分布式对齐", "线性表征假说", "分级忠实性"],
+    summary_cn: "将因果抽象从机制替换推广到任意机制变换,为MI提供了统一的理论基础——将SAEs、激活修补、因果清洗、DAS和转向向量统一到同一因果语言中。",
+    abstract_cn: "本文是因果抽象理论的里程碑式综合,为机制可解释性提供了统一的理论基础。作者将因果抽象从'机制替换'(仅允许硬/软干预)推广到'任意机制变换'——任何高层变量到神经网络组件的映射,以及任何高层函数到神经网络功能的映射都可以纳入该框架。这为以下MI现象提供了统一的形式化:多变语义神经元(多义性)、线性表征假说、模块化特征、分级忠实性(graded faithfulness——对齐不需要完美,可以有程度之分)。本文将SAEs、激活修补、因果清洗(causal scrubbing)、分布式对齐搜索(DAS)、转向向量(steering vectors)等看似不同的方法统一到因果抽象的公共语言之下,揭示它们共享的深层结构。这为MI提供了其所需的'基础理论'——正如统计学习理论为机器学习提供了基础,因果抽象为可解释性提供了基础。",
+    methodology: "因果抽象理论的形式发展(定义、定理、推论);跨方法统一;对线性表征假说等经验现象的理论解释;分级忠实性概念的引入。",
+    findings: "1) 因果抽象可以为几乎所有主流MI方法提供统一的理论表述; 2) 分级忠实性——不需要完美对齐也可以支持有意义的因果推断——是一个重要的方法论创新; 3) 线性表征假说(特征体现为潜在空间中的方向)在因果抽象框架下获得自然的理论解释; 4) 因果抽象提供了比较不同MI解释质量的共同度量。",
+    limitations: "理论框架的实践适用性——在日常MI研究中应用因果抽象可能需要超出当前实践的方法论复杂性; 分级忠实性的阈值设定(多少忠实性才算足够)缺乏原则性指导; 该框架主要关注解释的形式结构而非其认识论充分性。",
+    relevance: "本文为整个MI事业提供了最深层的理论基础。虽然论文本身不直接参与认识论辩论,但其因果抽象框架暗示了一个关键洞见:对于MI而言,'好的解释'=与目标模型之间存在高忠实性因果映射的抽象模型。这一标准不纯是内部主义或外部主义——它要求内部机制映射具有因果忠实性,而因果忠实性最终需要行为/干预验证。因此,因果抽象框架实际上暗示了内部-外部互补的必要性。",
+    relations: [
+      {target: "014", "type": "shares", "label": "与014共享对MI理论基础的关切——014以范畴论扩展015的因果抽象"},
+      {target: "012", "type": "contradicts", "label": "015提供统一理论,012揭示该理论的不可识别性局限"},
+      {target: "002", "type": "cites", "label": "为002的机制理解指标提供了因果基础"}
+    ]
+  },
+
+  // ============ REF: 参考与基础文献 (5篇) ============
+  {
+    id: "016", title: "Towards a Benchmark for Scientific Understanding in Humans and Machines",
+    authors: "Kristian Gonzalez Barman, Sascha Caron, Tom Claassen, Henk W. de Regt",
+    year: 2024, venue: "Minds and Machines (Vol. 34, Article 6)",
+    doi: "10.1007/s11023-024-09657-1",
+    pdf: "papers/016_deRegt_2024_Benchmark_Scientific_Understanding.pdf",
+    priority: "ref",
+    tags: ["de Regt", "理解基准", "AUP框架", "行为操作化", "比较评估", "基础文献"],
+    summary_cn: "提出科学理解基准(SUB)和行为化AUP框架(what-why-w-questions),将de Regt的理解理论操作化为可测试的基准——为MI认识论辩论提供可操作的评估工具。",
+    abstract_cn: "本文基于de Regt(2017)的科学理解理论,提出了一个构建'科学理解基准'(SUB)的框架,用于衡量人类和AI系统中的科学理解。作者提出了AUP(Agent-Understands-Phenomenon)框架,在三个层次上评估理解:(i)What-问题:信息检索——是否能访问关于现象的相关信息;(ii)Why-问题:解释能力——是否能组织信息并产生解释;(iii)W-问题:反事实推理——是否能推断在不同条件下事情会如何不同。这三个层次依次递进,从基本信息到因果推断。行为化操作路径是该框架的核心:理解决不是内在心理状态的直接测度,而必须通过可观察的任务表现来评估。这一立场对MI辩论具有深远意义:它暗示即使我们对网络的内部机制有了完整描述,如果不通过行为基准来验证,我们也无法可靠地声称'理解'了该网络。",
+    methodology: "哲学理论的操作化(de Regt理解理论→AUP框架);基准设计的方法论;跨人类-AI比较的评估逻辑。",
+    findings: "1) 科学理解可以通过行为基准进行操作化和比较评估; 2) AUP三层框架提供了递进的理解要求——从信息检索到因果推断; 3) 行为操作化并不意味着'理解=行为'——理解仍涉及内部机制,但必须通过行为进行验证; 4) 该框架适用于人类和AI——为跨系统比较提供了基础。",
+    limitations: "基准的具体设计和验证尚待完成——本文主要是框架提案; 行为基准是否充分捕捉了理解的各个维度(尤其是非命题性理解)存疑; 三层递进的区分在实践中可能模糊。",
+    relevance: "这是de Regt理解理论向AI/ML领域的最直接扩展,是连接经典认识论与当代MI辩论的桥梁。其核心洞见——理解必须通过行为基准进行验证——为互补主义立场提供了权威的哲学支持。作为2024年的'基础文献'(本课题允许的≤2篇之一),它提供了衡量当代2025-2026辩论的认识论标尺。",
+    relations: [
+      {target: "002", "type": "philosophical", label: "为002的机制理解指标提供了行为验证的补充维度"},
+      {target: "004", "type": "philosophical", label: "为004的'一致性标准'提供了操作化路径"},
+      {target: "017", "type": "shares", label: "共享将认识论理论应用于DNN理解的关切"}
+    ]
+  },
+  {
+    id: "017", title: "Digging Deeper with Deep Learning? Explanatory Understanding and Deep Neural Networks",
+    authors: "Claus Beisbart",
+    year: 2025, venue: "European Journal for Philosophy of Science (Vol. 15, Article 40)",
+    doi: "10.1007/s13194-025-00668-y",
+    pdf: "papers/017_Beisbart_2025_Digging_Deeper_DNN.pdf",
+    priority: "ref",
+    tags: ["解释性理解", "DNN", "衰减理解", "解释中的信任", "认识论条件"],
+    summary_cn: "系统评估DNN能否提供解释性理解:条件难以完全满足——科学家通常不知道DNN中是否包含解释,但DNN可以在衰减意义上贡献于理解。",
+    abstract_cn: "本文以'普世主义'(ecumenical)进路,综合多种解释和理解理论,询问深度神经网络能否为科学家提供解释性理解。核心发现:(1)完整的解释性理解条件很难满足——因为科学家通常不知道DNN是否包含一个解释(即其内部机制是否构成了对目标现象的正确解释);(2)然而,DNN可以在'衰减的'(attenuated)意义上贡献于理解——例如,通过揭示预测性特征、提供潜在的因果假说、或引导进一步的实验;(3)DNN作为推理工具(inference tickets)而非直接的解释来源——它们提供了从中可以推断出解释相关信息的起点。这与MI的'发现内部机制即获得理解'的强主张形成对比。本文的核心哲学洞见是:解释性理解要求一种'信任'——即我们相信DNN内部的计算确实封装了对目标现象的正确解释——而这种信任在当前的实践中通常是不成立的。",
+    methodology: "普世主义哲学分析(综合多种解释理论);概念区分(完整理解vs衰减理解);案例推理;对MI实践的哲学评估。",
+    findings: "1) DNN在原则上可以贡献于科学理解,但完整满足解释性理解的条件在实践中极为困难; 2) DNN的贡献更接近于提供'推理工具'而非直接产生理解; 3) 对DNN作为解释性工具的信任需要额外的验证——内部机制描述本身不足以建立这种信任; 4) DNN最有价值的认识论贡献可能是生成假说和引导实验,而非替代人类的解释活动。",
+    limitations: "分析主要面向DNN作为科学工具(用于理解其他现象)而非DNN本身作为理解对象——与MI(理解DNN本身)的关注点不完全重合; 对MI实践的直接涉及有限; '衰减理解'概念尚需更精确的界定。",
+    relevance: "本文从科学哲学的角度为外部主义立场提供了支持:解释性理解要求超出内部机制描述的额外条件(尤其是对解释正确性的信任)。当我们将DNN本身作为理解对象(MI的实践)时,这一论证暗示:我们需要独立于机制发现的方法来验证我们发现的机制确实构成了正确的解释——这正是行为验证的角色。与004(理解的条件)、016(行为基准)和002(内部机制指标)构成了三角对话。",
+    relations: [
+      {target: "004", "type": "shares", "label": "共享对'理解的条件'这一根本问题的哲学分析"},
+      {target: "016", "type": "philosophical", "label": "共享将认识论理论应用于DNN的关切"},
+      {target: "002", "type": "contradicts", "label": "挑战002'内部机制组织即可构成理解'的充分性"}
+    ]
+  },
+  {
+    id: "018", title: "Bridging Philosophy and Machine Learning: A Structuralist Framework for Classifying Neural Network Representations",
+    authors: "Yildiz Culcu",
+    year: 2025, venue: "arXiv (2511.18633)",
+    doi: "",
+    pdf: "papers/018_Culcu_2025_Structuralist_Framework.pdf",
+    priority: "ref",
+    tags: ["结构主义", "本体论承诺", "结构实在论", "结构观念论", "表征分类"],
+    summary_cn: "以结构主义科学哲学分类ML研究的本体论承诺:发现60%的论文隐含结构观念论——将神经表征视为有用的建构而非对现实的发现——暗示MI理解的根基可能是实用建构而非认识论揭示。",
+    abstract_cn: "本文将结构主义科学哲学(结构实在论、结构观念论、消除/非消除结构主义)应用于对机器学习中神经表征的本体论承诺进行分类。通过对ML文献的系统综述,作者发现:60%的论文隐含'结构观念论'(structural idealism)——即将学习到的表征视为模型依赖的建构,由架构、数据先验和训练动态塑造,而非对世界结构的发现;而'结构实在论'(structural realism)的实例数为零——即没有论文将表征视为对客观结构的发现。这一发现对MI的认识论具有深远意义:如果神经表征在根本上被视为'有用的建构'而非'真实的发现',那么MI声称的'理解'可能被重新解读为'实用的操作知识'而非'真实的认识论成就'。这支持了一个认识论上更谦逊的立场:MI的理解是相对于特定模型、数据和训练过程的,而非关于普适的'网络本质'。",
+    methodology: "结构主义哲学框架的应用;ML文献的系统综述(本体论承诺分类);对结构实在论vs观念论在ML语境中的评估。",
+    findings: "1) ML研究的主流本体论承诺是结构观念论——表征被视为建构而非发现; 2) 结构实在论在ML文献中几乎不存在; 3) 这一发现挑战了MI的'发现网络的真实机制'的修辞——在观念论视角下,MI更接近于'构建有用的内部描述'而非'发现真相'; 4) 不同架构/训练方案下的表征差异不应被视为'误差',而应被视为同一现象的不同合理建构。",
+    limitations: "系统综述的样本和分类方法可能有主观性; 结构观念论的标签可能并不被ML实践者本身接受; 从本体论承诺推断认识论结论的逻辑链条需要更多论证。",
+    relevance: "本文从科学哲学的本体论角度切入核心问题:如果MI发现的'机制'只是相对于特定视角的建构而非客观实在,那么基于这些机制声称'理解'将面临相对主义挑战。这一视角为外部主义提供了一种更深层的支持:如果内部描述是观念论意义上的建构,那么需要外部行为验证来锚定这些建构的认识论价值。与Culcu的分析类似,本课题需要阐明:'内部机制分析'的认识论主张究竟有多强?",
+    relations: [
+      {target: "006", "type": "philosophical", "label": "共享对ML隐含哲学承诺的分析关切"},
+      {target: "002", "type": "contradicts", "label": "挑战002'内部机制揭示真实理解'的实在论预设"},
+      {target: "019", "type": "shares", "label": "共享对理解中'实在vs建构'张力的关切"}
+    ]
+  },
+  {
+    id: "019", title: "Can Machines Understand? Evaluating Understanding in Machine Learning Via Generalization",
+    authors: "Gage Wrye",
+    year: 2025, venue: "PhilArchive",
+    doi: "",
+    pdf: "papers/019_Wrye_2025_Can_Machines_Understand_Generalization.pdf",
+    priority: "ref",
+    tags: ["理解定义", "概括化", "因果模型", "死记硬背", "回忆机器"],
+    summary_cn: "将理解定义为'关于因果关系的内部模型,以对新问题的概括化为证据'——引入'回忆机器'作为零假设以区分死记硬背与真正理解,为理解提供了行为可检验的定义。",
+    abstract_cn: "本文提出了一个关于'机器理解'的哲学分析。核心定义:理解=拥有一个关于因果关系的内部模型,该模型使主体能够处理新问题(概括化)。作者引入'回忆机器'(recall machine)作为零假设——一个只能检索训练数据但没有任何因果内部模型的系统——来区分死记硬背和真正理解:如果一个系统只能处理它见过的确切问题,它只是在回忆;如果它可以处理结构上相似但未见过的问题,它展示了理解。这一定义具有重要的操作性优势:它有明确的行为检验(概括化测试)。但作者也承认,概括化作为理解的操作定义可能有局限——某些理解不一定在行为上可测试(如理解为什么某首诗感人)。将这一框架应用于MI:如果MI揭示的内部机制能预测模型在新输入上的行为(概括化),那么这些发现构成了理解;如果只能描述模型在已知输入上的行为,它们可能只是重新描述。",
+    methodology: "哲学概念分析(理解的定义);思想实验(回忆机器);概括化作为操作标准;对ML实践的应用分析。",
+    findings: "1) 理解应被定义为内部因果模型+概括化能力——二者缺一不可; 2) 回忆机器作为零假设提供了是否死记硬背的判别标准; 3) 概括化是可行为检验的理解标准——比纯内部描述或纯外部行为列表都更全面; 4) MI发现需要通过概括化预测来验证——仅仅描述内部电路如何产生已知行为不构成理解的证据。",
+    limitations: "'概括化'的定义本身需要更精确——多少概括化算足够? 不同类型的概括化是否对应不同类型的理解? 回忆机器作为零假设在实践中可能难以严格应用; 情感/审美理解可能不适用概括化框架。",
+    relevance: "本文提供了一种精致的互补主义立场:理解要求内部因果模型(内部主义)加上概括化能力(外部行为检验)。这一双重标准直接回应了课题的核心问题:内部机制分析需要被概括化验证所补充才能构成理解。与de Regt的行为操作化(016)、Beckmann的对象/解释理解区分(004)形成综合——指出了内部与外部统一于概括化验证的路径。",
+    relations: [
+      {target: "004", "type": "shares", "label": "共享以更精细的概念区分来推进'机器理解'的辩论"},
+      {target: "016", "type": "extends", "label": "将016的行为基准思想具体化为概括化验证"},
+      {target: "010", "type": "shares", "label": "共享对'理解需由行为检验'的坚持——010通过反事实干预操作化检验"}
+    ]
+  },
+  {
+    id: "020", title: "Understanding Understanding: A Pragmatic Framework Motivated by Large Language Models",
+    authors: "Kevin Leyton-Brown, Yoav Shoham",
+    year: 2024, venue: "arXiv (2406.10937)",
+    doi: "",
+    pdf: "papers/020_LeytonBrown_2024_Understanding_Understanding.pdf",
+    priority: "ref",
+    tags: ["实用主义", "Peirce", "行为定义", "理解的形式化", "样本复杂度"],
+    summary_cn: "以Peirce的实用主义准则为基础,将理解严格定义为行为表现——理解=在问题分布上达到足够高的正确率且无可笑的错误——明确拒绝内部主义和指称主义的理解路径。",
+    abstract_cn: "本文以Peirce的'实用主义准则'(Pragmatic Maxim:一个概念的意义就是其可设想的所有实践后果)为基础,提出了一个严格的、可检验的理解定义。定义:一个领域被形式化为四元组(问题集Q、问题分布D、答案集A含'我不知道'、评分函数S);一个主体'理解'该领域当且仅当(1)其总体表现超过及格线,(2)其出现'荒谬答案'的概率可忽略。这个定义明确拒绝内部主义和指称主义——理解不在于内部表征结构或表征与外部世界的对应关系,而完全在于可观察的行为后果。作者进一步证明:好的解释可以降低样本复杂度——如果某人能对一个答案给出解释,则意味着他们能回答许多类似的问题,使得测试更加高效。这一论证暗示:解释的价值不在于解释本身的内在性质,而在于其行为后果(简化验证)。这一激进的外部主义立场与MI的内部主义形成最尖锐的对立。",
+    methodology: "哲学概念的形式化(Peirce实用主义准则→数学定义);行为表现作为理解的充要条件;解释与样本复杂度的关系证明。",
+    findings: "1) 理解可以完全以行为术语定义——无需诉诸内部表征; 2) 解释的价值在于其行为后果(降低验证成本),而非其内部结构; 3) 内部主义和指称主义对理解的定义是多余的; 4) 该定义具有操作优势——可被严格测试和比较。",
+    limitations: "纯行为定义可能遗漏理解的重要维度(如现象学体验、审美理解、非命题性理解); '荒谬答案'的阈值设定缺乏原则性指导; 严格的行为主义可能在哲学上站不住脚——基于行为主义的失败历史(如Skinner的行为主义心理学); 该定义可能对某些重要的理解形式(如'理解为什么量子力学很奇怪')不适用。",
+    relevance: "本文代表了外部主义立场的最极端形式——理解完全等于行为表现,内部机制仅仅是达到行为表现的手段,本身不具有认识论价值。这一立场与002(内部机制指标即理解)构成整个辩论谱系的两极。虽然大多数研究者可能不会接受如此极端的外部主义,但它澄清了辩论的逻辑空间:如果我们不接受'理解=行为表现',我们必须阐明内部机制本身到底增添了哪些行为表现所不能提供的认识论价值。",
+    relations: [
+      {target: "002", "type": "contradicts", "label": "与002的内部主义形成辩论谱系的两极——理解=行为vs理解=内部组织"},
+      {target: "016", "type": "extends", "label": "将016的行为操作化推进到激进的纯行为定义"},
+      {target: "007", "type": "philosophical", "label": "为007的实用主义转向提供了Peirce式的哲学基础"}
+    ]
+  }
+];
+
+const NOTES = [
+  {
+    paper_id: "001",
+    title: "001_Friedman_Duede_Interpretability_Needs_Behavior.md",
+    date: "2026-05-13",
+    content: "核心论证:机制可解释性若不与行为测试结合,其所揭示的'内部理解'在认识论上是脆弱的。区分'命题可解释性'(映射到命题态度)和'机制可解释性'(揭示电路),二者都需要行为锚定。关键概念:生态有效性的行为分析(ecologically sensitive behavioral analyses)。核心洞见:脱离行为验证的内部描述无法区分因果结构与非因果关联——后见之明的合理化(post-hoc rationalization)风险。与Beckmann & Queloz的三层指标形成直接对立。与Nanda的实用主义转向共享以行为后果为验证标准的精神。这一论文的立场可概括为:内部机制是原材料,行为验证提供认识论正当性——缺少后者,前者只是'另一种描述'。"
+  },
+  {
+    paper_id: "002",
+    title: "002_Beckmann_Queloz_Mechanistic_Indicators_Understanding.md",
+    date: "2026-05-13",
+    content: "核心贡献:提出基于MI发现的三层理解框架(概念理解→事态理解→原则理解)。哲学基础:de Regt的统一主义理解理论——理解=将多样化现象统合到少数原则之下。与Friedman & Duede(001)的核心分歧:Beckmann & Queloz认为内部机制的特定组织方式(统一性、原则性电路)本身就构成理解,无需独立的行为验证。而对Friedman & Duede而言,没有行为验证,我们就不知道发现的'原则电路'是否是真正的因果结构还是仅仅是事后合理化的描述。三个开放问题:(1)统一性是否充分?如果多个同等统一的内部描述相互竞争怎么办?(2)三层框架在实践中如何操作化?目前更多是概念框架而非可检验标准。(3)de Regt自身的'经验充分性'标准是否要求行为验证?Beckmann & Queloz对此的解读可能过于偏向内部主义。"
+  },
+  {
+    paper_id: "003",
+    title: "003_Bai_Execution_Grounded_Evaluation.md",
+    date: "2026-05-13",
+    content: "核心发现:MI研究的叙事与代码执行之间存在系统性差距。MechEvalAgent框架在30个MI研究输出上实现了与人类评审者>80%的一致性并额外发现了51个被遗漏的问题。仅凭论文文本无法充分评估MI研究(移除代码访问后一致性降至~45%)。这一发现的认识论含义深刻:如果MI解释连执行验证都无法通过,那么声称这些解释构成了'理解'在认识论上是可疑的。关键方法论贡献:为MI研究引入了可执行验证的元标准——解释必须能够经得起独立于作者叙事的验证。与Friedman & Duede的行为验证要求互补:执行验证确保解释的内部一致性,行为验证确保解释的经验充分性。二者结合为MI的科学可信度提供了完整的方法论框架。"
+  },
+  {
+    paper_id: "004",
+    title: "004_Beckmann_New_Horizons_Machine_Understanding.md",
+    date: "2026-05-13",
+    content: "核心贡献:为MI的认识论辩论引入了关键概念区分——对象理解(把握一个系统本身)与解释理解(知道为什么某个现象发生)。Blockhead论证的应用:一个只有行为等价的系统(无内部机制)不被视为有理解,因此内部机制对理解是必要的。但作者同时论证:仅有内部机制也不足够——理解还需要跨情境的一致性(既包括输出间一致性也包括输出与内部操作间的一致性)。这一立场实际上暗示了互补主义:理解=内部机制的特定组织方式+跨情境一致性验证。核心张力:一致性验证是否等同于行为验证?如果是,那么作者的立场更接近互补主义而非纯粹的内部主义。这一张力是解读本文的关键。"
+  },
+  {
+    paper_id: "005",
+    title: "005_Arad_Explanatory_Virtues_Framework.md",
+    date: "2026-05-13",
+    content: "核心贡献:首次将四种哲学传统的解释德性系统应用于评估MI方法。关键发现:当前MI方法系统性地忽视了三大德性——简单性(可量化)、统一性/共同解释力、律则性(发现神经网络的普遍原则)。紧凑证明(Compact Proofs)在多项德性上表现突出——为MI研究提供了规范方向。核心哲学洞见:如果不满足基本的解释德性(尤其是可证伪性和简单性),MI的解释可能只是'另一种描述'而非理解。'描述vs解释'的区分在这种框架下被操作化:解释满足关键德性,描述不满足。但一个重要的问题未被回答:不同德性之间的权重如何确定?在实践中,为德性分配权重本身就嵌入了关于'什么算好理解'的哲学立场。"
+  }
+];
+
+const DOMAIN_ID = '09_epistemology_understanding';
+
+// ======================================== INIT ========================================
+let activeFilter = 'all';
+let graphNetwork = null;
+let graphData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderCards(PAPERS);
+  renderNotes();
+  updateStats();
+  initTabs();
+  initFilters();
+});
+
+// ======================================== TAB SWITCHING ========================================
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'graph') initGraph();
+    });
+  });
+}
+
+// ======================================== FILTERS ========================================
+function initFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.filter === activeFilter) {
+        activeFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+      } else {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      filterCards();
+    });
+  });
+}
+
+function filterCards() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const filtered = PAPERS.filter(p => {
+    const matchesFilter = activeFilter === 'all' || p.priority === activeFilter ||
+      (activeFilter === '2026' && p.year === 2026) ||
+      (activeFilter === '2025' && p.year === 2025) ||
+      (activeFilter === '2024' && p.year <= 2024);
+    const matchesSearch = !query ||
+      p.title.toLowerCase().includes(query) ||
+      p.authors.toLowerCase().includes(query) ||
+      p.tags.some(t => t.toLowerCase().includes(query)) ||
+      p.summary_cn.toLowerCase().includes(query);
+    return matchesFilter && matchesSearch;
+  });
+  renderCards(filtered);
+}
+
+// ======================================== CARD RENDERING ========================================
+function renderCards(papers) {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = papers.map(p => `
+    <div class="card priority-${p.priority}" onclick="openPaper('${p.id}')">
+      <div class="card-priority-badge ${p.priority}"></div>
+      <div class="card-id">${p.id} · ${p.year}</div>
+      <div class="card-title">${p.title}</div>
+      <div class="card-authors">${p.authors}</div>
+      <div class="card-summary">${p.summary_cn}</div>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+  if (papers.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">没有匹配的文献</div>`;
+  }
+}
+
+// ======================================== MODAL ========================================
+function openPaper(id) {
+  const p = PAPERS.find(x => x.id === id);
+  if (!p) return;
+
+  let relHtml = '';
+  if (p.relations && p.relations.length > 0) {
+    relHtml = p.relations.map(r =>
+      `<span class="rel-badge ${r.type}">${r.label} → ${r.target}</span>`
+    ).join('');
+  }
+
+  const html = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="card-priority-badge ${p.priority}" style="position:static;display:inline-block;margin-bottom:0.5rem"></div>
+    <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem">${p.id} · ${p.year} · ${p.priority === 'must' ? '必读' : p.priority === 'important' ? '重要' : '参考'}</span>
+    <h2>${p.title}</h2>
+    <div class="meta">${p.authors}${p.venue ? ' · ' + p.venue : ''}${p.doi ? ' · DOI: ' + p.doi : ''}</div>
+    ${p.pdf ? `<div class="meta"><a href="${p.pdf}" target="_blank">📄 打开PDF</a></div>` : ''}
+
+    <section>
+      <h3>一句话概要</h3>
+      <p>${p.summary_cn}</p>
+    </section>
+
+    <section>
+      <h3>完整摘要</h3>
+      <p>${p.abstract_cn || p.summary_cn}</p>
+    </section>
+
+    ${p.methodology ? `
+    <section>
+      <h3>方法论与实验设计</h3>
+      <p>${p.methodology}</p>
+    </section>` : ''}
+
+    ${p.findings ? `
+    <section>
+      <h3>核心发现与贡献</h3>
+      <p>${p.findings}</p>
+    </section>` : ''}
+
+    ${p.limitations ? `
+    <section>
+      <h3>局限性与批评</h3>
+      <p>${p.limitations}</p>
+    </section>` : ''}
+
+    ${p.relevance ? `
+    <section>
+      <h3>与本研究的相关性</h3>
+      <p>${p.relevance}</p>
+    </section>` : ''}
+
+    ${relHtml ? `
+    <section>
+      <h3>文献关联</h3>
+      <div class="relations">${relHtml}</div>
+    </section>` : ''}
+
+    <section>
+      <h3>关键词</h3>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </section>
+  `;
+
+  document.getElementById('modal').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+// ======================================== GRAPH ========================================
+function initGraph() {
+  if (graphNetwork) return;
+
+  const nodes = PAPERS.map((p, i) => ({
+    id: p.id,
+    label: `${p.id}\n${p.title.substring(0, 30)}...`,
+    color: {
+      background: p.priority === 'must' ? '#4ade80' : p.priority === 'important' ? '#fbbf24' : '#64748b',
+      border: p.priority === 'must' ? '#22c55e' : p.priority === 'important' ? '#f59e0b' : '#475569'
+    },
+    font: { color: '#dce3f0', size: 10 },
+    size: p.priority === 'must' ? 28 : p.priority === 'important' ? 22 : 16,
+  }));
+
+  const edgeMap = {};
+  const edges = [];
+  const edgeColors = {
+    cites: { color: '#818cf8', dashes: false },
+    extends: { color: '#2dd4bf', dashes: false },
+    contradicts: { color: '#f87171', dashes: true },
+    shares: { color: '#f5a623', dashes: false },
+    empirical: { color: '#a78bfa', dashes: true },
+    philosophical: { color: '#fb923c', dashes: true }
+  };
+
+  PAPERS.forEach(p => {
+    if (!p.relations) return;
+    p.relations.forEach(r => {
+      const key = `${p.id}->${r.target}`;
+      if (!edgeMap[key]) {
+        edgeMap[key] = true;
+        edges.push({
+          from: p.id,
+          to: r.target,
+          label: r.label,
+          ...(edgeColors[r.type] || edgeColors.cites)
+        });
+      }
+    });
+  });
+
+  const container = document.getElementById('graph-container');
+  graphData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+  graphNetwork = new vis.Network(container, graphData, {
+    physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -30, centralGravity: 0.005, springLength: 150 } },
+    edges: { smooth: { type: 'continuous' }, font: { size: 8, color: '#8899bb' } },
+    interaction: { hover: true, tooltipDelay: 200 },
+  });
+
+  graphNetwork.on('click', function(evt) {
+    if (evt.nodes.length > 0) openPaper(evt.nodes[0]);
+  });
+}
+
+// ======================================== NOTES ========================================
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!NOTES || NOTES.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted)">暂无阅读笔记</div>`;
+    return;
+  }
+  list.innerHTML = NOTES.map(n => `
+    <div class="note-card">
+      <h4>${n.title}</h4>
+      <div class="note-meta">${n.paper_id} · ${n.date || ''}</div>
+      <p>${n.content}</p>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('paper-count').textContent = PAPERS.length;
+  document.getElementById('must-count').textContent = PAPERS.filter(p => p.priority === 'must').length;
+  document.getElementById('note-count').textContent = NOTES ? NOTES.length : 0;
+}
+</script>
+
+<div class="wiki-footer">
+  <div class="footer-title">浏览其他领域</div>
+  <div class="footer-domains">
+    <a href="../01_sae_features/wiki.html">01 SAE与特征分解</a>
+    <a href="../02_activation_engineering/wiki.html">02 激活与表征工程</a>
+    <a href="../03_causal_intervention/wiki.html">03 因果干预与心灵哲学</a>
+    <a href="../04_alignment_safety/wiki.html">04 AI对齐理论与安全</a>
+    <a href="../05_ethics_governance/wiki.html">05 AI伦理与治理</a>
+    <a href="../06_philosophy_of_science/wiki.html">06 科学哲学</a>
+    <a href="../07_philosophy_of_mind/wiki.html">07 心灵哲学与AI</a>
+    <a href="../08_representational_ontology/wiki.html">08 表征本体论 (Gap 1)</a>
+    <a href="../09_epistemology_understanding/wiki.html">09 理解认识论 (Gap 2)</a>
+    <a href="../10_causal_sufficiency/wiki.html">10 因果充分性 (Gap 3)</a>
+    <a href="../11_vector_grounding/wiki.html">11 向量奠基 (Gap 4)</a>
+  </div>
+  <div class="footer-back">
+    <a href="../index.html">← 返回文献知识库总览</a>
+  </div>
+</div>
+
+</body>
+</html>

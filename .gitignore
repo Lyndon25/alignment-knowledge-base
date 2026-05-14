@@ -1,0 +1,35 @@
+# Sensitive credentials
+key.txt
+config.local.yaml
+credentials.local.py
+
+# PDF papers (663MB — wikis already contain full metadata)
+knowledge_base/*/papers/
+*.pdf
+
+# Temporary data
+data/tmp_dl/
+data/experiments/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.egg-info/
+dist/
+build/
+
+# Claude internal
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.log.*
+data/scholaraio.log

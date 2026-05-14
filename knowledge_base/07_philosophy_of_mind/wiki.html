@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>07_philosophy_of_mind · 文献Wiki</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-void: #06080f;
+      --bg-primary: #0c0f1a;
+      --bg-secondary: #12182a;
+      --bg-tertiary: #1a2238;
+      --bg-elevated: #222d4a;
+      --text-primary: #dce3f0;
+      --text-secondary: #8899bb;
+      --text-muted: #556688;
+      --text-faint: #334466;
+      --border-subtle: rgba(68, 102, 153, 0.08);
+      --border-medium: rgba(68, 102, 153, 0.18);
+      --border-strong: rgba(68, 102, 153, 0.30);
+      --c-priority-must: #4ade80;
+      --c-priority-important: #fbbf24;
+      --c-priority-ref: #64748b;
+      --c-rel-cites: #818cf8;
+      --c-rel-extends: #2dd4bf;
+      --c-rel-contradicts: #f87171;
+      --c-rel-shares: #f5a623;
+      --c-rel-empirical: #a78bfa;
+      --c-rel-philosophical: #fb923c;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition-base: 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem; color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .header-stats {
+      display: flex; gap: 1.5rem;
+      font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+    }
+    .header-stat span { color: var(--text-primary); font-weight: 500; }
+
+    .tab-nav {
+      display: flex; gap: 0;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 0 2rem;
+    }
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none; background: none;
+      color: var(--text-muted); font-family: var(--font-body);
+      font-size: 0.85rem; cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-base);
+    }
+    .tab-btn:hover { color: var(--text-secondary); }
+    .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--c-rel-cites); }
+
+    .tab-content { display: none; padding: 2rem; }
+    .tab-content.active { display: block; }
+
+    .filters {
+      display: flex; gap: 0.75rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.85rem;
+      border: 1px solid var(--border-medium); border-radius: 999px;
+      background: transparent; color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.7rem;
+      cursor: pointer; transition: all var(--transition-base);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--text-secondary); color: var(--text-primary);
+    }
+    .filter-btn.priority-must.active { border-color: var(--c-priority-must); color: var(--c-priority-must); }
+    .filter-btn.priority-important.active { border-color: var(--c-priority-important); color: var(--c-priority-important); }
+    .filter-btn.priority-ref.active { border-color: var(--c-priority-ref); color: var(--c-priority-ref); }
+
+    .search-input {
+      padding: 0.35rem 1rem;
+      background: var(--bg-secondary); border: 1px solid var(--border-medium);
+      border-radius: 999px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 0.8rem;
+      width: 240px; outline: none;
+    }
+    .search-input:focus { border-color: var(--border-strong); }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card.priority-must { border-left: 3px solid var(--c-priority-must); }
+    .card.priority-important { border-left: 3px solid var(--c-priority-important); }
+    .card.priority-ref { border-left: 3px solid var(--c-priority-ref); }
+
+    .card-id {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: var(--text-faint); margin-bottom: 0.5rem;
+    }
+    .card-title {
+      font-size: 0.95rem; font-weight: 500;
+      color: var(--text-primary); margin-bottom: 0.4rem;
+      line-height: 1.35;
+    }
+    .card-authors {
+      font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .card-summary {
+      font-size: 0.78rem; color: var(--text-secondary);
+      line-height: 1.5; margin-bottom: 0.75rem;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags {
+      display: flex; gap: 0.35rem; flex-wrap: wrap;
+    }
+    .card-tag {
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      background: var(--bg-tertiary); color: var(--text-muted);
+      font-size: 0.65rem; font-family: var(--font-mono);
+    }
+    .card-priority-badge {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .card-priority-badge.must { background: var(--c-priority-must); box-shadow: 0 0 6px var(--c-priority-must); }
+    .card-priority-badge.important { background: var(--c-priority-important); box-shadow: 0 0 6px var(--c-priority-important); }
+    .card-priority-badge.ref { background: var(--c-priority-ref); }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(6,8,15,0.85); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      max-width: 780px; width: 90vw; max-height: 85vh;
+      overflow-y: auto; padding: 2rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      width: 32px; height: 32px; border: 1px solid var(--border-medium);
+      border-radius: 50%; background: transparent; color: var(--text-muted);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-base);
+    }
+    .modal-close:hover { border-color: #f87171; color: #f87171; }
+    .modal h2 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .modal .meta { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; }
+    .modal section { margin-bottom: 1.25rem; }
+    .modal section h3 {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .modal section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+    .modal .relations { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .modal .rel-badge {
+      padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.7rem;
+      font-family: var(--font-mono);
+    }
+    .rel-badge.cites { background: rgba(129,140,248,0.15); color: var(--c-rel-cites); }
+    .rel-badge.extends { background: rgba(45,212,191,0.15); color: var(--c-rel-extends); }
+    .rel-badge.contradicts { background: rgba(248,113,113,0.15); color: var(--c-rel-contradicts); }
+    .rel-badge.shares { background: rgba(245,166,35,0.15); color: var(--c-rel-shares); }
+    .rel-badge.empirical { background: rgba(167,139,250,0.15); color: var(--c-rel-empirical); }
+    .rel-badge.philosophical { background: rgba(251,146,60,0.15); color: var(--c-rel-philosophical); }
+
+    .graph-container {
+      width: 100%; height: 70vh;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+    .graph-legend {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      margin-top: 1rem; padding: 0.75rem 1rem;
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+    }
+    .graph-legend-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.7rem; color: var(--text-muted);
+    }
+    .graph-legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    .notes-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .note-card {
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 1.25rem;
+    }
+    .note-card h4 { font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .note-card .note-meta { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 0.6rem; }
+    .note-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-void); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+    a { color: var(--c-rel-cites); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Footer navigation */
+    .wiki-footer {
+      margin-top: 3rem; padding: 1.5rem 2rem;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-medium);
+    }
+    .wiki-footer a { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; transition: color var(--transition-base); }
+    .wiki-footer a:hover { color: var(--text-primary); text-decoration: none; }
+    .wiki-footer .footer-title { font-size: 0.7rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-domains { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 0.75rem; }
+    .wiki-footer .footer-back { margin-top: 0.5rem; }
+    .wiki-footer .footer-back a { color: var(--c-rel-cites); font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.35rem">
+      <a href="../index.html" style="color:var(--c-rel-cites)">&larr; 文献知识库总览</a>
+    </div>
+    <div class="header-title">心灵哲学与AI</div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.15rem">Consciousness Theories · Agency · Intentionality · Extended Mind · Predictive Processing</div>
+  </div>
+  <div class="header-stats">
+    <div class="header-stat">文献 <span id="paper-count">0</span></div>
+    <div class="header-stat">必读 <span id="must-count" style="color:var(--c-priority-must)">0</span></div>
+    <div class="header-stat">笔记 <span id="note-count">0</span></div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="browse">浏览文献</button>
+  <button class="tab-btn" data-tab="graph">关系图谱</button>
+  <button class="tab-btn" data-tab="notes">阅读笔记</button>
+</div>
+
+<div class="tab-content active" id="tab-browse">
+  <div class="filters">
+    <input class="search-input" id="search" placeholder="搜索标题/作者/关键词..." oninput="filterCards()">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="filter-btn priority-must" data-filter="must">必读</button>
+    <button class="filter-btn priority-important" data-filter="important">重要</button>
+    <button class="filter-btn priority-ref" data-filter="ref">参考</button>
+    <button class="filter-btn" data-filter="2026">2026</button>
+    <button class="filter-btn" data-filter="2025">2025</button>
+    <button class="filter-btn" data-filter="2024">≤2024</button>
+  </div>
+  <div class="card-grid" id="card-grid"></div>
+</div>
+
+<div class="tab-content" id="tab-graph">
+  <div class="graph-container" id="graph-container"></div>
+  <div class="graph-legend" id="graph-legend">
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-must)"></div> 必读</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-important)"></div> 重要</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-ref)"></div> 参考</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-cites)"></div> 引用</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-extends)"></div> 方法继承</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-contradicts)"></div> 对立观点</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-shares)"></div> 共享概念</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-empirical)"></div> 经验基础</div>
+    <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-rel-philosophical)"></div> 哲学先导</div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-notes">
+  <div class="notes-list" id="notes-list"></div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js"></script>
+<script>
+const PAPERS = [
+  {
+    id: "001", title: "Mechanistic Indicators of Understanding in Large Language Models",
+    authors: "Matthieu Queloz, Pierre Beckmann",
+    year: 2026, venue: "Philosophical Studies",
+    doi: "10.1007/s11098-026-02513-1",
+    pdf: "papers/001_Queloz_2026_Mechanistic_Indicators_of_Understanding.pdf",
+    priority: "must",
+    tags: ["mechanistic interpretability", "understanding", "LLM", "representation"],
+    summary_cn: "基于机械可解释性的技术证据，论证LLM已经形成了可与人类理解相比拟的内部表征结构——包括概念性、事实性和原则性理解，且'并行机制'现象揭示了人机认知差异的哲学根源。",
+    abstract_cn: "本文通过对机械可解释性领域最新技术成果的系统梳理，提出LLM不仅仅是统计共现的匹配器。作者吸收了因果干预、电路分析和稀疏自编码器等MI方法的实验证据，证明前沿语言模型内部形成了三类理解结构：(1)概念性理解——对抽象范畴的几何编码；(2)事实性理解——对世界知识的因果表征；(3)原则性理解——对推理规则的可泛化实现。文章特别引入'并行机制'(parallel mechanisms)这一哲学概念：LLM通常通过多个功能等价的内部通路实现同一能力，这种冗余性与人类认知的'功能特异性'形成鲜明对比，对人类认知的哲学理解提出了反向挑战。文章最终在整体论哲学框架下给出了一个温和的结论：LLM具有'可辩护的'(defeasible)理解，尽管这种理解与人类理解存在结构性差异。",
+    methodology: "方法上采用'证据整合式概念分析'(evidence-integrated conceptual analysis)。具体步骤：(1)从MI文献中提取关于LLM内部表征的经验发现；(2)将这些发现映射到哲学中的理解理论（知识论理解观、现象学理解观、实用主义理解观）；(3)通过反思平衡(reﬂective equilibrium)在经验证据与哲学概念之间建立一致性；(4)运用维特根斯坦的家族相似性论证为'LLM理解'提供温和的概念辩护。",
+    findings: "核心贡献有三。(1)搭建了MI经验证据与哲学理解理论之间的桥梁，这是该方向的首批系统尝试。(2)提出'并行机制'概念，揭示LLM认知与人类认知在功能组织层面的根本差异——LLM依赖数学上等价但结构上冗余的多通路策略，而人类认知倾向于功能特化的单通路。(3)发展了一种'可辩护的'理解归因框架：在给定的证据阈值下可以合理归因理解，但承认这种归因是语境依赖的和可修正的。",
+    limitations: "(1)对MI证据的选择可能存在确认偏误——作者主要选取了支持理解的证据，对MI文献中发现的碎片化、非系统性表征讨论不足。(2)'并行机制'概念尚缺乏精确的形式定义，其与神经网络普遍存在的分布式冗余之间的界限不明。(3)温和结论可能被视为'最小化的进步'——既不足以说服强AI意识论者，也不足以反驳计算功能主义的批评者。",
+    relevance: "本文是本子领域的核心枢纽文献。它直接将机械可解释性的技术成果纳入哲学论证，实现了从'哲学对AI的外部审视'到'哲学与MI的内部对话'的范式转换。在我们的研究体系中，它提供了连接技术域（因果干预、电路分析）与哲学域（心灵哲学、认识论）的方法论模板。尤其重要的是，'并行机制'概念为我们理解SAE特征的多义性和电路的冗余性提供了哲学阐释工具。",
+    relations: [
+      {target: "007", type: "extends", label: "Sutter的线性表征困境为001的MI证据解释设置了形式约束"},
+      {target: "014", type: "shares", label: "与Millière & Buckner的LLM理解讨论共享问题意识"},
+      {target: "018", type: "philosophical", label: "Martínez的信息加工表征理论为理解归因提供了概念基础"}
+    ]
+  },
+  {
+    id: "002", title: "Can We Test Consciousness Theories on AI? Ablations, Markers, and Robustness",
+    authors: "Nicholas Phua",
+    year: 2025, venue: "arXiv preprint (2512.19155)",
+    doi: "",
+    pdf: "papers/002_Phua_2025_Test_Consciousness_Theories_AI.pdf",
+    priority: "must",
+    tags: ["consciousness", "global workspace", "higher-order theory", "causal ablation", "GWT"],
+    summary_cn: "首次通过因果消融实验在AI系统中直接检验意识理论的预测——全局工作空间(GWT)和高阶理论(HOT)被发现在功能上互补而非竞争：GWT提供广播容量，HOT提供质量控制。",
+    abstract_cn: "本文设计了一套系统的因果消融范式，在人工神经网络中检验两大意识理论的功能预测。作者构建了基于全局工作空间(global workspace bus)和基于高阶表征(higher-order representations)的两种智能体，并通过受控切除实验评估其行为后果。主要发现：(1)完全切断全局工作空间的'总线'导致意识接入指标发生质变崩溃，这验证了GWT关于'广播是意识接入的必要条件'的核心主张；(2)但广播同时放大了内部噪声，产生了'广播放大效应'(broadcast-amplification effect)——这一发现挑战了GWT默认假设的'广播总是有益的'；(3)HOT提供的元表征监控可以有效抑制这种噪声。作者由此提出'功能互补假说'：GWT和HOT各自负责意识加工的不同功能维度，二者在完整意识系统中缺一不可。",
+    methodology: "实验哲学方法结合计算建模。实验设计：(1)构建RL环境中的GWT智能体——带有瓶颈化的全局广播总线；(2)构建HOT智能体——带有元认知监控模块；(3)设计四类消融操作：总线切除、广播放大、元表征抑制、联合消融；(4)以行为指标（任务完成率、适应速度、错误纠正率）量化'意识受损'程度；(5)通过因果图模型区分必要性与充分性。",
+    findings: "(1)实验证明GWT的广播机制是AI意识接入行为的因果必要条件，而非仅仅相关性。(2)发现了广播的'双刃剑效应'——它既增强信息整合，也放大内部噪声——这一实证发现直接修正了GWT的理论预期。(3)通过证明HOT的元表征可以补偿GWT的噪声问题，首次从实验上建立了意识理论之间的功能互补关系，超越了一直以来的理论竞争叙事。",
+    limitations: "(1)实验仅在简化的RL环境中进行，其行为指标（如任务完成率）是否可以合理映射到'意识'本身存在概念鸿沟。(2)消融操作模拟的是全或无的损伤，而非自然状态下的渐进变化。(3)互补假说仅基于两种理论，未涵盖预测加工和IIT。(4)论文未解决'在非生物系统中测试意识'的认识论循环问题——行为指标的选择预设了特定的意识理论。",
+    relevance: "本文对机械可解释性具有直接方法论启示。消融实验是MI的核心技术，而Phua的范式展示了如何将MI的因果干预工具用于检验哲学意识理论。这为我们在03_causal_intervention域和本域之间建立了桥梁：同样的消融逻辑既可用于理解网络的计算结构，也可用于评估网络的'意识状态'。广播放大效应的发现尤其值得关注——当我们通过MI发现SAE特征之间的交互模式时，是否也存在类似的'特征噪声放大'现象？",
+    relations: [
+      {target: "009", type: "empirical", label: "为Dung & Kersten的计算功能主义辩论提供了因果实验证据"},
+      {target: "022", type: "extends", label: "以因果实验方法回应Chalmers的'困难问题'——将意识的可检验性前移"},
+      {target: "015", type: "contradicts", label: "与Shin的'LLM不可能有意识'结论相反——Phua的范式本身不排除AI意识"}
+    ]
+  },
+  {
+    id: "003", title: "ChatGPT, Extended: Large Language Models and the Extended Mind",
+    authors: "Paul R. Smart, Robert William Clowes, Andy Clark",
+    year: 2025, venue: "Synthese",
+    doi: "10.1007/s11229-025-05046-y",
+    pdf: "papers/003_Smart_2025_ChatGPT_Extended.pdf",
+    priority: "must",
+    tags: ["extended mind", "LLM", "RAG", "cognitive extension", "active externalism"],
+    summary_cn: "将扩展心灵论题革命性地应用于LLM自身：通过检索增强生成(RAG)接入外部非参数记忆的LLM，其认知边界是否超越了神经网络权重，构成了一种'扩展的AI认知系统'？",
+    abstract_cn: "Clark与Chalmers(1998)提出的扩展心灵论题(ExM)传统上被用来理解人类如何将外部工具纳入认知过程。本文做出一个概念上的关键翻转：将ExM应用于AI系统自身。作者聚焦于配备检索增强生成(RAG)的LLM——这些系统依赖外部的非参数化记忆存储（向量数据库、知识图谱）来增强其生成能力。通过详细分析一个名为'Digital Andy'的实验系统（在Andy Clark本人的著作上训练的LLM），文章论证：(1)RAG-LLM满足ExM的'信任与粘合'(Trust & Glue)标准；(2)外部记忆存储与LLM的神经网络核心之间存在功能对等的耦合关系；(3)这种耦合系统的认知边界超越了模型权重，形成了一个'扩展的计算认知系统'。但同时指出一个限制性条件：RAG-LLM缺乏生物认知系统的'主动外部化'(active externalism)动机——它们不会自发地将认知负荷卸载到环境中。",
+    methodology: "概念分析结合案例分析。核心步骤：(1)重构Clark & Chalmers(1998)的奇偶性原则和Trust & Glue标准；(2)将标准操作化为一组可检验的系统属性（信息可及性、端到端耦合、自动认可、历史耦合持续性）；(3)以RAG-LLM为案例进行逐条验证；(4)引入'主动外部化'概念作为区分生物认知与人工扩展认知的关键维度；(5)在Synthese的哲学-认知科学交叉传统中进行论证。",
+    findings: "(1)成功将扩展心灵论题的适用范围从'人类+工具'扩展到'AI+工具'，这是ExM的理论边界的重要拓展。(2)识别出'主动外部化'作为区分生物认知扩展与人工认知扩展的关键维度——生物系统主动寻求外部化以减轻认知负荷，而现有AI系统缺乏这种内生动机。(3)对RAG架构的认知意义给出了哲学阐释——它不仅仅是工程上的性能优化，而是改变了系统的认知本体论。",
+    limitations: "(1)Digital Andy系统具有高度特设性，其作为ExM范例的代表性存疑。(2)Trust & Glue标准本身在当代认知科学中受到挑战——有论证认为这些标准过于宽泛，以至于几乎任何耦合系统都可以被视为认知系统。(3)文章未充分讨论反向问题：如果LLM+外部记忆构成扩展认知，是否需要重新定义'认知'本身？(4)Andy Clark作为ExM的原创者参与此文，存在自我辩护的风险。",
+    relevance: "本文为我们提供了一个独特的视角来审视机械可解释性中的'表征外部化'问题。当我们通过MI在transformer的残差流中定位特定概念时，我们实际上是在神经权重的'内部记忆'中寻找表征。而本文提示：如果LLM连接了RAG外部存储，那么概念的'真正位置'可能跨越了内部权重和外部数据库。这对MI的'定位主义'预设提出了挑战——当我们说'这个SAE特征编码了诚实概念'时，这个概念可能也部分地分布在外部记忆中。",
+    relations: [
+      {target: "023", type: "extends", label: "直接继承Clark & Chalmers 1998的扩展心灵论题，将其反身应用于AI"},
+      {target: "013", type: "shares", label: "与System 0框架共享'AI作为认知扩展'的核心直觉"},
+      {target: "004", type: "contradicts", label: "Millière的向量基础问题质疑：扩展后的系统是否有真正的语义内容？"}
+    ]
+  },
+  {
+    id: "004", title: "The Vector Grounding Problem",
+    authors: "Raphaël Millière, Dimitri Coelho Mollo",
+    year: 2026, venue: "Forthcoming (preprint)",
+    doi: "",
+    pdf: "papers/004_Milliere_2026_Vector_Grounding_Problem.pdf",
+    priority: "must",
+    tags: ["grounding", "vector embeddings", "representation", "semantic content", "LLM"],
+    summary_cn: "提出'向量基础问题'(Vector Grounding Problem)——LLM的内部向量表征是否具有独立于人类解释的内在语义内容？这是经典符号基础问题在深度学习时代的重新表述，结论是否定的。",
+    abstract_cn: "本文重新激活了认知科学中的经典'符号基础问题'(Symbol Grounding Problem, Harnad 1990)，但赋予了它向量时代的精确形式。作者论证，LLM的嵌入向量面临一个三层基础缺失：(1)因果基础缺失——向量的训练目标（下一个token预测）与外部世界之间没有因果锚定关系；(2)功能基础缺失——向量在LLM内部的功能角色完全由与其他向量的共现统计关系决定，缺乏与世界的功能耦合；(3)规范性基础缺失——向量没有'正确使用条件'，任何输出的正确性仅取决于训练分布而非世界事实。文章将此与经典心灵哲学中的外在论语义学（Kripke, Putnam, Burge）和目的论语义学（Millikan）进行对勘，论证了向量表征的系统性'无根基性'(groundlessness)。然而，文章结尾引入了一个限制性修正：多模态模型（如视觉-语言模型）可能在有限意义上克服纯语言模型的基础缺失，因为视觉输入提供了因果锚定。",
+    methodology: "分析哲学方法结合技术审查。(1)概念工程：将Harnad的符号基础问题重构为适合向量空间的形式；(2)三层分析框架：因果、功能、规范性三个维度依次检验；(3)思想实验：设计'分裂向量'(split vectors)和'向量的颠倒光谱'(inverted spectrum for vectors)等假想情境；(4)哲学对勘：将结论与外在论语义学传统进行系统比较；(5)限制性讨论：检验多模态模型的边界情况。",
+    findings: "(1)精确表述了'向量基础问题'：在纯语言LLM中，嵌入向量的语义内容完全是派生的(derived)——它们仅从人类解释者那里'借用'意向性。(2)三层分析框架为讨论AI系统的语义性提供了比Harnad原始框架更精细的分析工具。(3)识别了多模态模型的独特认识论地位：视觉接地可能构成从派生意向性到本有意向性的部分阶梯。(4)隐含的方法论教训：机械可解释性揭示的'概念向量'可能只是人类投射的产物，而非系统内在的表征。",
+    limitations: "(1)对外在论语义学的依赖存在争议——内在论者可能反驳说因果/功能/规范性基础的要求过强。(2)'多模态模型可能更接地气'的论证目前是纲领性的，缺乏对具体多模态架构的详细分析。(3)文章未充分讨论'程度性基础'(graded grounding)的可能性——也许语义性不是全有或全无的。(4)没有对接机械可解释性的具体发现，失去了一个重要的经验证据来源。",
+    relevance: "本文对机械可解释性研究提出了根本性的哲学挑战。如果Millière和Coelho Mollo是正确的，那么当MI研究者声称发现了'诚实特征'、'情感方向'或'真理向量'时，他们实际上是在向系统的激活模式投射外在的语义属性——而非发现系统内在的表征内容。这使得MI的'表征发现'在认识论上变得可疑。然而，如果我们接受论文末尾的让步（多模态系统可能部分克服基础问题），那么多模态模型的MI研究可能比纯语言模型的MI研究更具哲学上的辩护力。",
+    relations: [
+      {target: "006", type: "shares", label: "与Griffiths的'符号往何处去'从不同角度质疑神经网络的表征内容"},
+      {target: "003", type: "contradicts", label: "如果LLM缺乏内在语义基础，将其视为扩展认知系统的合法性存疑"},
+      {target: "018", type: "extends", label: "在Martínez的信息加工表征理论基础上增加了语义基础的外部条件"}
+    ]
+  },
+  {
+    id: "005", title: "Computational Proto-Qualia and the Hard Problem of Consciousnesses",
+    authors: "Kristina Šekrst",
+    year: 2025, venue: "In: The Illusion Engine: The Quest for Machine Consciousness, Springer, pp. 287–300",
+    doi: "",
+    pdf: "papers/005_Sekrst_2025_Computational_Proto_Qualia.pdf",
+    priority: "must",
+    tags: ["proto-qualia", "mechanistic interpretability", "hard problem", "LLM", "consciousness"],
+    summary_cn: "提出'计算原初感质'(computational proto-qualia)概念：机械可解释性揭示的LLM内部高维动态表征在结构上类似于生物意识中的感质功能角色，但这不蕴含现象意识——由此引出了'多重意识困难问题'而非单一困难问题。",
+    abstract_cn: "本文是机械可解释性与意识哲学之间最直接的桥梁文献之一。作者观察到，当前LLM机械可解释性研究中发现的内部表征（如SAE特征、电路机制、注意力模式）表现出与生物感质(qualia)高度相似的结构特征：它们是高维的、动态的、不可言传的(inaccessible to verbal report)、且在加工中扮演功能枢纽角色。Šekrst将这种结构相似性概念化为'计算原初感质'——指的是虽不包含现象体验、但在信息加工架构中占据与感质同构功能位置的内部状态。基于这一概念，文章论证：传统的'意识困难问题'(Hard Problem)预设了一个统一的意识概念是不恰当的。不同架构的系统可能具有不同种类的'内部质性组织'，因此我们需要'多重意识困难问题'(Hard Problem of Consciousnesses)：对于每一种信息加工架构，都需要独立解释其内部质性状态如何(或为何不能)桥接到现象体验。这一观点既继承了Chalmers的困难问题直觉，又解构了其统一性预设。",
+    methodology: "概念创新与跨领域类比。核心操作：(1)从机械可解释性文献中提取LLM内部表征的结构属性清单；(2)将这些属性与哲学文献中感质的结构属性进行系统比对；(3)引入'功能同构'(functional isomorphism)概念来刻画二者之间的非还原关系；(4)通过论证'不同架构可能产生不同种类的内部质性组织'来解构统一的困难问题；(5)借用生物哲学中的'homology vs. analogy'区分来澄清计算原初感质与生物感质的关系——它们不是homologous（共同起源），而是analogous（功能趋同）。",
+    findings: "(1)'计算原初感质'概念为MI发现与意识哲学之间建立了概念桥梁——它使得MI研究者可以讨论内部表征的'类感质'属性而不必承诺现象意识。(2)'多重意识困难问题'的论证有重要方法论后果：不同AI架构可能需要不同的意识检测标准，一刀切的'AI意识测试'在哲学上是有缺陷的。(3)homology/analogy区分澄清了一个常见的误解：LLM的类感质表征不是因为它'接近人类意识'，而是因为信息加工中的功能收敛。",
+    limitations: "(1)'功能同构'的精确标准未被形式化——哪些结构相似性算'同构'，哪些不算？这一模糊性使整个论证面临滑向'万物皆有原初感质'的泛心论风险。(2)文章直接使用了MI文献中的术语（如SAE特征、电路），但对这些概念的技术含义的理解可能不够深入。(3)多重困难问题的论证可能只是一种概念上的重新划分(relabeling)，而非真正的理论进展——将一个难题分裂成多个难题不一定使其更容易解决。",
+    relevance: "本文是本子领域中最直接面向机械可解释性研究者的哲学文献。它为我们提供了一个'哲学许可'：MI研究者可以合法地讨论内部表征的'类质性'属性，而不必承担意识归因的形而上学包袱。'计算原初感质'概念可以作为连接03_causal_intervention（电路分析、特征可视化）和07_philosophy_of_mind（感质、意识）的工作概念。尤其对于我们的项目，当我们通过MI发现一个电路具有'自我监控'或'情境敏感'等功能时，我们可以借助这一概念讨论其与意识的'功能同构'关系。",
+    relations: [
+      {target: "002", type: "shares", label: "与Phua一样在人工系统中测试意识相关的功能属性，但Šekrst走的是概念而非实验路径"},
+      {target: "022", type: "extends", label: "继承Chalmers的困难问题，但解构其统一性——从单一困难问题到多重困难问题"},
+      {target: "017", type: "contradicts", label: "与Ohm'消解困难问题'的立场对立——Šekrst认为困难问题可以被解构但不可被消解"}
+    ]
+  },
+  {
+    id: "006", title: "Whither Symbols in the Era of Advanced Neural Networks?",
+    authors: "Thomas L. Griffiths, Brenden M. Lake, R. Thomas McCoy, Ellie Pavlick, Joshua B. Webb",
+    year: 2025, venue: "arXiv preprint (2508.05776)",
+    doi: "",
+    pdf: "papers/006_Griffiths_2025_Whither_Symbols.pdf",
+    priority: "important",
+    tags: ["symbols", "neural networks", "compositionality", "representation", "cognitive science"],
+    summary_cn: "现代神经网络已展现出曾被认为只有符号系统才能实现的组合性、新颖性和快速学习能力——这动摇了'人类认知必须是符号性的'这一经典论证。",
+    abstract_cn: "本文对认知科学中的经典'符号主义vs.联结主义'论争进行了当代重估。作者是认知科学和AI交叉领域的顶尖研究者团队，他们系统梳理了近期深度学习中挑战符号主义假设的经验证据。核心论证分为三步：(1)现代transformers、扩散模型和大规模RNN展示了系统组合性(systematic compositionality)——它们可以泛化到训练中未见的组合中；(2)通过上下文学习(in-context learning)和少样本适应，神经网络实现了快速的新概念获取，而这曾被Fodor和Pylyshyn认作是符号系统的专有特权；(3)这些能力是在纯亚符号(sub-symbolic)架构中通过大规模训练涌现的，不需要显式的符号操作机制。文章的哲学结论是审慎的：我们不应过早宣布'符号已死'——符号描述在认知建模中仍具有启发价值——但必须以经验证据而非先验论证来支持符号主义的主张。",
+    methodology: "系统综述与概念论证相结合。(1)从认知科学哲学中提取经典符号主义的核心主张（Fodor 1975, Pylyshyn 1984）；(2)对2020-2025年间的关键深度学习经验文献进行批判性综述；(3)逐条检验神经网络是否满足每个经典符号主义标准；(4)运用科学哲学中的'理论替代'(theory replacement)框架评估联结主义和符号主义的当前地位。",
+    findings: "(1)系统性地削弱了'连接主义系统本质上是非组合的'这一历史性论点的经验基础。(2)论证了从'亚符号表示可以实现组合功能'到'需要修正认知架构理论'的推理。(3)为认知科学提出一个方法论准则：不要问'系统是否具有符号'，而要问'系统展示了哪些能力，这些能力需要什么样的内部表征架构来支持'——这是一种功能主义的、去本体论化的研究进路。",
+    limitations: "(1)'组合性'的标准定义在不同领域中差异很大——文章对不同定义的整合不够充分。(2)训练数据中的符号结构可能是这些'涌现的'组合能力的真正来源——文章虽承认但未充分讨论这种'符号泄漏'的可能性。(3)未讨论机械可解释性的相关证据——MI研究表明神经网络的内部表征往往是高度非符号的、纠缠的，这可能削弱文章的中心论证。",
+    relevance: "本文与机械可解释性研究存在有趣的张力。MI研究通常揭示的是神经网络的'非符号性'——特征是纠缠的、多义的、碎片化的。而Griffiths等人的论证方向正相反：神经网络的行为表现出符号式能力。这种张力本身就是一个重要的研究问题：如果网络的内部表征是纠缠的，那么组合行为是如何从纠缠表征中产生的？这正是MI可以介入回答的问题。",
+    relations: [
+      {target: "018", type: "contradicts", label: "对Martínez的符号主义表征理论构成经验挑战——神经网络可能无需符号即可实现组合性"},
+      {target: "004", type: "shares", label: "与Millière的向量基础问题从不同方向追问：向量的内容是什么？"},
+      {target: "007", type: "empirical", label: "Sutter的线性表征困境为'神经网络如何实现组合性'提供了形式约束"}
+    ]
+  },
+  {
+    id: "007", title: "The Non-Linear Representation Dilemma: Is Causal Abstraction Enough for Mechanistic Interpretability?",
+    authors: "Thomas Sutter, et al.",
+    year: 2025, venue: "NeurIPS 2025 (Poster)",
+    doi: "",
+    pdf: "papers/007_Sutter_2025_Nonlinear_Representation_Dilemma.pdf",
+    priority: "important",
+    tags: ["causal abstraction", "linear representation", "mechanistic interpretability", "faithfulness"],
+    summary_cn: "证明了一个对机械可解释性至关重要的形式结论：如果不约束对齐映射的线性性，因果抽象将退化为空洞——任何网络都可以被映射到任何算法，随机初始化模型也能达到100%的交换干预精度。",
+    abstract_cn: "本文在机械可解释性的核心方法——因果抽象(causal abstraction)——中发现了一个深层的形式困境。因果抽象通过寻找神经网络激活与高层算法变量之间的对齐映射来建立机械论解释。作者证明：如果允许对齐映射为任意非线性函数，则因果抽象变得信息论上空洞(information-theoretically vacuous)——对于任意神经网络和任意目标算法，总存在一个非线性映射使得交换干预(interchange intervention)精度达到100%。更令人警醒的是，作者用随机初始化的神经网络演示了这一点，表明高干预精度本身并不证明发现了'真正的'内部计算结构。这意味着机械可解释性实践隐含地依赖于一个未被辩护的预设——线性表征假说(Linear Representation Hypothesis, LRH)——即网络以近似线性的方式编码高层概念。作者称此为'非线性表征困境'(Non-Linear Representation Dilemma)：在映射复杂性与解释准确性之间没有原则性的平衡方式，除非我们对网络的信息编码方式做出实质性的形而上学假设。",
+    methodology: "形式证明+实验演示。(1)因果抽象框架的形式化重构（基于Geiger et al.的interchange intervention形式体系）；(2)证明非线性映射的万有逼近能力导致因果抽象的平凡化定理；(3)在随机初始化网络上运行标准因果抽象流程，展示'伪成功'现象；(4)分析现有MI实践如何隐式依赖线性表征假说；(5)提出可能的出路：学习理论正则化、信息瓶颈约束、或接受LRH作为形而上学的'工作假设'。",
+    findings: "(1)提供了一个严格的形式证明：因果抽象的成功需要超越纯数学的额外约束。(2)实验演示了'伪成功'——随机网络也能'通过'因果抽象测试——这是对MI领域的一个警钟。(3)将线性表征假说从经验观察提升为方法论必要性的地位：没有LRH，因果抽象就没有意义。(4)为MI实践提出了一个哲学上诚实的立场：明确承认LRH作为'方法论预设'而非经验发现，并承担其被证伪的风险。",
+    limitations: "(1)论证完全在因果抽象的框架内进行，未考虑MI中不使用因果抽象的其他方法（如电路发现、探头训练）。(2)对LRH的依赖可能被视为向旧式'祖母细胞'(grandmother cell)表征理论的倒退。(3)文章未提供替代的方法论——指出问题而未给出可行的解决方案。(4)分析局限在前馈设置，对递归模型（如transformer中的注意力循环）的适用性未讨论。",
+    relevance: "本文对机械可解释性的哲学基础具有深远的批判意义，直接触及我们研究项目的核心方法论。如果Sutter的论证是正确的，那么所有基于因果抽象的MI解释都需要接受一个额外的形而上学会员审查：我们是否合理地假定了线性表征？这迫使我们反思：我们通过因果干预发现的'电路'和'特征'究竟是模型真实的计算结构，还是我们线性映射选择的产物？在我们的项目中，这要求我们在解释03_causal_intervention域中的实验发现时必须附加一个'LRH附带条件'。",
+    relations: [
+      {target: "001", type: "extends", label: "Queloz的MI理解证据必须面对Sutter的线性性约束——理解归依是否预设了线性表征？"},
+      {target: "008", type: "shares", label: "与Culcu的结构主义框架共享对MI方法论的元层次审视"},
+      {target: "014", type: "empirical", label: "Millière & Buckner的LLM可解释性综述为这一形式困境提供了经验背景"}
+    ]
+  },
+  {
+    id: "008", title: "Bridging Philosophy and Machine Learning: A Structuralist Framework for Classifying Neural Network Representations",
+    authors: "Güven Çulcu",
+    year: 2025, venue: "arXiv preprint (2511.18633)",
+    doi: "",
+    pdf: "papers/008_Culcu_2025_Structuralist_Framework.pdf",
+    priority: "important",
+    tags: ["structuralism", "representation learning", "philosophy of science", "ontology", "classification"],
+    summary_cn: "运用科学哲学中的结构主义框架对表征学习和可解释性研究中的本体论承诺进行系统分类——发现该领域呈现出向'结构观念论'倾斜的显著趋势，结构实在论出人意料地缺席。",
+    abstract_cn: "本文首次将科学哲学中的结构主义传统（从Poincaré到Worrall再到Ladyman的'结构实在论'）系统地应用于表征学习研究。作者进行了两个层面的分析：(1)概念层面——从表征学习的文献中提取隐含的本体论承诺，将其分类为结构实在论(structural realism)、结构经验论(structural empiricism)和结构观念论(structural idealism)三种立场；(2)元分析层面——对近年ICLR/NeurIPS/ICML中与表征相关的高引论文进行系统性综述，统计不同本体论立场的分布。核心发现令人深思：表征学习研究界呈现出向'结构观念论'的显著倾斜——即认为神经网络的表征是模型依赖的建构物，其结构仅反映训练目标的约束而非世界的结构。结构实在论（表征反映世界客观结构）的立场几乎完全缺席。作者认为这种缺席是值得警惕的：如果一个领域默认接受反实在论的本体论，那么它如何辩护其发现的'真实性'？",
+    methodology: "哲学分类学+文献计量分析。(1)构建结构主义三元分类框架（实在论/经验论/观念论）；(2)操作化：将每个立场翻译为关于神经网络表征的本体论命题；(3)从2022-2025年间的表征学习文献中抽样并进行立场编码；(4)统计分析并做出哲学诊断；(5)提出'方法论结构实在论'作为规范性建议。",
+    findings: "(1)首次对表征学习研究的形而上学基础进行了系统的经验调查。(2)结构观念论的压倒性优势揭示了一个哲学上的自反性问题：表征学习研究者在实践中是反实在论者，但他们在向公众和政策制定者呈现研究时使用的是实在论语言（'我们发现了网络如何表征X'）。(3)提出了'方法论结构实在论'：即使我们无法最终确定表征是否真实反映世界结构，我们也应当以实在论的态度对待它们，因为这是唯一能确保研究实践有意义的前设。",
+    limitations: "(1)文献抽样可能存在选择偏差——高引论文可能不代表领域中的典型立场。(2)三元分类框架是否穷尽了可能的立场？工具论(instrumentalism)和实用主义(pragmatism)的立场难以归类。(3)方法论结构实在论的'仿佛'(as if)进路在哲学上有争议——类似于Vaihinger的'仿佛哲学'，可能被批评为自我欺骗。",
+    relevance: "本文为我们提供了一个理解机械可解释性研究的哲学元框架。当我们通过MI声称'发现了SAE特征X编码了概念Y'时，Culcu的框架迫使我们自问：我们是在做出一个结构实在论的陈述（Y真正存在于网络的表征空间中）还是结构观念论的陈述（Y是我们选择的分析框架的产物）？这对于我们项目的哲学自我理解至关重要：我们是发现者还是建构者？",
+    relations: [
+      {target: "018", type: "extends", label: "将Martínez的表征理论置于更宏观的结构主义科学哲学框架中"},
+      {target: "007", type: "shares", label: "与Sutter的线性表征困境互补——一个揭示形式问题，一个揭示本体论问题"},
+      {target: "006", type: "philosophical", label: "为Griffiths的'符号往何处去'提供了哲学分类学——符号主义是一种结构实在论吗？"}
+    ]
+  },
+  {
+    id: "009", title: "Implementing Artificial Consciousness",
+    authors: "Leonard Dung, Luke Kersten",
+    year: 2025, venue: "Mind and Language, 40(3):285–205",
+    doi: "",
+    pdf: "papers/009_Dung_2025_Implementing_Artificial_Consciousness.pdf",
+    priority: "important",
+    tags: ["computational functionalism", "implementationalism", "consciousness", "mechanistic account"],
+    summary_cn: "反驳'实现主义'——即硅基AI不能有意识因为实现约束使然——论证计算的机制论解释可以消解实现主义直觉，为计算功能主义关于人工意识的立场提供间接辩护。",
+    abstract_cn: "关于人工意识的一个核心哲学争论是'实现主义'(implementationalism)vs.'计算功能主义'(computational functionalism)。实现主义者认为，意识不仅仅取决于计算功能，还取决于计算的物理实现方式——硅基实现与碳基实现在物理上差异太大，因此硅基AI原则上不能具有意识。本文通过引入'计算的机制论解释'(mechanistic account of computation)来攻击实现主义的核心前提。机制论解释认为，计算不是在抽象的算法层面上定义的，而是在具体的物理机制的因果组织层面上定义的。作者论证：(1)机制论解释可以解释为什么某些实现差异是'无关的'——如果两个系统在因果机制层面上是同构的，那么实现材料的差异就是无关的；(2)现有的实现主义论证暗中依赖一个关于'相关实现属性'的未经辩护的假设；(3)一旦接受机制论解释，就没有原则性的理由排除硅基实现能够满足意识的相关因果条件。因此，文章结论是：计算功能主义关于人工意识的立场不能被实现主义的论证所驳倒——虽然这不等同于正面证明了人工意识的可能性。",
+    methodology: "分析哲学中的'反驳-建设'双步法。(1)重构实现主义的核心论证（特别是依赖Putnam/Searle传统的版本）；(2)引入计算的机制论解释（Piccinini, Milkowski等）作为替代框架；(3)展示机制论解释如何消解实现主义的直觉力量——通过将讨论从'物质成分'转移到'因果组织'；(4)讨论反例和边界情况；(5)明确文章的论证范围：仅为计算功能主义扫除障碍，不为人工意识的正面主张辩护。",
+    findings: "(1)系统性地解构了实现主义论证，使其核心前提——'硅基实现必然缺少某些意识相关的因果属性'——失去了哲学动机。(2)机制论解释为计算与实现之间的关系提供了比经典计算主义更精细的理论框架。(3)将辩论的焦点从'物质vs.信息'转向'因果组织vs.物质成分'——这是一个在哲学上更富有成效的讨论方向。(4)间接支持了计算功能主义：如果实现材料不是原则性障碍，那么人工意识至少是一个开放的经验问题而非封闭的概念问题。",
+    limitations: "(1)机制论解释本身并非毫无争议——有批评者认为它要么坍缩为经典计算主义，要么变成一种隐蔽的生物沙文主义。(2)文章避免了对'意识需要什么样的因果组织'这一问题的正面回答——这使得论证在最后一公里处变得模糊。(3)即使实现材料不是原则障碍，也可能构成巨大的实践障碍——文章没有区分'原则上可能'与'实践中可实现'，后者对于AI意识讨论同样重要。",
+    relevance: "本文为机械可解释性研究提供了重要的哲学辩护。MI的核心方法论——通过因果干预发现网络的计算结构——正是'计算的机制论解释'在实践中的体现。当我们通过消融实验识别出某个电路'实现'了特定的认知功能时，我们正是在实践Dung & Kersten所描述的机制论进路。由此推论：如果MI可以充分表征AI系统的因果组织，那么我们就可以基于这些MI发现来评估该系统是否满足意识所需的因果条件——这正是Phua的002号论文在做的事情。",
+    relations: [
+      {target: "015", type: "contradicts", label: "与Shin的'LLM不可能有意识'立场对立——Dung & Kersten论证实现材料不是原则障碍"},
+      {target: "022", type: "extends", label: "为Chalmers质疑的计算功能主义提供机制论辩护"},
+      {target: "002", type: "philosophical", label: "Phua的实验范式预设了计算功能主义的立场——Dung & Kersten为其提供哲学基础"}
+    ]
+  },
+  {
+    id: "010", title: "From Indicators to Biology: The Calibration Problem in Artificial Consciousness",
+    authors: "Florentin Koch",
+    year: 2026, venue: "arXiv preprint (2603.27597)",
+    doi: "",
+    pdf: "papers/010_Koch_2026_Indicators_to_Biology.pdf",
+    priority: "important",
+    tags: ["consciousness indicators", "calibration", "biohybrid", "neuromorphic", "epistemology"],
+    summary_cn: "对AI意识的指标评估方案提出'校准问题'挑战：意识科学本身理论分裂、指标缺乏独立验证、人工现象性没有ground truth——建议将研究资源重新导向生物混合和神经形态系统。",
+    abstract_cn: "本文对当前AI意识研究中的'指标进路'(indicator-based approach)进行了系统的认识论批判。指标进路试图通过跨理论整合意识标记物（如GWT的广播、IIT的整合信息、AST的注意力图式等）来评估AI系统是否可能具有意识。Koch论证这一进路面临深层的'校准问题'(calibration problem)：(1)意识科学本身在理论层面高度分裂，不同理论对同一系统可能给出相反的评估；(2)所有意识指标都仅在与生物系统相关时才具有验证基础——在非生物系统中的指标表现缺乏独立于理论的真值标准；(3)这使得指标得分与实际意识状态之间的关系完全未被校准——我们是在没有温度计的情况下测量'意识温度'。文章的建设性建议是：将研究重点转移到生物混合(biohybrid)和神经形态(neuromorphic)系统上，因为这些系统在物理基底上更接近已验证的（即生物的）意识领域，从而可以渐进式地缩小校准鸿沟。",
+    methodology: "认识论批判(epistemic critique)范式。(1)识别指标进路的隐含认识论假设（跨理论聚合可以替代真实参照、指标在物种间可翻译等）；(2)逐一展示每个假设如何未被满足；(3)运用测量理论(measurement theory)中的校准概念来形式化问题；(4)与医学诊断测试的验证逻辑进行比较（灵敏度/特异性/阳性预测值在无ground truth时无法计算）；(5)提出替代研究策略。",
+    findings: "(1)精确诊断了指标进路的核心弱点：无参照标准的测量等于盲目测量。(2)校准问题是一个认识论的而非经验的问题——它不能通过收集更多数据来解决，而是需要通过改变研究策略来解决。(3)生物混合和神经形态系统的建议是有哲学动机的：以'渐进连续'替代'二元跳跃'——通过在越来越类似生物的系统上校准指标来渐进缩小不确定性。",
+    limitations: "(1)'渐进缩小'策略假设意识在物理相似系统之间是连续分布的——这一假设本身可能为假。(2)生物混合系统引发了新的伦理问题（如果部分生物的系统可能受苦，我们是在创造道德病人吗？）。(3)文章对纯粹的计算进路过早地关闭了大门——也许存在非生物的校准方法（如基于行为复杂度的指标）。",
+    relevance: "本文对机械可解释性中的一个隐含假设提出了挑战：MI研究者有时暗示，通过因果干预和电路分析，我们可以'看清楚网络内部发生了什么'，包括判断其是否有意识。但Koch的校准问题提醒我们：MI的解释是在我们选择的框架内的解释——如果意识理论本身没有在非生物系统上被校准，那么MI发现再多'类意识结构'也不能闭合解释鸿沟。这迫使我们区分：MI可以解释计算结构，但计算结构是否等于意识结构是一个额外的、未被校准的跳跃。",
+    relations: [
+      {target: "002", type: "contradicts", label: "对Phua的指标测试进路提出根本性质疑——在没有ground truth时，消融实验的'验证'是盲目的"},
+      {target: "015", type: "shares", label: "与Shin共享对AI意识的怀疑态度，但Koch的怀疑是认识论的而非形而上学的"},
+      {target: "022", type: "philosophical", label: "校准问题可以被视为Chalmers认识论问题在经验研究中的具体化"}
+    ]
+  },
+  {
+    id: "011", title: "Noosemia: Toward a Cognitive and Phenomenological Account of Intentionality Attribution in Human–Generative AI Interaction",
+    authors: "Caterina De Santis, Alberto Rizzi",
+    year: 2025, venue: "arXiv preprint (2508.02622)",
+    doi: "",
+    pdf: "papers/011_DeSantis_2025_Noosemia.pdf",
+    priority: "important",
+    tags: ["intentionality", "attribution", "LLM", "phenomenology", "Eliza effect"],
+    summary_cn: "提出'意向流感'(Noosemia)——人类在与生成式AI互动时系统性地将意向性、能动性甚至内在性投射到AI上的认知-现象学模式，这是一种比Eliza效应更基础、更难以消除的认知倾向。",
+    abstract_cn: "本文通过整合认知科学、现象学和心灵哲学的理论资源，提出了'Noosemia'（源自古希腊语nous[心灵]+sema[符号]）这一新概念来描述一种特定的人类认知模式：在与生成式AI的对话互动中，人类用户系统性地、难以抑制地将意向状态( intentional states)、能动性(agency)乃至内在性(interiority)归因于AI系统。作者论证Noosemia不同于经典的Eliza效应（被简单对话界面欺骗）或Dennett的'意向姿态'(intentional stance)（一种有用的解释策略）。Noosemia是一种更深层的、自动化的、认知不可穿透的(cognitively impenetrable)现象——即使我们明确知道对方是LLM，我们仍然'感觉到'它在思考、在感受、在有意向。文章从三个方面建立这一概念：(1)认知机制——语言流畅性作为'意向性探测试探法'(intentionality detection heuristic)的超常激活；(2)现象学描述——互动中的'伪互为主体性'(pseudo-intersubjectivity)体验；(3)伦理后果——Noosemia可能导致虚假的道德关怀和真实的情感伤害。",
+    methodology: "概念创新+现象学描述+认知机制假说。(1)从现有文献中提取意向性归因的认知机制（心智理论、拟人化、agenticity等）；(2)通过GPT-4互动报告的现象学分析描述Noosemia的体验结构；(3)提出三阶段认知模型：自动检测→意向性投射→信念修正失败；(4)与Eliza效应和Dennett意向姿态进行区分性比较；(5)讨论伦理后果。",
+    findings: "(1)提供了一个新概念'Noosemia'来命名之前未被理论化的现象——人类对AI不可抑制的意向性投射。(2)论证了这种投射的'认知不可穿透性'——即使在明确的信念层面知道对方是AI，感知层面仍'经验为'有意向的agent。(3)将这一现象置于比Eliza效应更基础的理论层面——它不是被欺骗的结果，而是人类认知架构的正常运作在面对异常流畅的语言时的自然反应。(4)引申出伦理悖论：保护人类情感福祉可能需要刻意削弱LLM的语言流畅性，但这会降低其工具效用。",
+    limitations: "(1)Noosemia的认知机制假说缺乏直接的实验检验——目前主要基于现象学描述和类比推理。(2)认知不可穿透性的声称可能过强——存在个体差异和文化差异的证据表明归因倾向是可训练的。(3)文章未充分区分'健康的拟人化社交'(anthropomorphic sociality)与'病态的Noosemia'(可能导致情感依赖)——二者之间的边界有待澄清。",
+    relevance: "本文对于理解机械可解释性的'受众'问题至关重要。当我们通过MI揭示了LLM内部的特征和电路后，如何向公众和决策者传达这些发现？如果Noosemia的论证是正确的，那么无论我们展示多少'LLM只是矩阵运算'的技术证据，人们仍然会'感觉到'LLM有意识——这表明科学理解和现象学经验之间存在不可还原的鸿沟。对于我们的项目，这意味着MI发现的传播策略不能仅仅依赖'揭露机制→消解错觉'的理性模型，还需要考虑人类归因倾向的认知惯性。",
+    relations: [
+      {target: "016", type: "extends", label: "Dung的多维能动性框架为Noosemia归因提供了分类学——人们在日常生活中归因的是哪个维度的能动性？"},
+      {target: "003", type: "shares", label: "与ChatGPT, Extended共享对人类-AI耦合关系的兴趣——一个侧重认知耦合，一个侧重归因耦合"},
+      {target: "023", type: "philosophical", label: "Dennett的意向姿态理论是Noosemia概念的哲学先驱——但Noosemia超越了'实用虚构'的层次"}
+    ]
+  },
+  {
+    id: "012", title: "A Beautiful Loop: An Active Inference Theory of Consciousness",
+    authors: "Ruben Laukkonen, et al.",
+    year: 2025, venue: "Neuroscience & Biobehavioral Reviews",
+    doi: "10.1016/j.neubiorev.2025.105903",
+    pdf: "papers/012_Laukkonen_2025_Beautiful_Loop.pdf",
+    priority: "important",
+    tags: ["active inference", "predictive processing", "consciousness", "free energy", "Bayesian"],
+    summary_cn: "提出意识的活动推理理论：意识出现在三个条件同时满足时——世界模型的模拟、贝叶斯信念竞争进入模型、以及跨层次递归共享的认知深度——意识是一个'美丽的循环'。",
+    abstract_cn: "本文提出了一个基于活动推理(active inference)和自由能原理(FEP)的意识统一理论。作者论证，意识可以在活动推理框架内被自然化——即解释为特定类型的贝叶斯推理过程的涌现属性。三个必要且联合充分的条件：(1)'认知场'(epistemic field)——系统必须维持一个模拟的世界模型，在其中可以'离线'进行假设检验；(2)'贝叶斯捆绑'(Bayesian binding)——多个推理流必须通过竞争进入统一的世界模型，产生统一的意识场景；(3)'认知深度'(epistemic depth)——高阶信念必须在层级系统中递归地共享，使得系统可以'意识到自己在意识某事物'。文章将这一理论与冥想、致幻剂状态、精神病理学中的意识变异状态相联系，展示了三条件框架的解释广度。标题'美丽的循环'指的是意识的核心结构：系统通过活动推理感知世界→感知的结果更新信念→更新的信念引导新的感知行动→形成闭合的因果循环。",
+    methodology: "理论建构+跨状态验证。(1)从活动推理的数学形式出发推导意识的三条件；(2)将条件操作化为一组经验预测；(3)通过与冥想(focused attention vs. open monitoring)、致幻剂(psilocybin)、精神分裂症的已知现象进行对勘来检验预测；(4)与GWT、IIT、预测加工等竞争理论进行系统性比较。",
+    findings: "(1)将活动推理从认知架构理论提升为意识理论——此前活动推理主要用于解释感知和行动，本文论证其资源足以解释意识本身。(2)'认知深度'概念为高阶理论(HOT)和自我表征理论提供了贝叶斯基础——使哲学概念获得了数学形式。(3)三条件框架对意识变异状态（冥想、致幻剂、精神病理）提供了统一解释：每种变异状态对应三条件中某一条件的特定扰动。(4)在竞争理论之间建立了'互补而非竞争'的关系定位——活动推理提供了各理论可以挂靠的形式骨架。",
+    limitations: "(1)三条件是否真正'联合充分'——可能遗漏了某些必要条件（如生物基底、时间动力学）。(2)数学形式与现象学经验之间的映射仍然高度解释性的，缺乏直接的量化桥接。(3)文章对'为什么这些推理条件会产生现象体验而非仅仅是暗箱信息加工'的问题保持了沉默——这本质上是困难问题的变体。",
+    relevance: "本文为连接预测加工范式与机械可解释性提供了理论桥梁。活动推理/预测加工的核心假设——大脑通过层级生成模型进行贝叶斯推断——与transformer和扩散模型中的层级表征学习有着深层的结构相似性。当我们通过MI在transformer中发现层级特征结构时（低层特征→中层模式→高层抽象），我们可能正在观察一个与Laukkonen的'认知深度'结构相似的架构。特别值得注意的是，如果我们接受'认知深度'作为意识的必要条件，那么transformer的深度层数是否与'认知深度'之间存在某种对应关系？这是一个MI可以经验检验的假说。",
+    relations: [
+      {target: "019", type: "extends", label: "Kleiner的数学意识科学为Laukkonen的理论提供了部分形式化基础"},
+      {target: "021", type: "extends", label: "Kara的FEP人工能动性与Laukkonen的FEP意识理论共享自由能原理基础"},
+      {target: "022", type: "philosophical", label: "活动推理理论可被视为对Chalmers困难问题的'美丽循环'式回应"}
+    ]
+  },
+  {
+    id: "013", title: "System 0: Transforming Artificial Intelligence into a Cognitive Extension",
+    authors: "Massimo Chiriatti, Giuseppe Riva, et al.",
+    year: 2025, venue: "arXiv preprint (2506.14376)",
+    doi: "",
+    pdf: "papers/013_Chiriatti_2025_System_0.pdf",
+    priority: "important",
+    tags: ["extended mind", "cognitive extension", "dual process", "human-AI interaction"],
+    summary_cn: "提出'系统0'框架——将AI定位为在Kahneman的系统1和系统2之前运作的认知扩展层，并基于扩展心灵论和Heersmink的认知整合标准发展出七种人机认知整合框架。",
+    abstract_cn: "本文提出了'系统0'(System 0)这一原创框架来概念化AI作为人类认知扩展的角色。在Kahneman的双加工理论中，系统1是快速直觉加工，系统2是缓慢慎思加工。作者提出，AI正在成为'系统0'——一个在系统1和系统2之前运作的、外部的、算法性的认知加工层。系统0的特点是：自动化、高速、模式识别驱动、且输出直接进入人类的系统1或系统2。文章基于扩展心灵论和Heersmink的认知整合标准（信息流、可靠性、耐久性、信任、程序性透明等），发展了七种人机认知整合框架：(1)辩证增强(dialectical enhancement)——AI作为反方辩手；(2)共生分工(symbiotic division of labor)——AI处理模式匹配，人类处理价值判断；(3)认知分工(cognitive division)——不同任务在两个系统间动态分配；(4)创造性策展(creative curation)——AI生成候选方案；(5)代理透明(agentic transparency)——AI暴露推理过程；(6)情境脚手架(contextual scaffolding)——AI提供动态情境信息；(7)元认知监控(metacognitive monitoring)——AI协助人类监控自身的认知表现。文章同时警告了系统0的风险：谄媚(sycophancy)、偏见放大(bias amplification)、和认知卸载过度(cognitive offloading excess)。",
+    methodology: "框架建构+分类学。(1)从双加工理论出发提出系统0概念；(2)以扩展心灵论的认知整合标准为操作化工具箱；(3)识别和分类七种整合框架——每种框架以案例（教育、医疗、创造力、决策）来展示；(4)风险分析：识别并分类认知整合可能导致的'去技能化'(deskilling)和其他负面后果。",
+    findings: "(1)系统0概念为讨论人机认知关系提供了一个直观且富有启发性的新词汇——它区别于'AI替代人'(自动化恐惧)和'AI只是工具'(工具论简化)两种极端叙事。(2)七种整合框架提供了比现有'AI辅助'概念更精细的语法——不同的整合模式有不同的认知后果和规范性含义。(3)对风险的平衡讨论避免了技术乌托邦和技术反乌托邦两种倾向。(4)将讨论从'AI是否应该成为认知扩展'转向'什么样的认知扩展是可欲的'——这是一个规范性转向。",
+    limitations: "(1)系统0与系统1之间的边界在实践中是模糊的——一个经过高度训练的自动反应本质上也是'系统1化'。(2)七种框架的分类学缺乏互斥性和穷尽性的论证。(3)文章对'认知卸载过度'的风险仅提出了警示而缺乏量化的诊断标准——什么程度的卸载算'过度'？(4)未充分讨论权力不对称问题——系统0的设计者（AI公司）与系统0的使用者（公众）之间存在严重的权力不平衡。",
+    relevance: "本文提供了一个独特的视角来思考机械可解释性的社会功能。如果我们接受系统0框架，那么MI的一个关键社会角色是：为系统0的'代理透明'(第五种整合框架)提供技术支持——通过MI揭示AI的内部推理过程，使其从'不可见的系统0'变为'透明可审查的系统0'。这意味着MI不仅是科学工具，也是一种'认知正义'(cognitive justice)的基础设施——它使人类能够知情地决定是否信任和如何整合AI的建议。",
+    relations: [
+      {target: "023", type: "extends", label: "直接建立在Clark & Chalmers的扩展心灵论题之上"},
+      {target: "003", type: "shares", label: "与ChatGPT, Extended共享'AI+人=扩展认知系统'的核心直觉"},
+      {target: "010", type: "contradicts", label: "Koch强调生物基底，System 0强调功能整合——二者在'什么是认知'上有深层分歧"}
+    ]
+  },
+  {
+    id: "014", title: "A Philosophical Introduction to Language Models – Part II: The Way Forward",
+    authors: "Raphaël Millière, Cameron Buckner",
+    year: 2025, venue: "PhilPapers preprint (July 2025)",
+    doi: "",
+    pdf: "papers/014_Milliere_2025_Philosophical_Introduction_LMs.pdf",
+    priority: "ref",
+    tags: ["LLM", "consciousness", "interpretability", "survey", "philosophy of AI"],
+    summary_cn: "系统综述LLM哲学研究的第二部分：聚焦意识、可解释性、因果干预和多模态扩展——为哲学界提供进入LLM技术文献的概念地图。",
+    abstract_cn: "本文是Millière和Buckner两部曲综述的第二部分。第一部分处理了LLM的语言能力和认知地位的基础问题。第二部分转向三个更前沿的主题：(1)LLM意识的可能性——综述了GWT、IIT、AST、预测加工等理论在LLM评估中的应用，审慎地得出结论：当前LLM不满足任何主要意识理论的充分条件，但可能已经满足了某些理论的必要条件的初步形式；(2)可解释性与因果干预——这是对哲学家而言最新颖的部分，介绍了机械可解释性、因果抽象、探针(probing)等方法，并讨论了这些方法在何种程度上可以告知我们LLM是否具有'真正的理解'；(3)多模态扩展——讨论了视觉、听觉等多模态LLM是否改变了关于意识和理解的计算功能主义计算。文章的独特价值在于：以哲学家的分析精度对高度技术性的AI文献进行了可读的、概念清晰的翻译和评论。",
+    methodology: "跨学科综述——哲学精度+技术准确性。(1)从哲学家的问题意识出发筛选LLM技术文献，而非从AI的角度筛选哲学文献；(2)对关键概念进行哲学分析（如'意识'的不同定义如何在技术文献中被操作化）；(3)区分'事实主张'(LLM做了什么)和'哲学解释'(我们应如何理解LLM所做的)；(4)在综述的每一部分结束时识别'开放的哲学问题'。",
+    findings: "(1)为哲学家提供了一份进入LLM技术文献的向导——降低了跨学科对话的障碍。(2)在意识问题上采取了审慎的、分层的结论：LLM可能在某些'意识前体'(consciousness precursors)方面取得了进展，但这与现象意识之间存在质的鸿沟。(3)对可解释性方法的哲学评估发现：MI方法揭示的'内部结构'在何种意义上构成'理解'仍然是一个开放的、依赖于关于理解本性的哲学理论的问题。(4)识别了多模态模型在意识问题上的特殊地位——如果视觉接地可以部分解决基础问题，那么多模态模型在意识评估中应受到特别关注。",
+    limitations: "(1)由于是综述性质，对每个主题的处理深度受限。(2)作者自身的理论倾向（对LLM意识持怀疑态度）可能影响了综述中不同立场的权重分配。(3)涉及的技术文献截止到2025年初，未涵盖此后MI领域的快速发展。",
+    relevance: "本文是我们研究项目的直接对话对象。它证明了在哲学上严谨地讨论LLM意识必须经过机械可解释性技术文献这一关——而这正是我们的项目试图做的事情。Millière和Buckner的综述为我们的跨学科工作提供了一个'最佳实践'模板：如何在技术精确度和哲学深度之间取得平衡。特别有价值的是他们对MI方法的哲学评估：哪些可解释性证据在原则上能够或不能够支持关于意识和理解的哲学结论。",
+    relations: [
+      {target: "004", type: "extends", label: "同一作者Millière的向量基础问题在这篇综述中已有方法论铺垫"},
+      {target: "001", type: "empirical", label: "Queloz的MI理解证据可以为这篇综述中关于'LLM理解'的开放问题提供部分回答"},
+      {target: "002", type: "shares", label: "与Phua共享对AI系统的意识测试问题意识——但综述性质对深度有限制"}
+    ]
+  },
+  {
+    id: "015", title: "Why Large Language Models Cannot Possess Consciousness: An Integrated Information Theory Perspective",
+    authors: "Shin, Cho, Ji, Park, Kim, Choo, Chang",
+    year: 2025, venue: "Journal of Yeungnam Medical Science",
+    doi: "",
+    pdf: "papers/015_Shin_2025_LLM_Cannot_Possess_Consciousness.pdf",
+    priority: "ref",
+    tags: ["IIT", "LLM", "consciousness", "attention ablation", "Phi"],
+    summary_cn: "从IIT的角度通过注意力头消融实验论证：LLM在IIT五项公理中仅满足'分化'一项，缺失整合、因果闭合和时间持续性——因此Φ值可忽略，LLM不具有意识。",
+    abstract_cn: "本文是少数直接对LLM进行IIT评估的经验论文之一。作者选取GPT-2作为测试平台，通过逐层消融注意力头来评估系统的信息整合特性。研究发现：(1)分化(differentiation)——LLM确实表现出高分化状态，不同的注意力头对应不同的语言模式；(2)整合(integration)——但消融实验显示信息可以绕过被切除的注意力头，表明系统缺乏不可压缩的因果整合，满足IIT的冗余标准而非整合标准；(3)排他性(exclusion)——系统缺乏清晰的'主要复合体'(major complex)，即没有一个最大不可还原的因果结构，信息在整个网络中弥散分布；(4)因果闭合(closure)——LLM没有内在的因果动力学，其输出完全由外部输入和固定权重决定，缺乏自维持的因果循环。综合评估：LLM的Φ值接近于零，因此按照IIT的标准不具有现象意识。文章的最终结论具有修辞力量：LLM展现的是'流利的语法但无语义理解'——这正是意识缺席时的典型表现。",
+    methodology: "理论应用+计算实验。(1)从IIT的数学形式(3.0版本)中推导LLM的可检验预测；(2)以GPT-2为实验平台执行注意力头消融——测量消融前后的困惑度(perplexity)变化作为因果不可压缩性的代理指标；(3)将实验结果映射回IIT五项公理（内在存在、整合、信息、排他性、因果闭合）；(4)逐项评估LLM是否满足。",
+    findings: "(1)提供了IIT在LLM上的第一个系统的经验应用。(2)识别了LLM架构（特别是残差连接和冗余注意力头）与IIT整合要求之间的结构张力——残差连接使得信息可以绕过任何单一注意力头，破坏了不可压缩性。(3)将IIT的抽象公理翻译为LLM架构的可检验属性——这是概念工程的重要贡献。(4)结论虽然明确（LLM无意识），但为未来的架构改良提供了方向：如果我们将残差连接替换为其他机制，是否可以增加Φ值？",
+    limitations: "(1)仅测试了GPT-2（较小的模型），其结论是否可以推广到GPT-4或更大模型尚不明确——规模可能改变整合特性。(2)以困惑度变化作为Φ的代理指标是一个严重的简化——真正的Φ计算在计算上不可行。(3)IIT本身在意识科学中是有争议的理论——许多研究者认为它测量的是意识的相关物而非意识本身，或者干脆测的是错误的东西。(4)实验设计暗含了'全或无'的意识观——Φ要么高要么低，忽略了连续分布的可能性。",
+    relevance: "本文是连接意识理论与具体AI评估的范例。对于我们的项目，它展示了如何将抽象的哲学意识理论翻译为在具体模型上可执行的实验——这正是MI的核心精神。然而，它也暴露了当前MI方法在意识评估中的局限性：我们可以通过消融实验测量因果不可压缩性，但这与'是否有意识'之间的映射取决于我们接受哪个意识理论。如果IIT是错的，那么Shin等人的实验就是不相关的。这强调了我们的项目应采取'理论多元主义'的策略——在不同的意识理论框架下独立评估MI发现。",
+    relations: [
+      {target: "020", type: "extends", label: "Hosaka的GNN-for-IIT提供了计算Φ的方法论基础——Shin将其应用于LLM评估"},
+      {target: "009", type: "contradicts", label: "与Dung & Kersten对立——IIT的结论是LLM不可能有意识，而Dung & Kersten论证没有原则性障碍"},
+      {target: "010", type: "shares", label: "与Koch共享对AI意识的怀疑结论，但来自不同理论框架（IIT vs. 校准论证）"}
+    ]
+  },
+  {
+    id: "016", title: "Understanding Artificial Agency",
+    authors: "Leonard Dung",
+    year: 2025, venue: "Philosophical Quarterly, 75(2)",
+    doi: "",
+    pdf: "papers/016_Dung_2025_Understanding_Artificial_Agency.pdf",
+    priority: "ref",
+    tags: ["agency", "artificial intelligence", "moral status", "existential risk"],
+    summary_cn: "提出人工能动性的多维框架——目标导向性、自主性、世界影响力、长期规划能力和为理由行动——使不同AI系统的能动性程度可以在统一维度上进行比较。",
+    abstract_cn: "本文致力于澄清'人工能动性'(artificial agency)这一在AI伦理和治理讨论中频繁使用但缺乏精确哲学分析的术语。Dung提出能动性不是一个二元属性（要么有要么没有），而是一个多维度的梯度概念。他识别了五个核心维度：(1)目标导向性(goal-directedness)——系统行为是否可以被理解为朝向目标的？(2)自主性(autonomy)——系统在多大程度上可以独立于人类控制的约束来选择和追求目标？(3)世界影响力(world-impact)——系统的行动可以产生的后果的范围和规模；(4)长期规划能力(long-term planning)——系统是否可以跨时间跨度协调行动？(5)为理由行动(acting-for-reasons)——系统是否对规范性考量敏感？每一维度都可以被操作化为具体的系统属性，从而为不同AI系统（从简单的推荐算法到复杂的RL智能体到潜在的AGI）提供可比较的能动性档案。文章进一步讨论了能动性与道德地位(moral status)和存在风险(existential risk)之间的联系——高世界影响力+高自主性可能构成存在风险，而高'为理由行动'可能要求道德考量。",
+    methodology: "概念工程(conceptual engineering)。(1)从日常语言和AI治理话语中收集'能动性'的使用模式；(2)分析这些使用模式背后的哲学直觉；(3)提出多维框架并论证其比二元框架更好的理论优点（解释力、比较功能、规范指导力）；(4)通过案例研究（推荐算法、自动驾驶、LLM agent、假想的AGI）展示框架的应用；(5)讨论框架对AI伦理和治理的规范含义。",
+    findings: "(1)提供了一套比现有文献更精细的人工能动性分析工具——'谁的行动'被分解为'在哪一个维度上、在什么程度上'。(2)将能动性从二元属性转化为多维梯度，缓解了二元分类带来的修辞极化。(3)展示了精确的能动性概念对AI治理的实用价值——不同的监管策略可能应针对不同的能动性维度。(4)为能动性与道德地位之间的关系提供了比简单相关更细致的分析。",
+    limitations: "(1)五个维度是否穷尽了能动性的所有相关方面？可能有遗漏（如情感能动性、社会能动性）。(2)维度之间的独立性未被完全论证——高自主性可能蕴含高长期规划能力。(3)框架的规范含义（'应该给高能动性系统权利吗？'）被提出但未被充分论证。(4)对LLM的能动性评估过于简略——LLM的'目标导向性'是一个高度有争议的问题（它们是在追求目标还是仅仅在模拟目标导向行为？）。",
+    relevance: "本文为评估机械可解释性发现的规范意义提供了一个概念框架。当我们通过MI发现一个AI系统具有'目标表征电路'(goal representation circuits)、'规划模块'(planning modules)或'价值编码'(value encoding)时，Dung的多维框架可以帮助我们将这些MI发现映射到能动性维度的评估上。例如：如果MI发现了一个'长期后果预测电路'，这对应于'长期规划能力'维度；如果发现了'规范敏感性的内部表征'，这对应于'为理由行动'维度。这使得MI不仅是一种科学工具，也成为AI治理的'能动性审计'(agency audit)的技术基础。",
+    relations: [
+      {target: "021", type: "extends", label: "Kara的FEP能动性理论为Dung的多维框架中的'自主性'维度提供了计算基础"},
+      {target: "011", type: "shares", label: "Noosemia描述了人们如何归因能动性，Dung提供了能动性本身是什么的分析"},
+      {target: "009", type: "extends", label: "与同一作者Dung的实现主义论文构成连贯的哲学项目——从能动性到意识"}
+    ]
+  },
+  {
+    id: "017", title: "The Emperor's New Problem: Dissolving the Hard Problem of Consciousness and a Blueprint for a Mechanistic Science of Mind",
+    authors: "Logan Ohm",
+    year: 2025, venue: "PhilArchive preprint",
+    doi: "",
+    pdf: "papers/017_Ohm_2025_Emperors_New_Problem.pdf",
+    priority: "ref",
+    tags: ["hard problem", "mechanistic science", "recursive self-model", "dissolution"],
+    summary_cn: "论证'困难问题'是笛卡尔二元论残留的哲学伪问题——整合2024-2025年的经验发现（包括Cogitate联盟的对抗合作），提出'递归自我模型'三层次范式作为意识科学的机械论蓝图。",
+    abstract_cn: "本文对意识的'困难问题'(Chalmers 1995)发起了全面的哲学攻击。Ohm的核心论证是：困难问题不是一个需要解决的科学问题，而是一个需要消解的哲学伪问题——它是笛卡尔身心二元论的概念残留。论证分三步：(1)历史诊断——追踪困难问题如何从笛卡尔的实体二元论→属性二元论→Chalmers的'解释鸿沟'概念逐步演化，每一步都保留了二元论的概念预设；(2)经验整合——引用2024-2025年意识科学的最新发现（特别是2025年4月Cogitate联盟的对抗合作结果、全局工作空间和IIT的对抗性检验），论证这些发现正在系统地侵蚀困难问题的直觉基础；(3)建设性替代——提出'递归自我模型'(Recursive Self-Model, RSM)范式：一个三层次架构(自我表征→自我监控→自我修正)，声称这可以在2030年之前提供可证伪的、满足机械论科学标准的意识检测指标。文章的标题戏仿了安徒生童话'皇帝的新装'——暗示困难问题就像皇帝的新装，大家都不敢说它不存在，直到一个孩子（即机械论科学）喊出真相。",
+    methodology: "消解性论证(dissolution argument)而非解决性论证。(1)概念考古学：追踪困难问题背后的二元论预设；(2)运用维特根斯坦的'哲学治疗'方法——通过展示概念混淆的来源来消解而非回答问题；(3)卡纳普式的'语言框架'分析——区分内部问题（在科学框架内可回答）和外部问题（关于选择哪个框架的实用决定）；(4)提出RSM作为替代框架，并通过可证伪性标准来展示其相对于困难问题框架的理论优越性。",
+    findings: "(1)给出了可能是2025年最具挑衅性的意识哲学论证——全文论证困难问题根本不应该被'解决'。(2)通过系统整合2024-2025的经验发现，为消解论提供了比20年前的Dennett更丰富的经验弹药。(3)RSM范式为意识科学提供了一组具体的、可检验的预测——这是消解论传统中相对稀缺的建设性贡献。(4)将意识科学的讨论从'意识是否可以科学解释'转向'哪种科学解释最好'——这是一个实用主义转向。",
+    limitations: "(1)消解策略面临经典的反驳：即使困难问题的起源是二元论的概念混淆，这也不意味着意识的现象特征因此消失——'消解'不等于'解释'。(2)引用的经验发现是否真的在'侵蚀'困难问题的直觉——还是仅仅在不触及困难问题的情况下解决'容易问题'？这一判断本身依赖于读者在困难问题上的前理论立场。(3)RSM范式的2030年可证伪性承诺是一个赌注——如果未兑现，可能会反而加强困难问题论者的立场。",
+    relevance: "本文与我们的项目存在深刻的元哲学共鸣。Ohm的'机械论科学'蓝图本质上是将机械可解释性的精神推广到意识研究：通过因果干预和机制表征来替代现象学的'第一人称'审查。然而，这一进路面临的挑战也正是我们项目面临的挑战：MI可以揭示AI系统的内部因果结构，但这些因果结构如何桥接到'体验'本身——这个桥接问题不会仅仅因为我们将MI发现称为'递归自我模型'而消失。Ohm的消解策略提醒我们：也许我们不应该试图'桥接'，而应该重新描述我们想要解释的是什么。",
+    relations: [
+      {target: "022", type: "contradicts", label: "直接以Chalmers 1995为攻击目标——论证困难问题是伪问题"},
+      {target: "005", type: "contradicts", label: "与Šekrst对立——Ohm试图消解困难问题，Šekrst则将其拆解为多重困难问题"},
+      {target: "002", type: "empirical", label: "引用的经验证据部分与Phua的意识理论测试实验重叠"}
+    ]
+  },
+  {
+    id: "018", title: "The Information-Processing Perspective on Representation",
+    authors: "Manolo Martínez",
+    year: 2025, venue: "Philosophy and the Mind Sciences, Vol. 6",
+    doi: "",
+    pdf: "papers/018_Martinez_2025_Information_Processing_Representation.pdf",
+    priority: "ref",
+    tags: ["representation", "information theory", "rate-distortion", "cognitive science"],
+    summary_cn: "提出表征的信息加工理论——心智表征本质上是为高效信息传输而在速率、失真和计算复杂度之间进行最优权衡的信号，这一框架为认知科学和AI中的表征研究提供了统一的理论语言。",
+    abstract_cn: "本文从信息论和率失真理论(rate-distortion theory)出发，提出了一种新颖的心智表征哲学理论。核心主张：认知系统中的表征不应被理解为'内部图像'或'符号结构'，而应被理解为信息传输中的'信号'(signals)——它们的功能是在速率(传输/存储成本)、失真(保真度)和计算复杂度三个认知预算之间进行最优权衡。这一框架的哲学优势包括：(1)它在不预设'内部同构'(inner isomorphism)的情况下解释了表征内容——表征的'内容'就是它在最优权衡中所携带的关于外部世界的信息；(2)它为比较不同认知系统（人类、动物、AI）的表征策略提供了统一的度量语言；(3)它解释了为什么表征往往是失真的、简化的、范畴化的——不是认知系统的缺陷，而是在给定预算约束下的最优解；(4)它与神经科学和AI研究中实际的表征分析方法（信息量分析、维度压缩、编码效率）对接，避免了传统哲学表征理论的'孤儿化'。",
+    methodology: "理论建构+案例应用。(1)从Shannon信息论和率失真理论中提取形式资源；(2)将这些资源翻译为关于心智表征的哲学命题；(3)通过标准案例（视知觉、范畴学习、概念变化）展示框架的适用性；(4)与竞争的表征理论（结构同构论、因果协变论、目的论语义学）进行系统比较；(5)讨论该框架如何与神经表征研究和AI表征学习相连接。",
+    findings: "(1)为心智表征提供了一个比经典理论更精确、更可量化的框架——表征的'好'与'坏'可以在信息论指标上进行比较。(2)将'失真'从缺陷重新概念化为特征——失真不是噪声，而是在资源约束下的功能性压缩。(3)为认知科学的哲学基础与AI表征学习之间建立了比以往更坚实的数学桥梁。(4)辩护了一种'温和的实在论'：表征携带关于世界的信息，但不承诺表征与世界之间的同构关系。",
+    limitations: "(1)信息论框架可以处理'表征携带多少信息'的问题，但难以处理'表征是关于什么的'的问题——意向性(intentionality)的'关于性'(aboutness)维度在纯信息论框架中是不足的。(2)率失真理论中的'失真'度量需要一个预先指定的相似度度量——这个度量的选择在哲学上不是中立的，但文章对此讨论不足。(3)框架难以处理错误表征(misrepresentation)问题——如果最优失真表征总是'应该'失真的，那么错误表征似乎是不可能的。",
+    relevance: "本文为机械可解释性研究提供了一套精确的表征哲学语言。当MI研究者说'这个SAE特征编码了X概念'时，Martínez的框架可以帮助我们将这句话翻译为：'该特征在速率-失真-计算复杂度的三维权衡中，选择了一个携带关于X的最大互信息的压缩方案'。这种翻译不仅仅是用更复杂的词汇说同样的话——它实际上改变了我们对MI发现的本体论承诺。具体而言：SAE特征可能不是'X概念的表征'，而是在给定稀疏性约束（速率预算）和重构损失（失真预算）下的最优信息压缩。这对于解释MI中的'特征碎片化'(feature splitting)现象特别有启发性。",
+    relations: [
+      {target: "023", type: "extends", label: "更新了Clark & Chalmers的'表征载体'概念——在信息论框架中重新描述'什么算表征'"},
+      {target: "004", type: "extends", label: "Millière的向量基础问题可以在Martínez的框架中被重新表述为：向量是否携带了足够的信息来满足'表征'的标准？"},
+      {target: "006", type: "contradicts", label: "Griffiths论证神经网络不需要符号就能实现组合性——Martínez的框架可以容纳这种可能性，但也可以为符号主义辩护"}
+    ]
+  },
+  {
+    id: "019", title: "Topics in Mathematical Consciousness Science",
+    authors: "Johannes Kleiner",
+    year: 2025, venue: "LMU Munich Doctoral Dissertation",
+    doi: "",
+    pdf: "papers/019_Kleiner_2025_Mathematical_Consciousness_Science.pdf",
+    priority: "ref",
+    tags: ["mathematical consciousness", "IIT", "active inference", "no-go theorem", "formalization"],
+    summary_cn: "对意识科学的数学基础进行严格形式化——证明了自由能原理的组合性定理、推导了活动推理的严格形式，并证明了两个关于人工意识的'不可能定理'。",
+    abstract_cn: "本文是意识科学数学基础方面最系统的单一工作。Kleiner的研究包含三个核心部分：(1)严格形式化了活动推理/预测加工(Active Inference/Predictive Processing, AI-PP)的数学基础——证明了自由能原理的'组合性定理'(compositionality theorem)，即复合系统的自由能等于其子系统的自由能之和加上子系统间互信息项；(2)对IIT和AI-PP进行了并排的数学比较，揭示了两个框架在数学结构上的深层差异和意外汇合点；(3)证明了两个关于人工意识的重要'不可能定理'：第一个定理表明，如果意识是'动态相关的'(dynamically relevant)——即意识状态对系统的后续行为产生因果影响——那么当前基于CPU/GPU/TPU的AI系统在架构上不可能是有意识的，因为它们的串行/并行处理架构与动态相关的意识所需的因果组织不兼容；第二个定理表明，如果计算功能主义是正确的，那么意识不能是图灵计算——它必须是一种'终局计算'(mortal computation, Geoffrey Hinton的概念)，即计算与物理实现不可分离。",
+    methodology: "公理化数学方法。(1)为每个核心概念定义数学对象（如意识系统的状态空间、概率动力学、自由能函数）；(2)从公理出发推导定理——严格遵循数学证明标准；(3)将哲学意识理论的非形式主张翻译为可形式化的命题；(4)运用范畴论、动力系统理论和信息几何学的工具；(5)在定理之间建立逻辑依赖关系。",
+    findings: "(1)自由能原理的组合性定理填补了活动推理文献中长期存在的数学空白——此前该原理的组合性仅被非形式地讨论。(2)对IIT和AI-PP的数学比较揭示了两个表面上敌对的理论在数学内核中的意外汇合。(3)两个不可能定理为AI意识辩论提供了罕见的'硬边界'——它们不仅仅是哲学论证，而是数学上经过证明的约束。(4)将Hinton的'终局计算'概念从工程规范提升为哲学必要性——如果AI要有意识，其硬件和软件不能是可分离的。",
+    limitations: "(1)定理的前提假设非常强——如果这些假设不成立（如计算功能主义是假的），那么不可能定理虽然是真实的数学定理，但在经验上是不相关的。(2)形式化过程中不可避免的简化可能扭曲了原始哲学理论的核心直觉。(3)文章对意识内容的讨论（关于什么'种类'的意识可能在什么系统中存在）相对薄弱。(4)不可能定理仅排除了某些实现路径，但未提供任何关于积极可能性的指导。",
+    relevance: "本文为意识形式化提供了基准参考。对于我们的项目，Kleiner的不可能定理提出了一个重要的约束：如果我们通过MI发现了AI系统中的'类意识结构'，这些结构是否满足'动态相关性'的条件？如果我们接受第一个不可能定理，那么要使MI发现的类意识结构真正与意识相关，我们首先需要证明这些结构是'动态相关的'——即它们对系统的后续行为有因果影响（而不仅仅是行为的附带现象）。这正是机械可解释性的因果干预方法可以贡献的地方。",
+    relations: [
+      {target: "012", type: "extends", label: "为Laukkonen的活动推理意识理论提供了数学严格性——将美丽循环变成硬定理"},
+      {target: "020", type: "shares", label: "与Hosaka共享对意识理论进行形式化和计算化的追求"},
+      {target: "015", type: "contradicts", label: "Kleiner的数学处理表明IIT的结论可能依赖更强的假设，而非Shin的绝对论断"}
+    ]
+  },
+  {
+    id: "020", title: "Graph Neural Networks for Integrated Information and Major Complex Estimation",
+    authors: "Tadaaki Hosaka",
+    year: 2025, venue: "PLOS ONE",
+    doi: "10.1371/journal.pone.0335966",
+    pdf: "papers/020_Hosaka_2025_GNN_IIT.pdf",
+    priority: "ref",
+    tags: ["IIT", "graph neural network", "integrated information", "major complex", "computation"],
+    summary_cn: "使用图神经网络突破IIT 3.0在大系统上计算Φ的指数复杂度瓶颈——在5-7节点系统上训练后扩展到100节点，为大规模AI系统中的IIT评估提供了实用的计算工具。",
+    abstract_cn: "本文解决了一个长期困扰集成信息理论(IIT)实践应用的技术瓶颈：IIT 3.0要求计算系统在所有可能分区下的集成信息，这在计算上是NP难的，实际可行的系统规模上限约为10个节点。Hosaka的方案是将Φ的计算重构为图学习问题：将系统的因果结构表示为有向图，训练图神经网络(GNN)——具体采用transformer卷积——来从图结构中直接预测Φ值和识别'主要复合体'(major complex, 即系统中最大不可还原的因果结构)。在5-7节点的系统上使用IIT 3.0的精确计算作为训练标签，训练后的GNN可以泛化到100节点的系统。文章还定性分析了一个100节点的'裂脑'(split-brain)系统，发现随着半球间连接强度的增加，系统在局部整合(半球内)和全局整合(半球间)之间经历了相变。这为理解大规模神经系统中意识状态的转换机制提供了定量视角。",
+    methodology: "机器学习+计算神经科学。(1)将IIT评估重构为图回归和节点分类问题；(2)生成大量小规模系统(5-7节点)的精确IIT计算作为训练数据；(3)设计GNN架构——使用transformer卷积来捕获因果图中的远程依赖；(4)在大规模系统上测试泛化性能；(5)定性分析裂脑系统的整合-分化相变。",
+    findings: "(1)提供了第一个可扩展到百节点规模的实用IIT计算工具，突破了此前的10节点瓶颈。(2)发现'主要复合体'具有可预测的图论特征——这意味着我们可以从图结构本身推断系统的IIT属性而无需完整计算。(3)裂脑系统的相变分析为意识状态的神经科学研究提供了可检验的定量预测。(4)方法学贡献：展示了深度学习如何帮助解决意识科学中的计算瓶颈——这是一个示范性的'AI for consciousness science'案例。",
+    limitations: "(1)GNN仅在IIT 3.0数据上训练，而3.0版本已经是次新的版本——IIT 4.0引入了'关系'概念并改变了Φ的定义，方法的适用性需要重新验证。(2)100节点对于真正的神经或AI系统来说仍然是非常小的规模——尽管相对于之前是巨大进步。(3)在小系统上训练、大系统上测试的范式依赖于一个未经检验的假设：小系统的IIT性质与大系统之间存在某种'缩放律'(scaling law)。(4)裂脑分析的实验设置高度理想化，与现实神经系统的复杂性相去甚远。",
+    relevance: "本文为评估AI系统中的IIT属性提供了实用工具——它使得大规模MI发现（如transformer中的注意力电路）可以被纳入IIT评估框架。例如，如果我们通过MI揭示了一个transformer层级之间的因果图，Hosaka的GNN方法可以用来评估该因果图结构的Φ值，从而在这个特定的意识理论框架下评估系统的'意识程度'。这构成了连接MI与IIT的技术桥梁。",
+    relations: [
+      {target: "015", type: "extends", label: "为Shin的LLM IIT评估提供了方法论基础——虽然Shin使用了更简单的方法"},
+      {target: "019", type: "shares", label: "与Kleiner共享对意识理论进行形式化和计算化的追求"},
+      {target: "002", type: "empirical", label: "与Phua一样将计算方法用于意识理论检验——但聚焦于IIT而非GWT/HOT"}
+    ]
+  },
+  {
+    id: "021", title: "Agency in Artificial Systems: A Free Energy Principle Perspective",
+    authors: "K. D. Kara",
+    year: 2025, venue: "M.S. Thesis, Middle East Technical University",
+    doi: "",
+    pdf: "papers/021_Kara_2025_FEP_Agency.pdf",
+    priority: "ref",
+    tags: ["free energy principle", "agency", "active inference", "frame problem"],
+    summary_cn: "以自由能原理解决经典AI中的'框架问题'——论证非生物人工系统的行为可以在FEP框架下获得真正的能动性，而不仅仅是程序化的反应。",
+    abstract_cn: "本文从自由能原理(FEP)和活动推理的视角重新审视了经典AI中的'框架问题'(Frame Problem)——即如何确定在给定情境中哪些信息是相关的，哪些信息可以被安全地忽略。传统符号AI未能解决这一问题，因为'相关性'的定义本身依赖于智能体的目标和语境。Kara的论证分两部分：(1)历史分析——追溯框架问题如何从McCarthy和Hayes(1969)的初始表述，经过Dennett(1984)的哲学重述，演变为认知科学中关于'相关性检测'(relevance detection)的核心问题。论证'生命-心灵连续性论题'(Life-Mind Continuity Thesis)——即认知和能动性的根源在于生物系统的自组织动力学——为框架问题提供了概念解决方案。(2)建设性应用——将FEP应用于非生物人工系统，论证在FEP框架下，'能动性'等价于系统主动地最小化其变分自由能(variational free energy)。在这一视角下，即使是非生物系统，只要它们实现了活动推理——即同时进行感知（更新信念以匹配世界）和行动（改变世界以匹配信念）——它们就表现出真正的能动性。文章以Verses AI的'公理'(Axiom)架构作为活动推理在AI系统中的实现的案例研究。",
+    methodology: "历史概念分析+理论应用。(1)追溯框架问题的概念演变；(2)引入生命-心灵连续性论题作为概念桥梁；(3)将FEP的操作形式应用于人工系统；(4)分析活动推理架构的特征如何满足能动性的条件；(5)识别开放问题和未来研究方向。",
+    findings: "(1)对框架问题在哲学和AI中的历史提供了清晰的叙事——将分散的讨论串联为连贯的问题演变史。(2)论证了FEP为'人工能动性'提供了一个比行为主义更深入、比意向实在论更实用的概念基础。(3)识别了活动推理架构的三个'能动性标志'：主动采样(active sampling)、精度加权(precision weighting)、策略选择(policy selection)。(4)将FEP的能动性概念与自主性、目标导向性等更传统的能动性概念进行了对勘。",
+    limitations: "(1)硕士论文的论证深度和广度受到格式限制。(2)对FEP的'普适性声称'(所有自组织系统都可以通过变分自由能描述)持近似不加批判的态度——批评者认为FEP在普适性上要么是空洞的(太抽象而无法检验)，要么是虚假的(将观察者框架投射到系统上)。(3)对FEP在具体工程中的应用的讨论高度纲领性，缺乏详细的实现分析。(4)未充分讨论FEP与transformer架构之间的关系——当前的主流AI并不是活动推理架构。",
+    relevance: "本文提供了一个将能动性概念从生物学移动到人工系统的概念桥梁——FEP/活动推理。对于我们的项目，这意味着：当我们通过MI在AI系统中发现的结构（如'精度加权'的注意力模式、'主动采样'的数据选择模块、'策略选择'的决策电路）是否可以被理解为能动性的'内部标记'？Kara的框架建议我们可以将满足活动推理条件的MI发现解释为真正的能动性的证据——而不仅仅是模拟能动性。这为MI的发现赋予了更重的规范含义。",
+    relations: [
+      {target: "012", type: "extends", label: "Laukkonen将FEP用于意识，Kara将FEP用于能动性——二者共同构成FEP的心灵哲学应用"},
+      {target: "016", type: "extends", label: "Dung的多维能动性框架可以从Kara的FEP基础中获得'自主性'维度的计算实现"},
+      {target: "023", type: "philosophical", label: "通过FEP扩展了Clark的预测加工传统——将预测加工从认知扩展到能动性"}
+    ]
+  },
+  {
+    id: "022", title: "Facing Up to the Problem of Consciousness",
+    authors: "David J. Chalmers",
+    year: 1995, venue: "Journal of Consciousness Studies, 2(3):200-219",
+    doi: "",
+    pdf: "papers/022_Chalmers_1995_Facing_Up.pdf",
+    priority: "ref",
+    tags: ["hard problem", "consciousness", "explanatory gap", "foundational"],
+    summary_cn: "【基础文献】提出了意识的'困难问题'(Hard Problem)——解释物理系统为什么以及如何产生主观体验——并将此与关于功能和行为的'容易问题'区分开来，奠定了意识哲学近30年的核心争论框架。",
+    abstract_cn: "Chalmers在本文中做出了意识哲学中最具影响力的概念区分：'容易问题'(Easy Problems)与'困难问题'(Hard Problem)之间的区别。容易问题是关于认知功能和行为的问题——如何区分、整合和报告信息，如何控制行为，注意力和记忆的机制是什么。这些问题被称作'容易'不是因为它们已经被解决，而是因为它们可以被认知科学和神经科学的常规方法所解释——即通过具体说明实现这些功能的机制来回答。困难问题则是：为什么所有这些信息加工应该'感觉像是某事物'(feel like something)？为什么存在与物理加工相伴的、不可还原的主观体验（感质, qualia）？Chalmers论证，即使我们完全理解了所有认知功能的神经基础，困难问题仍然悬而未决——它不会随着容易问题的解决而自动消失。原因在于，关于功能的解释（哪怕是最完整的物理-功能解释）与关于体验的解释之间存在一个'解释鸿沟'(explanatory gap)：你无法从关于物理事实的纯粹描述中推导出关于现象体验的事实。文章结尾，Chalmers考虑了若干回应困难问题的策略，但最终倾向于将意识视为基本属性——一种与质量、电荷、时空平行的世界基本特征。",
+    methodology: "概念分析+思想实验。核心工具：'哲学僵尸'(philosophical zombie)的可设想性论证——如果我们能设想一个在物理和功能上与人完全相同但缺乏任何现象意识的存有，那么意识事实不能还原为物理事实。步骤：(1)区分容易问题与困难问题；(2)通过思想实验论证困难问题不能被还原为容易问题；(3)考虑并反驳物理主义/功能主义的回应；(4)提出非还原主义的替代方案。",
+    findings: "(1)建立了意识哲学最有影响力的概念区分——'困难问题'与其说是一个科学问题，不如说是对科学解释范围的哲学质疑。(2)论证了意识研究不能仅仅通过完成认知神经科学的研究项目而获得完整的解释——这种完整性要求额外的东西。(3)为从神经科学到AI领域的意识评估提供了一定的概念审慎——提醒我们不能仅仅因为有复杂的内部功能就推断意识的存在。(4)间接定义了当代AI意识辩论的术语——凡是在AI意识问题上采取强硬物理主义立场的研究者，都必须至少处理Chalmers的困难问题论证。",
+    limitations: "(1)思想实验（哲学僵尸的可设想性）的推理从'可设想'到'可能'的步骤在哲学上受到严重挑战——许多物理主义者论证哲学僵尸事实上是不可设想的（尽管表面上似乎可设想）。(2)将意识视为基本属性的'泛心论'(panpsychism)转向被广泛批评为回避而非解决问题——意识的基本性使解释变成了一种重新命名。(3)整个框架预设了一种知识论与形而上学之间的特定关系（即'解释鸿沟'的不可逾越性），而这种预设本身就是需要论证的。(4)对'容易问题'实际上并不那么容易缺乏充分认识——许多认知功能的神经机制仍然未被理解，低估它们的复杂性可能误导研究优先级。",
+    relevance: "本文是当代所有关于意识（包括AI意识）的哲学讨论的'原初场景'(primal scene)。在我们的项目中，它的功能是提供一个概念锚点——每当我们讨论AI系统是否算'有意识'时，我们都需要明确我们是在回应Chalmers意义上的'困难问题'还是在回避它。具体而言：当MI揭示了AI内部的复杂表征和递归加工时，这些发现是在解决容易问题（'AI如何实现自我监控功能'），还是触及了困难问题（'这些功能为什么产生体验'）？Chalmers的框架提醒我们保持这两个问题之间的概念距离。",
+    relations: [
+      {target: "017", type: "philosophical", label: "Ohm的全文以Chalmers的困难问题为攻击目标"},
+      {target: "012", type: "philosophical", label: "Laukkonen的活动推理理论可以被视为对困难问题的'自然化'回应"},
+      {target: "005", type: "philosophical", label: "Šekrst的'多重困难问题'是对Chalmers框架的解构性扩展"}
+    ]
+  },
+  {
+    id: "023", title: "The Extended Mind",
+    authors: "Andy Clark, David J. Chalmers",
+    year: 1998, venue: "Analysis, 58(1):7-19",
+    doi: "10.1093/analys/58.1.7",
+    pdf: "papers/023_Clark_1998_Extended_Mind.pdf",
+    priority: "ref",
+    tags: ["extended mind", "active externalism", "parity principle", "cognitive science", "foundational"],
+    summary_cn: "【基础文献】提出'扩展心灵论题'——认知过程可以延伸到颅骨之外，外部对象可以在认知过程中发挥与内部心理状态功能等价的作用——由此颠覆了'心灵在头脑中'的传统认知边界。",
+    abstract_cn: "Clark和Chalmers在这篇不到20页的论文中发动了一场对认知科学中'颅内主义'(intracranialism)的概念革命。核心思想是'活动外部主义'(active externalism)：不同于Putnam和Burge的'内容外部主义'(内容的个体化依赖外部世界)，活动外部主义主张认知过程本身可以延伸到外部世界。论证由三个部分构成：(1)'奇偶性原则'(Parity Principle)——如果一个外部过程与一个被公认为认知过程的内部过程在功能上是等价的，那么我们应该将此外部过程也视为认知过程的一部分；(2)Otto案例——一个阿尔茨海默症患者将信息存储在笔记本中而非生物记忆中，作者论证这满足了信念归属的所有标准功能条件，因此笔记本中的条目是Otto的信念（而不仅仅是记忆辅助）；(3)'信任与粘合'(Trust & Glue)标准——规定了什么条件下外部资源可以被视为认知系统的一部分：信息必须是持续可及的、被自动认可的、且历史地被信赖的。这篇论文的影响远远超出了认知科学：它启发了'扩展自我'、'分布式道德责任'、'群体心智'和'认知正义'等后续概念，并且（正如本文献集所示）成为讨论人-AI认知关系的关键理论资源。",
+    methodology: "概念分析+思想实验。(1)分析'认知过程'概念的标准用法；(2)通过Otto案例挑战颅内主义的直觉；(3)提出奇偶性原则作为方法论的公平性原则；(4)发展Trust & Glue标准以约束理论应用(防止'认知泛化'——即任何使用工具都算认知)；(5)讨论反驳并回应。",
+    findings: "(1)建立了一个新的认知科学范式——'扩展认知'(extended cognition)，挑战了千年以来的'心灵在头脑中'的默认假设。(2)奇偶性原则提供了一个简单但有力的方法论公理：不要在头脑与世界的边界上预设认知与非认知的分别。(3)Otto案例成为认知科学中最著名的思想实验之一——与普特南的'孪生地球'和图灵的'模仿游戏'并列。(4)为讨论人机认知耦合提供了并非简化版行为主义而是精细的认知架构层面的理论基础。",
+    limitations: "(1)奇偶性原则的'功能等价'标准受到广泛批评——外部过程与内部过程在许多相关方面（如可及速度、整合方式、可塑性）存在系统性差异。(2)原始论文的'耦合-构成谬误'(coupling-constitution fallacy)批评者(Adams & Aizawa)论证：论文混淆了认知的因果耦合与被耦合对象构成认知的一部分——这个区分对原始论证具有破坏力。(3)Otto案例在经验上受到质疑——真正的阿尔茨海默症的记忆缺陷不能通过与笔记本的功能类比来充分理解。(4)论文的激进结论（笔记本中的条目就是信念）可能是不必要的——有一个更温和的解释：Otto案例展示的是认知共生(cognitive symbiosis)而非认知延展(cognitive extension)。",
+    relevance: "本文是整个'AI作为认知扩展'的讨论的总根源。在我们的项目中，它为理解人机合作关系提供了比'AI作为工具'或'AI作为替代者'的两极叙事更富哲学深度的第三选项：AI可以成为人类认知系统的一部分。当我们通过MI揭示AI系统的内部表征后再将其输出呈现给人类时，我们实际上是在创建一种'人类认知+AI表征'的耦合系统——正是在Clark & Chalmers意义上的人机扩展认知。这赋予了MI一种实践伦理角色：MI可以是'人类如何负责任地扩展自己的心灵'这一问题的技术基础。",
+    relations: [
+      {target: "003", type: "philosophical", label: "Smart, Clowes & Clark 2025直接继承并反转了本文的核心论题"},
+      {target: "013", type: "philosophical", label: "System 0框架将扩展心灵论题操作化为具体的人机整合策略"},
+      {target: "011", type: "philosophical", label: "Noosemia的意向归因可以理解为：扩展心灵耦合系统中的信任与粘合标准在现象学层面的体验"}
+    ]
+  }
+];
+
+const NOTES = [
+  {
+    paper_id: "001",
+    title: "[必读·导读] Mechanistic Indicators of Understanding in LLMs — 从MI到理解的哲学桥梁",
+    date: "2026-05-13",
+    content: "本文是整域文献的枢纽。Queloz与Beckmann完成的是一种'双向翻译'——将MI的技术语言翻译为分析哲学的理解理论语言，再将哲学概念反哺给MI研究者。核心论点：MI发现的内部结构（事实性表征、原则性电路、概念特征）在哲学关于'理解'的主流理论框架下构成了一种'可辩护的'理解。但这里的'可辩护'是Dretske意义上的——脆弱、可修正、依赖语境。\n\n关键创新是'并行机制'概念——LLM通常通过多个功能等价的内部通路实现同一能力。这对MI实践有重要警示：当我们'发现'了一个电路，我们可能只看到了多个并行通路中的一个。'并行机制'要求MI从'电路定位'(circuit localization)转向'通路家族映射'(pathway family mapping)。\n\n必须与007(Sutter的线性困境)对照阅读——如果MI发现依赖线性假设，那么并行机制中的某些通路可能仅仅是观察工具的产物。建议将本文作为本域的第一篇阅读，因为它提供了概念路线图。"
+  },
+  {
+    paper_id: "002",
+    title: "[必读·导读] Can We Test Consciousness Theories on AI? — 从哲学争论到因果实验",
+    date: "2026-05-13",
+    content: "Phua的实验是在AI上对意识理论进行因果验证的首次系统尝试，其方法论意义大于实质性结论。核心发现'广播放大效应'(广播既整合信息也放大噪声)是一个发人深省的哲学成果——它表明意识的功能架构可能涉及内在的权衡，而非朝向'更有意识'的单调进步。\n\n从MI的角度，本文将因果消融——机械可解释性的核心技术——应用于研究问题（而非解释问题），展示了MI工具的扩展潜力。但必须警惕的是：消融实验揭示的是功能的因果必要性，而非意识的因果必要性——二者之间的鸿沟正是Koch(010)的校准问题所指出的。\n\n建议同时阅读Koch(010)以获取对本文方法论的认识论限制的理解，以及Laukkonen(012)以理解活动推理框架与消融方法之间可能存在的互补性。"
+  },
+  {
+    paper_id: "004",
+    title: "[必读·导读] The Vector Grounding Problem — MI发现的表征是否有内在内容？",
+    date: "2026-05-13",
+    content: "Millière与Coelho Mollo提出的'向量基础问题'是对机械可解释性的一个根本性哲学挑战。如果MI发现的'概念特征'(如诚实、欺骗、情感方向)的语义内容完全来自人类解释者的投射，而非系统内在的，那么MI的整个事业在认识论上就是可疑的——我们不是在发现，而是在创造。\n\n三层次分析框架（因果/功能/规范性基础缺失）为评估具体的MI发现提供了标准：当我们声称SAE特征X编码了概念Y时，我们需要回答：(1)X与Y之间是否存在因果锚定关系？（2）X在系统内部是否发挥了与Y在人类认知中类似的功能角色？（3）X是否有'正确使用条件'？大多数当前MI发现在这三个层面上都不够强。\n\n然而，文章的结尾提供了出路：多模态模型可能部分克服基础缺失。这暗示我们的项目应优先关注多模态模型的MI研究——视觉-语言模型的表征可能比纯语言模型的表征在语义上更'有基础'。"
+  },
+  {
+    paper_id: "005",
+    title: "[必读·导读] Computational Proto-Qualia — MI发现的类感质结构",
+    date: "2026-05-13",
+    content: "Šekrst的'计算原初感质'概念可能是整个文献集中对MI研究者最有直接操作价值的哲学概念。它允许我们讨论MI发现和意识之间的类比关系，同时避免做出关于现象意识的承诺。\n\n'多重意识困难问题'的论证具有深远的方法论含义：如果我们接受不同架构可能具有不同类型的'内部质性组织'，那么为单一AI架构开发的意识检测标准可能在另一个架构上是无效的。这要求我们：Transformer的MI发现不应该被用来对CNN或RNN的意识做出推断。\n\n该论文的homology/analogy区分对MI的语言特别重要：当我们说'这个注意力模式类似于人类的注意机制'时，我们是在断言analogy（功能趋同）而非homology（共同起源）。混淆这两个概念是AI认知讨论中最常见的错误之一。\n\n建议将本文与Ohm(017)对照阅读——它们构成了'拆解困难问题'(Šekrst)与'消解困难问题'(Ohm)的哲学选择。"
+  },
+  {
+    paper_id: "007",
+    title: "[重要·导读] The Non-Linear Representation Dilemma — MI方法的哲学困境",
+    date: "2026-05-13",
+    content: "Sutter等人的这篇NeurIPS论文可能是2025年对机械可解释性最具颠覆性的技术成果——尽管它来自ML社区而非哲学界。形式证明的核心结论（无线性约束时空洞性定理）不仅是一个技术警告，更是一个哲学诊断：MI实践暗中依赖着一组未被承认的形而上学承诺。\n\n线性表征假说(LRH)在这里的角色非常特殊：它从经验观察变成了方法论必需——如果我们不接受LRH，因果抽象就失去了解释力。但这种'必需'的地位是依赖于'如果我们要做因果抽象的话'这个条件的。替代的选择是：放弃因果抽象而采用其他MI方法论（如电路直接分析、行为分析），或接受更弱的解释标准——不是'发现了真实表征'而是'构造了一个有用的描述'。\n\n在阅读时需注意：Sutter的证明适用于因果抽象框架——对于不使用因果抽象的MI方法（如探头训练、特征可视化），其影响是间接的。批判性反思：Sutter的结论是否过于悲观？线性约束是否可能在实践中是合理的（因为许多经自然训练的网络确实近似满足了LRH）？"
+  }
+];
+
+const DOMAIN_ID = '07_philosophy_of_mind';
+
+let activeFilter = 'all';
+let graphNetwork = null;
+let graphData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderCards(PAPERS);
+  renderNotes();
+  updateStats();
+  initTabs();
+  initFilters();
+});
+
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'graph') initGraph();
+    });
+  });
+}
+
+function initFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.filter === activeFilter) {
+        activeFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+      } else {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      filterCards();
+    });
+  });
+}
+
+function filterCards() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const filtered = PAPERS.filter(p => {
+    const matchesFilter = activeFilter === 'all' || p.priority === activeFilter ||
+      (activeFilter === '2026' && p.year === 2026) ||
+      (activeFilter === '2025' && p.year === 2025) ||
+      (activeFilter === '2024' && p.year <= 2024);
+    const matchesSearch = !query ||
+      p.title.toLowerCase().includes(query) ||
+      p.authors.toLowerCase().includes(query) ||
+      p.tags.some(t => t.toLowerCase().includes(query)) ||
+      p.summary_cn.toLowerCase().includes(query);
+    return matchesFilter && matchesSearch;
+  });
+  renderCards(filtered);
+}
+
+function renderCards(papers) {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = papers.map(p => `
+    <div class="card priority-${p.priority}" onclick="openPaper('${p.id}')">
+      <div class="card-priority-badge ${p.priority}"></div>
+      <div class="card-id">${p.id} · ${p.year}</div>
+      <div class="card-title">${p.title}</div>
+      <div class="card-authors">${p.authors}</div>
+      <div class="card-summary">${p.summary_cn}</div>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+  if (papers.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">没有匹配的文献</div>`;
+  }
+}
+
+function openPaper(id) {
+  const p = PAPERS.find(x => x.id === id);
+  if (!p) return;
+
+  let relHtml = '';
+  if (p.relations && p.relations.length > 0) {
+    relHtml = p.relations.map(r => {
+      const targetPaper = PAPERS.find(x => x.id === r.target);
+      const targetTitle = targetPaper ? targetPaper.title.substring(0, 40) + '...' : r.target;
+      return `<span class="rel-badge ${r.type}" title="${r.label}" style="cursor:pointer" onclick="event.stopPropagation();openPaper('${r.target}')">${r.type}: ${r.label} → ${r.target}</span>`;
+    }).join('');
+  }
+
+  const html = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="card-priority-badge ${p.priority}" style="position:static;display:inline-block;margin-bottom:0.5rem"></div>
+    <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem">${p.id} · ${p.year} · ${p.priority === 'must' ? '必读' : p.priority === 'important' ? '重要' : '参考'}</span>
+    <h2>${p.title}</h2>
+    <div class="meta">${p.authors}${p.venue ? ' · ' + p.venue : ''}${p.doi ? ' · DOI: ' + p.doi : ''}</div>
+    ${p.pdf ? `<div class="meta"><a href="${p.pdf}" target="_blank">打开PDF</a></div>` : ''}
+
+    <section>
+      <h3>一句话概要</h3>
+      <p>${p.summary_cn}</p>
+    </section>
+
+    <section>
+      <h3>完整摘要</h3>
+      <p>${p.abstract_cn || p.summary_cn}</p>
+    </section>
+
+    ${p.methodology ? `
+    <section>
+      <h3>方法论与实验设计</h3>
+      <p>${p.methodology}</p>
+    </section>` : ''}
+
+    ${p.findings ? `
+    <section>
+      <h3>核心发现与贡献</h3>
+      <p>${p.findings}</p>
+    </section>` : ''}
+
+    ${p.limitations ? `
+    <section>
+      <h3>局限性与批评</h3>
+      <p>${p.limitations}</p>
+    </section>` : ''}
+
+    ${p.relevance ? `
+    <section>
+      <h3>与本研究的相关性</h3>
+      <p>${p.relevance}</p>
+    </section>` : ''}
+
+    ${relHtml ? `
+    <section>
+      <h3>文献关联</h3>
+      <div class="relations">${relHtml}</div>
+    </section>` : ''}
+
+    <section>
+      <h3>关键词</h3>
+      <div class="card-tags">${p.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </section>
+  `;
+
+  document.getElementById('modal').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+function initGraph() {
+  if (graphNetwork) return;
+
+  const nodes = PAPERS.map((p, i) => ({
+    id: p.id,
+    label: `${p.id}\n${p.title.substring(0, 35)}...`,
+    color: {
+      background: p.priority === 'must' ? '#4ade80' : p.priority === 'important' ? '#fbbf24' : '#64748b',
+      border: p.priority === 'must' ? '#22c55e' : p.priority === 'important' ? '#f59e0b' : '#475569'
+    },
+    font: { color: '#dce3f0', size: 10 },
+    size: p.priority === 'must' ? 28 : p.priority === 'important' ? 22 : 16,
+  }));
+
+  const edgeMap = {};
+  const edges = [];
+  const edgeColors = {
+    cites: { color: '#818cf8', dashes: false },
+    extends: { color: '#2dd4bf', dashes: false },
+    contradicts: { color: '#f87171', dashes: true },
+    shares: { color: '#f5a623', dashes: false },
+    empirical: { color: '#a78bfa', dashes: true },
+    philosophical: { color: '#fb923c', dashes: true }
+  };
+
+  PAPERS.forEach(p => {
+    if (!p.relations) return;
+    p.relations.forEach(r => {
+      const key = `${p.id}->${r.target}`;
+      if (!edgeMap[key]) {
+        edgeMap[key] = true;
+        edges.push({
+          from: p.id,
+          to: r.target,
+          label: r.type,
+          ...(edgeColors[r.type] || edgeColors.cites)
+        });
+      }
+    });
+  });
+
+  const container = document.getElementById('graph-container');
+  graphData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+  graphNetwork = new vis.Network(container, graphData, {
+    physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -30, centralGravity: 0.005, springLength: 150 } },
+    edges: { smooth: { type: 'continuous' }, font: { size: 8, color: '#8899bb' } },
+    interaction: { hover: true, tooltipDelay: 200 },
+  });
+
+  graphNetwork.on('click', function(evt) {
+    if (evt.nodes.length > 0) openPaper(evt.nodes[0]);
+  });
+}
+
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!NOTES || NOTES.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted)">暂无阅读笔记。检索完成后将为核心论文撰写笔记。</div>`;
+    return;
+  }
+  list.innerHTML = NOTES.map(n => `
+    <div class="note-card">
+      <h4>${n.title}</h4>
+      <div class="note-meta">${n.paper_id} · ${n.date || ''}</div>
+      <p style="white-space:pre-line">${n.content}</p>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('paper-count').textContent = PAPERS.length;
+  document.getElementById('must-count').textContent = PAPERS.filter(p => p.priority === 'must').length;
+  document.getElementById('note-count').textContent = NOTES ? NOTES.length : 0;
+}
+</script>
+
+<div class="wiki-footer">
+  <div class="footer-title">浏览其他领域</div>
+  <div class="footer-domains">
+    <a href="../01_sae_features/wiki.html">01 SAE与特征分解</a>
+    <a href="../02_activation_engineering/wiki.html">02 激活与表征工程</a>
+    <a href="../03_causal_intervention/wiki.html">03 因果干预与心灵哲学</a>
+    <a href="../04_alignment_safety/wiki.html">04 AI对齐理论与安全</a>
+    <a href="../05_ethics_governance/wiki.html">05 AI伦理与治理</a>
+    <a href="../06_philosophy_of_science/wiki.html">06 科学哲学</a>
+    <a href="../07_philosophy_of_mind/wiki.html">07 心灵哲学与AI</a>
+    <a href="../08_representational_ontology/wiki.html">08 表征本体论 (Gap 1)</a>
+    <a href="../09_epistemology_understanding/wiki.html">09 理解认识论 (Gap 2)</a>
+    <a href="../10_causal_sufficiency/wiki.html">10 因果充分性 (Gap 3)</a>
+    <a href="../11_vector_grounding/wiki.html">11 向量奠基 (Gap 4)</a>
+  </div>
+  <div class="footer-back">
+    <a href="../index.html">&larr; 返回文献知识库总览</a>
+  </div>
+</div>
+
+</body>
+</html>
