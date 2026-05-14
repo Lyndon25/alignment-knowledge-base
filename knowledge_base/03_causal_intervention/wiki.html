@@ -12,33 +12,35 @@
 
   <style>
     :root {
-      --bg-void: #06080f;
-      --bg-primary: #0c0f1a;
-      --bg-secondary: #12182a;
-      --bg-tertiary: #1a2238;
-      --bg-elevated: #222d4a;
-      --text-primary: #dce3f0;
-      --text-secondary: #8899bb;
-      --text-muted: #556688;
-      --text-faint: #334466;
-      --border-subtle: rgba(68, 102, 153, 0.08);
-      --border-medium: rgba(68, 102, 153, 0.18);
-      --border-strong: rgba(68, 102, 153, 0.30);
-      --c-priority-must: #4ade80;
-      --c-priority-important: #fbbf24;
-      --c-priority-ref: #64748b;
-      --c-rel-cites: #818cf8;
-      --c-rel-extends: #2dd4bf;
-      --c-rel-contradicts: #f87171;
-      --c-rel-shares: #f5a623;
-      --c-rel-empirical: #a78bfa;
-      --c-rel-philosophical: #fb923c;
+      --bg-void: #f4f5f8;
+      --bg-primary: #ffffff;
+      --bg-secondary: #eef0f4;
+      --bg-tertiary: #e4e7ed;
+      --bg-elevated: #d8dce4;
+      --text-primary: #1a1f2e;
+      --text-secondary: #4a5a72;
+      --text-muted: #7a8aa2;
+      --text-faint: #aab5c8;
+      --border-subtle: rgba(0,0,0,0.05);
+      --border-medium: rgba(0,0,0,0.10);
+      --border-strong: rgba(0,0,0,0.18);
+      --c-priority-must: #16a34a;
+      --c-priority-important: #d97706;
+      --c-priority-ref: #6b7280;
+      --c-rel-cites: #6366f1;
+      --c-rel-extends: #0d9488;
+      --c-rel-contradicts: #dc2626;
+      --c-rel-shares: #d97706;
+      --c-rel-empirical: #7c3aed;
+      --c-rel-philosophical: #ea580c;
       --font-display: 'DM Serif Display', Georgia, serif;
       --font-body: 'Sora', system-ui, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
       --radius-sm: 6px;
       --radius-md: 10px;
       --radius-lg: 16px;
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+      --shadow-card-hover: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
       --transition-base: 200ms cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -48,29 +50,31 @@
       font-family: var(--font-body);
       background: var(--bg-void);
       color: var(--text-primary);
-      line-height: 1.6;
+      line-height: 1.7;
       min-height: 100vh;
     }
 
+    /* Header */
     .header {
       background: var(--bg-primary);
       border-bottom: 1px solid var(--border-medium);
-      padding: 1rem 2rem;
+      padding: 1.25rem 2rem;
       display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 100;
       backdrop-filter: blur(12px);
     }
     .header-title {
       font-family: var(--font-display);
-      font-size: 1.25rem; color: var(--text-primary);
+      font-size: 1.35rem; color: var(--text-primary);
       letter-spacing: -0.02em;
     }
     .header-stats {
       display: flex; gap: 1.5rem;
-      font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+      font-family: var(--font-body); font-size: 0.78rem; color: var(--text-muted);
     }
-    .header-stat span { color: var(--text-primary); font-weight: 500; }
+    .header-stat span { color: var(--text-primary); font-weight: 600; }
 
+    /* Tab Navigation */
     .tab-nav {
       display: flex; gap: 0;
       background: var(--bg-primary);
@@ -78,46 +82,51 @@
       padding: 0 2rem;
     }
     .tab-btn {
-      padding: 0.75rem 1.25rem;
+      padding: 0.85rem 1.5rem;
       border: none; background: none;
       color: var(--text-muted); font-family: var(--font-body);
-      font-size: 0.85rem; cursor: pointer;
+      font-size: 0.88rem; font-weight: 500; cursor: pointer;
       border-bottom: 2px solid transparent;
       transition: all var(--transition-base);
     }
     .tab-btn:hover { color: var(--text-secondary); }
     .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--c-rel-cites); }
 
+    /* Tab Content */
     .tab-content { display: none; padding: 2rem; }
     .tab-content.active { display: block; }
 
+    /* Filters */
     .filters {
       display: flex; gap: 0.75rem; flex-wrap: wrap;
       margin-bottom: 1.5rem;
     }
     .filter-btn {
-      padding: 0.35rem 0.85rem;
+      padding: 0.4rem 1rem;
       border: 1px solid var(--border-medium); border-radius: 999px;
-      background: transparent; color: var(--text-muted);
-      font-family: var(--font-mono); font-size: 0.7rem;
+      background: var(--bg-primary); color: var(--text-muted);
+      font-family: var(--font-body); font-size: 0.78rem; font-weight: 500;
       cursor: pointer; transition: all var(--transition-base);
     }
-    .filter-btn:hover, .filter-btn.active {
-      border-color: var(--text-secondary); color: var(--text-primary);
+    .filter-btn:hover { border-color: var(--border-strong); color: var(--text-secondary); }
+    .filter-btn.active {
+      background: var(--text-primary); color: var(--bg-primary); border-color: var(--text-primary);
     }
-    .filter-btn.priority-must.active { border-color: var(--c-priority-must); color: var(--c-priority-must); }
-    .filter-btn.priority-important.active { border-color: var(--c-priority-important); color: var(--c-priority-important); }
-    .filter-btn.priority-ref.active { border-color: var(--c-priority-ref); color: var(--c-priority-ref); }
+    .filter-btn.priority-must.active { background: var(--c-priority-must); border-color: var(--c-priority-must); color: white; }
+    .filter-btn.priority-important.active { background: var(--c-priority-important); border-color: var(--c-priority-important); color: white; }
+    .filter-btn.priority-ref.active { background: var(--c-priority-ref); border-color: var(--c-priority-ref); color: white; }
 
     .search-input {
-      padding: 0.35rem 1rem;
-      background: var(--bg-secondary); border: 1px solid var(--border-medium);
+      padding: 0.4rem 1.2rem;
+      background: var(--bg-primary); border: 1px solid var(--border-medium);
       border-radius: 999px; color: var(--text-primary);
-      font-family: var(--font-body); font-size: 0.8rem;
-      width: 240px; outline: none;
+      font-family: var(--font-body); font-size: 0.82rem;
+      width: 260px; outline: none; transition: border-color var(--transition-base);
     }
     .search-input:focus { border-color: var(--border-strong); }
+    .search-input::placeholder { color: var(--text-faint); }
 
+    /* Card Grid */
     .card-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -132,31 +141,32 @@
       transition: all var(--transition-base);
       position: relative;
       overflow: hidden;
+      box-shadow: var(--shadow-card);
     }
     .card:hover {
-      border-color: var(--border-strong);
+      border-color: var(--border-medium);
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      box-shadow: var(--shadow-card-hover);
     }
     .card.priority-must { border-left: 3px solid var(--c-priority-must); }
     .card.priority-important { border-left: 3px solid var(--c-priority-important); }
     .card.priority-ref { border-left: 3px solid var(--c-priority-ref); }
 
     .card-id {
-      font-family: var(--font-mono); font-size: 0.65rem;
-      color: var(--text-faint); margin-bottom: 0.5rem;
+      font-family: var(--font-mono); font-size: 0.7rem;
+      color: var(--text-faint); margin-bottom: 0.4rem;
     }
     .card-title {
-      font-size: 0.95rem; font-weight: 500;
-      color: var(--text-primary); margin-bottom: 0.4rem;
+      font-size: 1rem; font-weight: 600;
+      color: var(--text-primary); margin-bottom: 0.35rem;
       line-height: 1.35;
     }
     .card-authors {
-      font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;
+      font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem;
     }
     .card-summary {
-      font-size: 0.78rem; color: var(--text-secondary);
-      line-height: 1.5; margin-bottom: 0.75rem;
+      font-size: 0.82rem; color: var(--text-secondary);
+      line-height: 1.6; margin-bottom: 0.75rem;
       display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -164,10 +174,10 @@
       display: flex; gap: 0.35rem; flex-wrap: wrap;
     }
     .card-tag {
-      padding: 0.15rem 0.55rem;
+      padding: 0.15rem 0.6rem;
       border-radius: 999px;
-      background: var(--bg-tertiary); color: var(--text-muted);
-      font-size: 0.65rem; font-family: var(--font-mono);
+      background: var(--bg-secondary); color: var(--text-muted);
+      font-size: 0.7rem; font-family: var(--font-mono);
     }
     .card-priority-badge {
       position: absolute; top: 0.75rem; right: 0.75rem;
@@ -177,10 +187,12 @@
     .card-priority-badge.important { background: var(--c-priority-important); box-shadow: 0 0 6px var(--c-priority-important); }
     .card-priority-badge.ref { background: var(--c-priority-ref); }
 
+    /* Detail Panel (Modal) */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(6,8,15,0.85); z-index: 200;
+      background: rgba(0,0,0,0.40); z-index: 200;
       align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
     }
     .modal-overlay.active { display: flex; }
     .modal {
@@ -190,41 +202,86 @@
       max-width: 780px; width: 90vw; max-height: 85vh;
       overflow-y: auto; padding: 2rem;
       position: relative;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.12);
     }
     .modal-close {
       position: absolute; top: 1rem; right: 1rem;
-      width: 32px; height: 32px; border: 1px solid var(--border-medium);
-      border-radius: 50%; background: transparent; color: var(--text-muted);
-      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px;
+      border: 1px solid var(--border-medium);
+      border-radius: 50%; background: var(--bg-primary);
+      color: var(--text-muted); font-size: 1.1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: all var(--transition-base);
     }
-    .modal-close:hover { border-color: #f87171; color: #f87171; }
-    .modal h2 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; }
-    .modal .meta { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; }
+    .modal-close:hover { border-color: var(--c-rel-contradicts); color: var(--c-rel-contradicts); }
+    .modal h2 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .modal .meta { color: var(--text-muted); font-size: 0.82rem; margin-bottom: 1.5rem; }
     .modal section { margin-bottom: 1.25rem; }
     .modal section h3 {
-      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
       color: var(--text-muted); margin-bottom: 0.5rem;
     }
-    .modal section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+    .modal section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.8; }
     .modal .relations { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
     .modal .rel-badge {
-      padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.7rem;
+      padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.72rem;
       font-family: var(--font-mono);
     }
-    .rel-badge.cites { background: rgba(129,140,248,0.15); color: var(--c-rel-cites); }
-    .rel-badge.extends { background: rgba(45,212,191,0.15); color: var(--c-rel-extends); }
-    .rel-badge.contradicts { background: rgba(248,113,113,0.15); color: var(--c-rel-contradicts); }
-    .rel-badge.shares { background: rgba(245,166,35,0.15); color: var(--c-rel-shares); }
-    .rel-badge.empirical { background: rgba(167,139,250,0.15); color: var(--c-rel-empirical); }
-    .rel-badge.philosophical { background: rgba(251,146,60,0.15); color: var(--c-rel-philosophical); }
+    .rel-badge.cites { background: rgba(99,102,241,0.10); color: var(--c-rel-cites); }
+    .rel-badge.extends { background: rgba(13,148,136,0.10); color: var(--c-rel-extends); }
+    .rel-badge.contradicts { background: rgba(220,38,38,0.10); color: var(--c-rel-contradicts); }
+    .rel-badge.shares { background: rgba(217,119,6,0.10); color: var(--c-rel-shares); }
+    .rel-badge.empirical { background: rgba(124,58,237,0.10); color: var(--c-rel-empirical); }
+    .rel-badge.philosophical { background: rgba(234,88,12,0.10); color: var(--c-rel-philosophical); }
 
+    /* Graph Container */
+    .graph-wrapper {
+      position: relative;
+      width: 100%;
+    }
     .graph-container {
       width: 100%; height: 70vh;
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-lg);
       background: var(--bg-primary);
       overflow: hidden;
+    }
+    .graph-container.fullscreen {
+      position: fixed; inset: 0; z-index: 300;
+      width: 100vw; height: 100vh;
+      border-radius: 0; border: none;
+    }
+    .graph-toolbar {
+      position: absolute;
+      bottom: 1.25rem; right: 1.25rem;
+      display: flex; gap: 0.35rem;
+      z-index: 10;
+    }
+    .graph-toolbar.fullscreen {
+      bottom: 2rem; right: 2rem;
+    }
+    .graph-btn {
+      width: 38px; height: 38px;
+      border: 1px solid var(--border-medium);
+      border-radius: 50%;
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-base);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .graph-btn:hover {
+      background: var(--bg-secondary);
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .graph-btn.fullscreen-btn {
+      width: auto; padding: 0 1rem;
+      border-radius: 999px;
+      font-size: 0.78rem; font-family: var(--font-body); font-weight: 500;
+      gap: 0.35rem;
     }
     .graph-legend {
       display: flex; gap: 1.5rem; flex-wrap: wrap;
@@ -234,51 +291,53 @@
     }
     .graph-legend-item {
       display: flex; align-items: center; gap: 0.4rem;
-      font-size: 0.7rem; color: var(--text-muted);
+      font-size: 0.72rem; color: var(--text-muted);
     }
     .graph-legend-dot {
       width: 10px; height: 10px; border-radius: 50%;
     }
 
+    /* Reading Notes */
     .notes-list { display: flex; flex-direction: column; gap: 0.75rem; }
     .note-card {
       background: var(--bg-primary); border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md); padding: 1.25rem;
+      border-radius: var(--radius-md); padding: 1.5rem;
+      box-shadow: var(--shadow-card);
     }
-    .note-card h4 { font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.4rem; }
-    .note-card .note-meta { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 0.6rem; }
-    .note-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+    .note-card h4 { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .note-card .note-meta { font-size: 0.75rem; color: var(--text-faint); margin-bottom: 0.6rem; }
+    .note-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.8; }
 
     ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--bg-void); }
+    ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 
     a { color: var(--c-rel-cites); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* Footer navigation */
-    .wiki-footer {
-      margin-top: 3rem; padding: 1.5rem 2rem;
-      background: var(--bg-primary);
-      border-top: 1px solid var(--border-medium);
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .wiki-footer a { color: var(--text-muted); font-size: 0.72rem; text-decoration: none; transition: color var(--transition-base); }
-    .wiki-footer a:hover { color: var(--text-primary); text-decoration: none; }
-    .wiki-footer .footer-title { font-size: 0.7rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
-    .wiki-footer .footer-domains { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 0.75rem; }
-    .wiki-footer .footer-back { margin-top: 0.5rem; }
-    .wiki-footer .footer-back a { color: var(--c-rel-cites); font-size: 0.78rem; }
+    .card { animation: fadeIn 0.3s ease both; }
+    .card:nth-child(1) { animation-delay: 0.02s; }
+    .card:nth-child(2) { animation-delay: 0.04s; }
+    .card:nth-child(3) { animation-delay: 0.06s; }
+    .card:nth-child(4) { animation-delay: 0.08s; }
+    .card:nth-child(5) { animation-delay: 0.10s; }
+    .card:nth-child(6) { animation-delay: 0.12s; }
+    .card:nth-child(7) { animation-delay: 0.14s; }
+    .card:nth-child(8) { animation-delay: 0.16s; }
+    .card:nth-child(n+9) { animation-delay: 0.18s; }
   </style>
 </head>
 <body>
 
 <div class="header">
   <div>
-    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.35rem">
-      <a href="../index.html" style="color:var(--c-rel-cites)">← 文献知识库总览</a>
-    </div>
     <div class="header-title">因果干预与心灵哲学</div>
-    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.15rem">Causal Intervention · Causal Abstraction · Philosophy of Mind · Predictive Processing</div>
+    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.15rem">Causal Intervention · Causal Abstraction · Philosophy of Mind · Predictive Processing</div>
   </div>
   <div class="header-stats">
     <div class="header-stat">文献 <span id="paper-count">0</span></div>
@@ -288,9 +347,9 @@
 </div>
 
 <div class="tab-nav">
-  <button class="tab-btn active" data-tab="browse">&#x1F4CB; 浏览文献</button>
-  <button class="tab-btn" data-tab="graph">&#x1F517; 关系图谱</button>
-  <button class="tab-btn" data-tab="notes">&#x1F4DD; 阅读笔记</button>
+  <button class="tab-btn active" data-tab="browse">📋 浏览文献</button>
+  <button class="tab-btn" data-tab="graph">🔗 关系图谱</button>
+  <button class="tab-btn" data-tab="notes">📝 阅读笔记</button>
 </div>
 
 <!-- Tab: Browse -->
@@ -310,7 +369,15 @@
 
 <!-- Tab: Graph -->
 <div class="tab-content" id="tab-graph">
-  <div class="graph-container" id="graph-container"></div>
+  <div class="graph-wrapper">
+    <div class="graph-container" id="graph-container"></div>
+    <div class="graph-toolbar" id="graph-toolbar">
+      <button class="graph-btn" id="graph-zoom-in" title="放大">＋</button>
+      <button class="graph-btn" id="graph-zoom-out" title="缩小">−</button>
+      <button class="graph-btn" id="graph-reset" title="重置视角">⟲</button>
+      <button class="graph-btn graph-btn fullscreen-btn" id="graph-fullscreen" title="全屏">⛶ 全屏</button>
+    </div>
+  </div>
   <div class="graph-legend" id="graph-legend">
     <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-must)"></div> 必读</div>
     <div class="graph-legend-item"><div class="graph-legend-dot" style="background:var(--c-priority-important)"></div> 重要</div>
@@ -1042,7 +1109,6 @@ const PAPERS = [
     ]
   }
 ];
-
 const NOTES = [
   {
     paper_id: "001",
@@ -1075,13 +1141,13 @@ const NOTES = [
     content: "<strong>核心问题：</strong>机制可解释性研究者'在做什么'当他们在寻找和报告回路时——这是一个科学解释、工程诊断、还是计算建模？<br><br><strong>解释观假设：</strong>核心论纲——神经网络包含隐式的因果-机制解释——具有深刻的哲学后果。它将可解释性从一个'创造性的解释活动'重新框架化为'发现预先存在的解释'。这类似于科学哲学中的科学实在论与反实在论的争论——可解释性实在论（explainability realism）认为内部因果结构客观存在并等待被发现。<br><br><strong>解释美德框架：</strong>六美德体系——经验充分性、内部一致性、简约性、统一性、多层级性和因果关系专一性——将可解释性脱离了'眼睛测试'并置于其自己的认识论基础上。每个美德都提出了可度量标准，将可解释性从工艺提升为科学。<br><br><strong>与本研究的关系：</strong>这直接定义了本研究的定位和框架——如果机制可解释性声称产生科学解释，那么它必须满足这些美德。因果干预方法本身构成了方法论工具，但它们产生的'解释'的质量需要通过这些美德来评估。哲学研究的功能是：(1) 分析和完善这些美德；(2) 识别当前技术实现中的认识论裂痕；(3) 提出新的美德或修改以适应AI系统的特殊性。<br><br><strong>开放问题：</strong>(1) 解释观假设是否过分——是否存在不能被表征为解释性'回路'的神经网络功能？(2) 美德框架中的不同美德之间是否存在不可解决的张力（如简约性和经验充分性）？(3) 是否存在特定于AI（而非通用科学）的解释美德？"
   }
 ];
-
 const DOMAIN_ID = '03_causal_intervention';
 
 // ═══════════════════════════════ INIT ═══════════════════════════════
 let activeFilter = 'all';
 let graphNetwork = null;
 let graphData = null;
+let isFullscreen = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   renderCards(PAPERS);
@@ -1089,6 +1155,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateStats();
   initTabs();
   initFilters();
+  initGraphControls();
 });
 
 // ═══════════════════════════════ TAB SWITCHING ══════════════════════
@@ -1170,12 +1237,12 @@ function openPaper(id) {
   }
 
   const html = `
-    <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="card-priority-badge ${p.priority}" style="position:static;display:inline-block;margin-bottom:0.5rem"></div>
-    <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem">${p.id} · ${p.year} · ${p.priority === 'must' ? '必读' : p.priority === 'important' ? '重要' : '参考'}</span>
+    <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);margin-left:0.5rem">${p.id} · ${p.year} · ${p.priority === 'must' ? '必读' : p.priority === 'important' ? '重要' : '参考'}</span>
     <h2>${p.title}</h2>
     <div class="meta">${p.authors}${p.venue ? ' · ' + p.venue : ''}${p.doi ? ' · DOI: ' + p.doi : ''}</div>
-    ${p.pdf ? `<div class="meta"><a href="${p.pdf}" target="_blank">&#x1F4C4; 打开PDF</a></div>` : ''}
+    ${p.pdf ? `<div class="meta"><a href="${p.pdf}" target="_blank">📄 打开PDF</a></div>` : ''}
 
     <section>
       <h3>一句话概要</h3>
@@ -1235,26 +1302,41 @@ function closeModal() {
 function initGraph() {
   if (graphNetwork) return;
 
+  // Helper: extract core conclusion label from summary_cn
+  function getConclusionLabel(p) {
+    let text = p.summary_cn || '';
+    // Take first sentence (split by 。!? and take first)
+    const match = text.match(/^[^。！？]*[。！？]/);
+    if (match) text = match[0];
+    // Truncate to 35 chars
+    if (text.length > 35) text = text.substring(0, 34) + '…';
+    // Remove trailing punctuation for cleaner look
+    text = text.replace(/[。！？，]$/, '');
+    return `${p.id}\n${text}`;
+  }
+
   const nodes = PAPERS.map((p, i) => ({
     id: p.id,
-    label: `${p.id}\n${p.title.substring(0, 30)}...`,
+    label: getConclusionLabel(p),
+    title: `<strong>${p.title}</strong><br><em>${p.authors}</em><br><br>${p.summary_cn}`,
     color: {
-      background: p.priority === 'must' ? '#4ade80' : p.priority === 'important' ? '#fbbf24' : '#64748b',
-      border: p.priority === 'must' ? '#22c55e' : p.priority === 'important' ? '#f59e0b' : '#475569'
+      background: p.priority === 'must' ? '#16a34a' : p.priority === 'important' ? '#d97706' : '#9ca3af',
+      border: p.priority === 'must' ? '#15803d' : p.priority === 'important' ? '#b45309' : '#6b7280'
     },
-    font: { color: '#dce3f0', size: 10 },
-    size: p.priority === 'must' ? 28 : p.priority === 'important' ? 22 : 16,
+    font: { color: '#1a1f2e', size: 9, face: 'Sora' },
+    size: p.priority === 'must' ? 26 : p.priority === 'important' ? 20 : 14,
+    borderWidth: 1.5,
   }));
 
   const edgeMap = {};
   const edges = [];
   const edgeColors = {
-    cites: { color: '#818cf8', dashes: false },
-    extends: { color: '#2dd4bf', dashes: false },
-    contradicts: { color: '#f87171', dashes: true },
-    shares: { color: '#f5a623', dashes: false },
-    empirical: { color: '#a78bfa', dashes: true },
-    philosophical: { color: '#fb923c', dashes: true }
+    cites: { color: '#6366f1', dashes: false },
+    extends: { color: '#0d9488', dashes: false },
+    contradicts: { color: '#dc2626', dashes: true },
+    shares: { color: '#d97706', dashes: false },
+    empirical: { color: '#7c3aed', dashes: true },
+    philosophical: { color: '#ea580c', dashes: true }
   };
 
   PAPERS.forEach(p => {
@@ -1277,13 +1359,52 @@ function initGraph() {
   graphData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
   graphNetwork = new vis.Network(container, graphData, {
     physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -30, centralGravity: 0.005, springLength: 150 } },
-    edges: { smooth: { type: 'continuous' }, font: { size: 8, color: '#8899bb' } },
+    edges: { smooth: { type: 'continuous' }, font: { size: 8, color: '#7a8aa2', face: 'Sora' } },
     interaction: { hover: true, tooltipDelay: 200 },
   });
 
   graphNetwork.on('click', function(evt) {
     if (evt.nodes.length > 0) openPaper(evt.nodes[0]);
   });
+}
+
+// ═══════════════════════════════ GRAPH CONTROLS ═════════════════════
+function initGraphControls() {
+  document.getElementById('graph-zoom-in').addEventListener('click', () => {
+    if (graphNetwork) graphNetwork.moveTo({ scale: graphNetwork.getScale() * 1.4 });
+  });
+  document.getElementById('graph-zoom-out').addEventListener('click', () => {
+    if (graphNetwork) graphNetwork.moveTo({ scale: graphNetwork.getScale() / 1.4 });
+  });
+  document.getElementById('graph-reset').addEventListener('click', () => {
+    if (graphNetwork) graphNetwork.fit({ animation: true });
+  });
+  document.getElementById('graph-fullscreen').addEventListener('click', toggleFullscreen);
+
+  // Escape to exit fullscreen
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isFullscreen) toggleFullscreen();
+  });
+}
+
+function toggleFullscreen() {
+  const container = document.getElementById('graph-container');
+  const toolbar = document.getElementById('graph-toolbar');
+  const btn = document.getElementById('graph-fullscreen');
+
+  if (!isFullscreen) {
+    container.classList.add('fullscreen');
+    toolbar.classList.add('fullscreen');
+    btn.textContent = '✕ 退出';
+    isFullscreen = true;
+  } else {
+    container.classList.remove('fullscreen');
+    toolbar.classList.remove('fullscreen');
+    btn.textContent = '⛶ 全屏';
+    isFullscreen = false;
+    // Re-trigger fit since layout changed
+    if (graphNetwork) setTimeout(() => graphNetwork.fit({ animation: false }), 100);
+  }
 }
 
 // ═══════════════════════════════ NOTES ═════════════════════════════
@@ -1308,26 +1429,5 @@ function updateStats() {
   document.getElementById('note-count').textContent = NOTES ? NOTES.length : 0;
 }
 </script>
-
-<div class="wiki-footer">
-  <div class="footer-title">浏览其他领域</div>
-  <div class="footer-domains">
-    <a href="../01_sae_features/wiki.html">01 SAE与特征分解</a>
-    <a href="../02_activation_engineering/wiki.html">02 激活与表征工程</a>
-    <a href="../03_causal_intervention/wiki.html">03 因果干预与心灵哲学</a>
-    <a href="../04_alignment_safety/wiki.html">04 AI对齐理论与安全</a>
-    <a href="../05_ethics_governance/wiki.html">05 AI伦理与治理</a>
-    <a href="../06_philosophy_of_science/wiki.html">06 科学哲学</a>
-    <a href="../07_philosophy_of_mind/wiki.html">07 心灵哲学与AI</a>
-    <a href="../08_representational_ontology/wiki.html">08 表征本体论 (Gap 1)</a>
-    <a href="../09_epistemology_understanding/wiki.html">09 理解认识论 (Gap 2)</a>
-    <a href="../10_causal_sufficiency/wiki.html">10 因果充分性 (Gap 3)</a>
-    <a href="../11_vector_grounding/wiki.html">11 向量奠基 (Gap 4)</a>
-  </div>
-  <div class="footer-back">
-    <a href="../index.html">← 返回文献知识库总览</a>
-  </div>
-</div>
-
 </body>
 </html>

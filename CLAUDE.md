@@ -221,6 +221,92 @@ Download automation: `resources/code/batch_download.py` (OA+arXiv strategies), `
 - Papers directory: `data/papers/` (flat ScholarAIO structure)
 - Knowledge base: `knowledge_base/` (organized by domain with wikis)
 
+## Common Commands
+
+### Wiki Regeneration (after updating the template)
+```bash
+# Regenerate all 11 domain wikis from template + extracted data
+python resources/code/regenerate_wikis.py
+```
+
+### Batch Download Missing PDFs
+```bash
+# Download from OA sources (arXiv, PhilArchive, OpenReview)
+python resources/code/batch_download.py
+
+# Include ZJU campus network attempts
+python resources/code/batch_download.py --campus
+
+# List missing papers without downloading
+python resources/code/batch_download.py --list-only
+
+# Restrict to a single domain
+python resources/code/batch_download.py --domain 06
+```
+
+### Institutional Access Downloads
+```bash
+# CARSI institutional access
+python resources/code/carsi_download.py
+
+# RVPN browser-based download (Playwright)
+python resources/code/rvpn_playwright.py
+```
+
+### ScholarAIO Ingestion
+```bash
+python -m scholaraio search --query "..."
+python -m scholaraio ingest --config config.yaml
+```
+
+### PDF Download Strategy (in order of effectiveness)
+1. **arXiv API / direct PDF** — covers ~70% of ML/CS papers
+2. **PhilArchive** — `philpapers.org/archive/{RECID}.pdf` (bypasses Cloudflare)
+3. **OpenReview** — `openreview.net/pdf?id={forum_id}` for NeurIPS/ICML
+4. **Unpaywall API** — `api.unpaywall.org/v2/{DOI}` for OA status check
+5. **ACL Anthology** — `aclanthology.org/{paper_id}.pdf` for CL papers
+
+Windows-specific constraints: prefix with `PYTHONIOENCODING=utf-8` for Chinese text; use `curl` not WebFetch for PDF URLs; avoid `grep -P` (use `grep -oE`); use ASCII-safe filenames for downloaded PDFs.
+
+## Wiki Data Model
+
+Each domain wiki (`knowledge_base/{NN}_*/wiki.html`) is generated from `resources/templates/wiki_template.html`. It contains inline JavaScript data arrays:
+
+### PAPER object fields
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | 3-digit zero-padded ID |
+| `title` | string | Full English title |
+| `authors` | string | Full author list |
+| `year` | number | Publication year |
+| `venue` | string | Venue/journal |
+| `doi` | string | DOI or "N/A" |
+| `pdf` | string | Relative path to PDF |
+| `priority` | "must"|"important"|"ref" | Reading priority |
+| `tags` | string[] | Topic tags |
+| `summary_cn` | string | 1-sentence Chinese summary (used for graph node labels) |
+| `abstract_cn` | string | Extended Chinese abstract |
+| `methodology` | string | Method description |
+| `findings` | string | Core findings |
+| `limitations` | string | Limitations |
+| `relevance` | string | Relevance to this project |
+| `relations` | array | Inter-paper relationships: `{target, type, label}` |
+
+### Relation types
+`cites`, `extends`, `contradicts`, `shares`, `empirical`, `philosophical`
+
+### Graph node labels
+Graph nodes display the **core conclusion** (from `summary_cn`, truncated to ~35 chars) instead of paper titles, with tooltips showing the full title + authors + summary.
+
+### Cross-domain bridges
+Hardcoded in `knowledge_base/index.html` as HTML cards. Each bridge connects 2-3 domains with a description and linked papers.
+
+## Git Workflow
+- PDFs are gitignored (`knowledge_base/*/papers/` and `*.pdf`) — do not commit them
+- `config.local.yaml` and `key.txt` are gitignored
+- Primary version-controlled artifacts: wiki HTML files, research notes, writing drafts, Python scripts
+- Commit messages: bilingual (Chinese description, English technical terms)
+
 ## Notes for Claude
 
 - When suggesting readings, prioritize works that bridge technical and philosophical perspectives
